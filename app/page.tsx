@@ -3,7 +3,7 @@ export default function Home() {
     <div style={{ textAlign: "center", marginTop: "50px" }}>
       <h1>Hello World! 🚀</h1>
       <p>This is running locally!</p>
-      <p>TESTING ===============================</p>
+      <p>PPL B - Kelompoka 6</p>
     </div>
   );
 }
