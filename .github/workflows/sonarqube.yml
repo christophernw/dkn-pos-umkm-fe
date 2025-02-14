@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - staging
   pull_request:
     branches:
       - main
+      - staging
 
 jobs:
   sonarqube:
@@ -31,7 +33,6 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
           npx sonarqube-scanner \
-            -Dsonar.projectKey=your-project-key \
-            -Dsonar.organization=your-organization \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.login=$SONAR_TOKEN
+            -Dsonar.projectKey=dkn-pos-umkm-fe \
+            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
