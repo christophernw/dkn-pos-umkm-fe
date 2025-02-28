@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom'
 import { render, screen } from "@testing-library/react";
-import DaftarProduk from "../app/daftarProduk/page"; 
+import DaftarProduk from "../src/app/daftarProduk/page"; 
 
 describe("DaftarProduk Page", () => {
   beforeEach(() => {

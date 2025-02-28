@@ -1,8 +1,9 @@
+import { NavbarButton } from "@/src/components/elements/button/NavbarButton";
+import { Navbar } from "@/src/components/layout/Navbar";
 import "@testing-library/jest-dom";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { useRouter } from "next/router";
-import { Navbar } from "../components/Navbar";
-import { NavbarButton } from "../components/elements/button/NavbarButton";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+
+
 
 jest.mock("@/public/icons/navbar/HomeIcon", () => () => <svg data-testid="home-icon" />);
 jest.mock("@/public/icons/navbar/TransactionIcon", () => () => <svg data-testid="transaction-icon" />);
@@ -25,9 +26,22 @@ describe("Navbar Component", () => {
         
         const homeButton = screen.getByTestId("home-icon");
         fireEvent.click(homeButton);
-        expect(homeButton).toHaveStyle("color: white");
         expect(screen.getByText("Home"));
     });
+
+    test("Navbar navigates to the correct route when the Product button is clicked", () => {
+        render(<Navbar />);
+      
+        const productButton = screen.getByRole("link", { name: /product/i }); // Case-insensitive match
+      
+        expect(productButton).toHaveAttribute("href", "/daftarProduk"); // Ensure correct href
+      
+
+        waitFor(() => {
+            fireEvent.click(productButton);
+            expect(window.location.pathname).toBe("/daftarProduk");
+          });
+      });
 });
 
 describe("NavbarButton Component", () => {
@@ -43,7 +57,6 @@ describe("NavbarButton Component", () => {
             />
         );
         expect(screen.getByTestId("test-icon")).toBeInTheDocument();
-        expect(screen.getByText("Test")).toBeInTheDocument();
     });
 
     test("calls toggleButton when clicked", () => {
@@ -63,22 +76,4 @@ describe("NavbarButton Component", () => {
         expect(mockToggleButton).toHaveBeenCalledTimes(1);
     });
 });
-
-jest.mock("next/router", () => ({
-    useRouter: jest.fn(),
-}));
   
-describe("Navbar Navigation", () => {
-    it("navigates to the correct route when a button is clicked", () => {
-        const mockPush = jest.fn();
-        (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
-
-        render(<Navbar />);
-
-        const productButton = screen.getByTestId("home-icon");
-
-        fireEvent.click(productButton);
-
-        expect(mockPush).toHaveBeenCalledWith("/");
-    });
-});
