@@ -1,7 +1,8 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { NavbarButton } from '../elements/button/NavbarButton'
 import HomeIcon from '@/public/icons/navbar/HomeIcon'
+import { usePathname } from 'next/navigation';
 import TransactionIcon from '@/public/icons/navbar/TransactionIcon'
 import ProductIcon from '@/public/icons/navbar/ProductIcon'
 import SettingsIcon from '@/public/icons/navbar/SettingsIcon'
@@ -9,15 +10,31 @@ import ReportIcon from '@/public/icons/navbar/ReportIcon'
 
 
 export const Navbar = () => {
-    const [activeButton, setActiveButton] = useState("")
-
     const navItems = [
         { text: 'Home', icon: HomeIcon, route: "/" },
-        { text: 'Transaction', icon: TransactionIcon, route: "/" },
+        { text: 'Transaction', icon: TransactionIcon, route: "/transaksi" },
         { text: 'Product', icon: ProductIcon, route: "/daftarProduk" },
-        { text: 'Report', icon: ReportIcon, route: "/" },
-        { text: 'Setting', icon: SettingsIcon, route: "/" },
+        { text: 'Report', icon: ReportIcon, route: "/report" },
+        { text: 'Setting', icon: SettingsIcon, route: "/setting" },
     ]
+
+    const [activeItem, setActiveItem] = useState<string | null>(null);
+    const pathname = usePathname();
+
+    useEffect(() => {
+      const activeMenuItem = navItems.find(item => 
+        pathname === item.route
+      );
+      
+      if (activeMenuItem) {
+        setActiveItem(activeMenuItem.text);
+      }
+
+    }, [pathname]);
+  
+    const handleItemClick = (title: string) => {
+      setActiveItem(prev => (prev === title ? prev : title));
+    };
 
     return (
         <div className="bg-white fixed bottom-0 w-full sm:w-[402px] py-3 pb-7 shadow-[0_-4px_6px_0px_rgba(0,0,0,0.1)]">
@@ -25,8 +42,8 @@ export const Navbar = () => {
                 {navItems.map((item, index) => (
                     <NavbarButton
                         key={index}
-                        isActive={activeButton === item.text}
-                        toggleButton={() => setActiveButton(item.text)}
+                        isActive={activeItem === item.text}
+                        toggleButton={() => handleItemClick(item.text)}
                         icon={item.icon}
                         text={item.text}
                         route={item.route}

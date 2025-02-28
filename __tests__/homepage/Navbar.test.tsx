@@ -3,8 +3,6 @@ import { Navbar } from "@/src/components/layout/Navbar";
 import "@testing-library/jest-dom";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
-
-
 jest.mock("@/public/icons/navbar/HomeIcon", () => () => <svg data-testid="home-icon" />);
 jest.mock("@/public/icons/navbar/TransactionIcon", () => () => <svg data-testid="transaction-icon" />);
 jest.mock("@/public/icons/navbar/ProductIcon", () => () => <svg data-testid="product-icon" />);
