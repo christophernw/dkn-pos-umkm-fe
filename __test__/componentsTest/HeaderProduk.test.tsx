@@ -12,7 +12,6 @@ describe('HeaderProduk Component', () => {
   beforeEach(() => {
     jest.clearAllMocks()
   })
-
   
   it('highlights "Informasi Stok" link when on /daftarProduk page', () => {
     (usePathname as jest.Mock).mockReturnValue('/daftarProduk')
