@@ -36,6 +36,7 @@ export default function MultiRolePage() {
       <div className="w-full flex justify-between mb-6">
         <button
           onClick={() => router.back()}
+          aria-label='Back'
           className="w-10 h-10 rounded-full bg-white hover:bg-gray-300 flex items-center justify-center"
         >
           <ArrowLeft className="w-5 h-5 text-black" />

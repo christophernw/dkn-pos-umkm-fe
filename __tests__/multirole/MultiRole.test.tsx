@@ -1,18 +1,22 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import MultiRolePage from "@/src/app/multirole/page"; 
-import { useRouter } from "next/navigation";
 
-const mockPush = jest.fn()
+const mockPush = jest.fn();
+const mockBack = jest.fn();
+
+// Mocking API calls for users
+global.fetch = jest.fn();
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockPush,
+    back: mockBack
   }),
 }));
 
 describe("User Accounts Page", () => {
   beforeEach(() => {
-    jest.clearAllMocks(); // 🔧 Bersihkan mock sebelum setiap test
+    jest.clearAllMocks();
   });
 
   it("should display the title 'User Accounts'", () => {
@@ -47,6 +51,15 @@ describe("User Accounts Page", () => {
     
     fireEvent.click(addButton);
     
-    expect(mockPush).toHaveBeenCalledWith("/multirole/add-user"); // Pastikan push dipanggil
+    expect(mockPush).toHaveBeenCalledWith("/multirole/add-user"); 
+  });
+
+  it("should back to home page when back button is clicked", () => {
+    render(<MultiRolePage />);
+    const backButton = screen.getByLabelText("Back");
+    
+    fireEvent.click(backButton);
+    
+    expect(mockBack).toHaveBeenCalledWith(); 
   });
 });
