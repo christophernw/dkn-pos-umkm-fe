@@ -4,7 +4,7 @@ import React from 'react'
 
 const semuaBarang = () => {
   return (
-    <div className='relative min-h-full'>
+    <div className='relative min-h-screen'>
       <HeaderProduk />
       <main>
         <ProductCard />
@@ -28,9 +28,9 @@ const semuaBarang = () => {
           </button>
         </div>
       </section>
-      <div className='absolute bottom-4 w-full'>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-full w-full shadow-md">
-          + Tambah Produk Baru
+      <div className='fixed bottom-4 flex justify-end px-4'>
+        <button className="bg-blue-600 hover:bg-blue-700 text-white text-4xl just flex items-center justify-center h-14 w-14 font-medium rounded-full shadow-md">
+          +
         </button>
       </div>
     </div>
