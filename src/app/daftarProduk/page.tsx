@@ -1,13 +1,16 @@
+import HeaderProduk from '@/src/components/HeaderProduk';
 import React from 'react' 
 // rafce
 
 const DaftarProduk = () => {
   return (
-    <main>
-      <div>page</div>
-      <p></p>
-    </main>
+    <div>
+      <HeaderProduk />
+      <main>ini summary daftar produk</main>
+      <div>ini daftar produk</div> 
+    </div>
   );
 }
 
-export default DaftarProduk
+export default DaftarProduk 
+
