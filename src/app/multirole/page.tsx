@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, MoreHorizontal } from "lucide-react";
 
 const users = [
   {
@@ -33,17 +33,17 @@ export default function MultiRolePage() {
 
   return (
     <div className="min-h-screen bg-[#EDF1F9] p-4 ">
-      <div className="w-full flex items-center">
+      <div className="w-full flex justify-between mb-6">
         <button
           onClick={() => router.back()}
           className="w-10 h-10 rounded-full bg-white hover:bg-gray-300 flex items-center justify-center"
         >
           <ArrowLeft className="w-5 h-5 text-black" />
         </button>
-      </div>
-
-      <div className="flex items-center mb-10 relative">
-        <h1 className="text-xl font-semibold w-full text-center">Pengaturan Pengguna</h1>
+        <h1 className="text-xl font-semibold ">Pengaturan Pengguna</h1>
+        <button className="w-10 h-10 rounded-full bg-white hover:bg-gray-300 flex items-center justify-center">
+          <MoreHorizontal className="w-5 h-5 text-black" />
+        </button>
       </div>
 
       <div className="bg-white p-4 rounded-2xl shadow-md">
