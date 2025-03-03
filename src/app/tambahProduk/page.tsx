@@ -1,8 +1,9 @@
-"use client"; // belom
+"use client";
 import { useState, ChangeEvent, FormEvent } from "react";
 
 export default function AddProductPage() {
   const [productName, setProductName] = useState("");
+  const [category, setCategory] = useState("");
   const [priceSell, setPriceSell] = useState("");
   const [priceCost, setPriceCost] = useState("");
   const [currentStock, setCurrentStock] = useState("");
@@ -10,7 +11,6 @@ export default function AddProductPage() {
   const [unit, setUnit] = useState("Kg");
   const [previewImg, setPreviewImg] = useState<string | null>(null);
 
-  // Handle image file selection
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
     const file = e.target.files[0];
@@ -21,11 +21,11 @@ export default function AddProductPage() {
     reader.readAsDataURL(file);
   };
 
-  // Simulated form submission
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const productData = {
       productName,
+      category,
       priceSell,
       priceCost,
       currentStock,
@@ -53,7 +53,7 @@ export default function AddProductPage() {
         onSubmit={handleSubmit}
         className="bg-white rounded-lg p-4 shadow-sm space-y-4"
       >
-        {/* placeholder */}
+        {/* Placeholder/gambar */}
         <div className="flex justify-center">
           <label
             htmlFor="imageUpload"
@@ -94,7 +94,7 @@ export default function AddProductPage() {
           />
         </div>
 
-        {/* Product Name */}
+        {/* Nama Produk */}
         <div>
           <label
             htmlFor="productName"
@@ -112,7 +112,25 @@ export default function AddProductPage() {
           />
         </div>
 
-        {/* Price Sell */}
+        {/* Kategori */}
+        <div>
+          <label
+            htmlFor="category"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Kategori
+          </label>
+          <input
+            id="category"
+            type="text"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            placeholder="Makanan"
+            className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          />
+        </div>
+
+        {/* Harga Jual */}
         <div>
           <label
             htmlFor="priceSell"
@@ -130,7 +148,7 @@ export default function AddProductPage() {
           />
         </div>
 
-        {/* Price Cost */}
+        {/* Harga Modal */}
         <div>
           <label
             htmlFor="priceCost"
@@ -148,9 +166,9 @@ export default function AddProductPage() {
           />
         </div>
 
-        {/* Satuan (Unit) and Stock */}
+        {/* Satuan (Unit) dan Stok */}
         <div className="flex items-center justify-between space-x-4">
-          {/* Unit Select */}
+          {/* Pilih Satuan */}
           <div className="w-1/3">
             <label
               htmlFor="unit"
@@ -171,7 +189,7 @@ export default function AddProductPage() {
             </select>
           </div>
 
-          {/* Current Stock */}
+          {/* Stok Saat Ini */}
           <div className="w-1/3">
             <label
               htmlFor="currentStock"
@@ -189,7 +207,7 @@ export default function AddProductPage() {
             />
           </div>
 
-          {/* Minimum Stock */}
+          {/* Stok Minimum */}
           <div className="w-1/3">
             <label
               htmlFor="minimumStock"
@@ -208,7 +226,7 @@ export default function AddProductPage() {
           </div>
         </div>
 
-        {/* Submit button */}
+        {/* Tombol Submit */}
         <div className="pt-4">
           <button
             type="submit"
