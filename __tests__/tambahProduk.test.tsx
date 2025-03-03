@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import AddProductPage from "../src/app/tambahProduk/page";
 
@@ -7,6 +7,10 @@ describe("AddProductPage", () => {
   const mockHistoryBack = jest.fn();
   beforeAll(() => {
     window.history.back = mockHistoryBack;
+  });
+
+  beforeEach(() => {
+    window.alert = jest.fn();
   });
 
   afterAll(() => {
@@ -25,6 +29,11 @@ describe("AddProductPage", () => {
     expect(screen.getByLabelText(/stok saat ini/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/stok minimum/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /lanjut/i })).toBeInTheDocument();
+  });
+
+  it("menampilkan placeholder upload jika previewImg masih null", () => {
+    render(<AddProductPage />);
+    expect(screen.getByText("Upload")).toBeInTheDocument();
   });
 
   it("dapat mengisi input teks", () => {
@@ -71,23 +80,24 @@ describe("AddProductPage", () => {
     expect(mockHistoryBack).toHaveBeenCalled();
   });
 
-  it("tidak crash ketika file gambar tidak dipilih", () => {
+  it("tidak crash ketika file gambar tidak dipilih (null files)", () => {
     render(<AddProductPage />);
     const fileInput = screen.getByLabelText("Upload") as HTMLInputElement;
     
     fireEvent.change(fileInput, { target: { files: null } });
   });
 
-  it("menghandle upload gambar dengan benar", () => {
+  it("menghandle upload gambar dengan benar dan menampilkan preview", async () => {
     render(<AddProductPage />);
     const fileInput = screen.getByLabelText("Upload") as HTMLInputElement;
 
     const mockFile = new File(["(⌐□_□)"], "pie.png", { type: "image/png" });
-    const dataTransfer = new DataTransfer();
-    dataTransfer.items.add(mockFile);
 
-    fireEvent.change(fileInput, { target: { files: dataTransfer.files } });
+    fireEvent.change(fileInput, { target: { files: [mockFile] } });
 
+    await waitFor(() => {
+      expect(screen.getByAltText("Product Preview")).toBeInTheDocument();
+    });
   });
 
   it("mensubmit data form dengan benar", () => {
@@ -123,10 +133,8 @@ describe("AddProductPage", () => {
       unit: "Botol",
     });
 
-    const alertMock = jest.spyOn(window, "alert").mockImplementation(() => {});
-    expect(alertMock).toHaveBeenCalledWith("Product submitted!");
+    expect(window.alert).toHaveBeenCalledWith("Product submitted!");
 
     consoleSpy.mockRestore();
-    alertMock.mockRestore();
   });
 });
