@@ -10,13 +10,13 @@ import ReportIcon from '@/public/icons/navbar/ReportIcon'
 
 
 export const Navbar = () => {
-    const navItems = [
+    const navItems = React.useMemo(() => [
         { text: 'Home', icon: HomeIcon, route: "/" },
         { text: 'Transaction', icon: TransactionIcon, route: "/transaksi" },
         { text: 'Product', icon: ProductIcon, route: "/daftarProduk" },
         { text: 'Report', icon: ReportIcon, route: "/report" },
         { text: 'Setting', icon: SettingsIcon, route: "/setting" },
-    ]
+    ], []);
 
     const [activeItem, setActiveItem] = useState<string | null>(null);
     const pathname = usePathname();
@@ -30,7 +30,7 @@ export const Navbar = () => {
         setActiveItem(activeMenuItem.text);
       }
 
-    }, [pathname]);
+    }, [pathname, navItems]);
   
     const handleItemClick = (title: string) => {
       setActiveItem(prev => (prev === title ? prev : title));

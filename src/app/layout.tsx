@@ -28,7 +28,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen overflow-x-hidden custom-scrollbar-hidden antialiased flex justify-center`}
       >
-        <div className="w-full sm:w-[402px] min-h-screen bg-[#EDF1F9] p-3">
+        <div className="w-full sm:w-[402px] min-h-screen bg-primary-blue">
+            <Navbar />
             {children}
         </div>
       </body>

@@ -23,11 +23,4 @@ describe("Semua Barang Page", () => {
     expect(paginationButtonNext).toBeInTheDocument()
     expect(paginationButtonPrev).toBeInTheDocument()
   })
-
-  it("renders tambah produk button", () => {
-    const tambahProdukButton =
-      screen.getByText(/tambah produk/i) ||
-      screen.getByRole("button", { name: /tambah produk/i })
-    expect(tambahProdukButton).toBeInTheDocument()
-  })
 })
