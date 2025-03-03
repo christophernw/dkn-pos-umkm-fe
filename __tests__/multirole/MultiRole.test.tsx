@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import MultiRolePage from "@/src/app/multirole/page"; 
 
 
@@ -28,5 +28,12 @@ describe("User Accounts Page", () => {
   it("should display a button to add new accounts", () => {
     render(<MultiRolePage/>);
     expect(screen.getByText("+ Tambah Akun")).toBeInTheDocument();
+  });
+
+  it("should trigger action when the add account button is clicked", () => {
+    render(<MultiRolePage />);
+    const addButton = screen.getByText("+ Tambah Akun");
+    fireEvent.click(addButton);
+    expect(screen.getByText("Form Tambah Akun")).toBeInTheDocument();
   });
 });
