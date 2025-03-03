@@ -26,8 +26,9 @@ describe("Semua Barang Page", () => {
 
   it("renders tambah produk button", () => {
     const tambahProdukButton =
-      screen.getByText(/tambah produk/i) ||
-      screen.getByRole("button", { name: /tambah produk/i })
-    expect(tambahProdukButton).toBeInTheDocument()
-  })
+      screen.getByText("+") || 
+      screen.getByRole("button", { name: "+"});
+    expect(tambahProdukButton).toBeInTheDocument();
+});
+
 })
