@@ -6,7 +6,6 @@ const DaftarProduk = () => {
   return (
     <div>
       <HeaderProduk />
-      <main>ini summary daftar produk</main>
     </div>
   );
 }

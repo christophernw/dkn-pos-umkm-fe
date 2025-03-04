@@ -25,7 +25,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run SonarQube Scan
+      - name: Run tests and generate coverage
+        run: npm run test -- --coverage
+
+      - name: Run SonarQube Scan (Only `src/` Files)
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -33,4 +36,6 @@ jobs:
           npx sonarqube-scanner \
             -Dsonar.projectKey=dkn-pos-umkm-fe \
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
+            -Dsonar.sources=src \
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
