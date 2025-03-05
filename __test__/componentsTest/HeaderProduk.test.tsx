@@ -11,6 +11,7 @@ import { usePathname } from 'next/navigation'
 describe('HeaderProduk Component', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    jest.spyOn(console, 'log').mockImplementation(() => {}) // Mock console.log
   })
   
   it('highlights "Informasi Stok" link when on /daftarProduk page', () => {
@@ -79,4 +80,45 @@ describe('HeaderProduk Component', () => {
     if (threeDotsButton) {
       fireEvent.click(threeDotsButton)
     }
-  })})
+  })
+
+  it('logs sorting action in ascending order when clicked', () => {
+    (usePathname as jest.Mock).mockReturnValue('/semuaBarang')
+    render(<HeaderProduk />)
+
+    const buttons = screen.getAllByRole('button')
+    const menuButton = buttons.find(button =>
+      button.querySelector('.bi-three-dots') !== null
+    )
+
+    expect(menuButton).toBeInTheDocument()
+    if (menuButton) {
+      fireEvent.click(menuButton)
+    }
+
+    const sortAscButton = screen.getByText(/stok terendah/i)
+    fireEvent.click(sortAscButton)
+
+    expect(console.log).toHaveBeenCalledWith("Sorting dengan order: asc")
+  })
+
+  it('logs sorting action in descending order when clicked', () => {
+    (usePathname as jest.Mock).mockReturnValue('/semuaBarang')
+    render(<HeaderProduk />)
+
+    const buttons = screen.getAllByRole('button')
+    const menuButton = buttons.find(button =>
+      button.querySelector('.bi-three-dots') !== null
+    )
+
+    expect(menuButton).toBeInTheDocument()
+    if (menuButton) {
+      fireEvent.click(menuButton)
+    }
+
+    const sortDescButton = screen.getByText(/stok tertinggi/i)
+    fireEvent.click(sortDescButton)
+
+    expect(console.log).toHaveBeenCalledWith("Sorting dengan order: desc")
+  })
+})
