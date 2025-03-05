@@ -9,7 +9,7 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="flex justify-center items-center h-full">
+        <div className="flex justify-center items-center h-full p-3">
             <div className="bg-white rounded-xl flex flex-col items-center p-8 mx-2 space-y-4 border">
                 <div className="flex flex-col items-center gap-2">
                     <p className="text-[#3554C1] font-bold text-lg">Masuk ke LANCAR</p>

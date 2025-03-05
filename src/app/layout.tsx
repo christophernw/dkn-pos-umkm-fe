@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Navbar } from "../components/layout/Navbar";
 import { getServerSession } from "next-auth";
 import Provider from "./Provider";
 import { options } from "./lib/authoptions";
@@ -34,8 +33,7 @@ export default async function RootLayout({
       >
       <Provider session={session}>
         <div className="w-full sm:w-[402px] min-h-screen bg-[#EDF1F9]">
-            <Navbar />
-            <div className="p-3 h-full pb-32">
+            <div className="h-full">
               {children}
             </div>
         </div>

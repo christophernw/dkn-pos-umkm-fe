@@ -1,4 +1,4 @@
-import LoginPage from "@/src/app/login/page";
+import LoginPage from "@/src/app/(auth)/login/page";
 import { render, screen, fireEvent } from "@testing-library/react";
 
 import { signIn } from "next-auth/react";
