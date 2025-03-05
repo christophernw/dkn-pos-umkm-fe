@@ -23,15 +23,11 @@ describe("Semua Barang Page", () => {
     expect(paginationButtonNext).toBeInTheDocument()
     expect(paginationButtonPrev).toBeInTheDocument()
   })
-<<<<<<< HEAD
-=======
 
   it("renders tambah produk button", () => {
-    const tambahProdukButton =
-      screen.getByText("+") || 
-      screen.getByRole("button", { name: "+"});
-    expect(tambahProdukButton).toBeInTheDocument();
-});
-
->>>>>>> 564762001e1c90ace87fb82d1da535be3c401aab
+      const tambahProdukButton =
+        screen.getByText("+") || 
+        screen.getByRole("button", { name: "+"});
+      expect(tambahProdukButton).toBeInTheDocument();
+  });
 })
