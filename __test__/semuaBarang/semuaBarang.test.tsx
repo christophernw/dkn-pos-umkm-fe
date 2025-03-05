@@ -23,6 +23,8 @@ describe("Semua Barang Page", () => {
     expect(paginationButtonNext).toBeInTheDocument()
     expect(paginationButtonPrev).toBeInTheDocument()
   })
+<<<<<<< HEAD
+=======
 
   it("renders tambah produk button", () => {
     const tambahProdukButton =
@@ -31,4 +33,5 @@ describe("Semua Barang Page", () => {
     expect(tambahProdukButton).toBeInTheDocument();
 });
 
+>>>>>>> 564762001e1c90ace87fb82d1da535be3c401aab
 })
