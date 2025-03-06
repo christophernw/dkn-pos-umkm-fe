@@ -1,6 +1,7 @@
+import SemuaBarang from '@/src/app/(withNavbar)/semuaBarang/page'
 import '@testing-library/jest-dom'
 import { render, screen } from "@testing-library/react"
-import SemuaBarang from "../../src/app/semuaBarang/page"
+
 
 describe("Semua Barang Page", () => {
   beforeEach(() => {

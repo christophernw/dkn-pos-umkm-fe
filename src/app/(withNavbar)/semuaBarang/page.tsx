@@ -2,7 +2,7 @@ import HeaderProduk from '@/src/components/HeaderProduk'
 import ProductCard from '@/src/components/ProductCard';
 import React from 'react' 
 
-const semuaBarang = () => {
+const SemuaBarang = () => {
   return (
     <div className='relative min-h-screen'>
       <HeaderProduk />
@@ -37,4 +37,4 @@ const semuaBarang = () => {
   );
 };
 
-export default semuaBarang
+export default SemuaBarang
