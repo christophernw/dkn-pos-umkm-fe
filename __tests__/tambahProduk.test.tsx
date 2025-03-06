@@ -4,7 +4,7 @@ import "@testing-library/jest-dom";
 import AddProductPage from "../src/app/tambahProduk/page";
 
 describe("AddProductPage", () => {
-  const mockHistoryBack = jest.fn();
+    const mockHistoryBack = jest.fn();
   beforeAll(() => {
     window.history.back = mockHistoryBack;
   });
