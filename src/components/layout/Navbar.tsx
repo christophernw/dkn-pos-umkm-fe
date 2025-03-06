@@ -39,9 +39,9 @@ export const Navbar = () => {
     return (
         <div className="bg-white fixed bottom-0 w-full sm:w-[402px] py-3 pb-7 shadow-[0_-4px_6px_0px_rgba(0,0,0,0.1)]">
             <div className="flex gap-4 justify-center ">
-                {navItems.map((item, index) => (
+                {navItems.map((item) => (
                     <NavbarButton
-                        key={index}
+                        key={item.text}
                         isActive={activeItem === item.text}
                         toggleButton={() => handleItemClick(item.text)}
                         icon={item.icon}

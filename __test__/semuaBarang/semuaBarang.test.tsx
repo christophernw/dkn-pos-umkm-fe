@@ -25,10 +25,9 @@ describe("Semua Barang Page", () => {
   })
 
   it("renders tambah produk button", () => {
-    const tambahProdukButton =
-      screen.getByText("+") || 
-      screen.getByRole("button", { name: "+"});
-    expect(tambahProdukButton).toBeInTheDocument();
-});
-
+      const tambahProdukButton =
+        screen.getByText("+") || 
+        screen.getByRole("button", { name: "+"});
+      expect(tambahProdukButton).toBeInTheDocument();
+  });
 })
