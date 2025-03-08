@@ -63,8 +63,7 @@ describe("AddProductPage", () => {
   it("bisa memilih satuan yang berbeda", () => {
     render(<AddProductPage />);
     const selectUnit = screen.getByLabelText(/pilih satuan/i) as HTMLSelectElement;
-    expect(selectUnit.value).toBe("Kg"); // default
-
+    expect(selectUnit.value).toBe("Kg");
     fireEvent.change(selectUnit, { target: { value: "Pcs" } });
     expect(selectUnit.value).toBe("Pcs");
 
@@ -136,5 +135,20 @@ describe("AddProductPage", () => {
     expect(window.alert).toHaveBeenCalledWith("Product submitted!");
 
     consoleSpy.mockRestore();
+  });
+
+  it("mengubah nilai negatif menjadi 0 untuk input number", () => {
+    render(<AddProductPage />);
+    const minimumStockInput = screen.getByLabelText(/stok minimum/i) as HTMLInputElement;
+
+    fireEvent.change(minimumStockInput, { target: { value: "-5" } });
+    expect(minimumStockInput.value).toBe("0");
+  });
+
+  it("membiarkan input string non-numerik (parseFloat -> NaN) tanpa perubahan", () => {
+    render(<AddProductPage />);
+    const priceSellInput = screen.getByLabelText(/harga jual/i) as HTMLInputElement;
+    fireEvent.change(priceSellInput, { target: { value: "abc" } });
+    expect(priceSellInput.value).toBe("abc");
   });
 });
