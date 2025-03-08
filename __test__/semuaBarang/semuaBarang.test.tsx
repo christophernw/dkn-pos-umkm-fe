@@ -1,6 +1,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import SemuaBarang from '@/src/app/semuaBarang/page';
 import ProductCard from '@/src/components/ProductCard';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 
 global.fetch = jest.fn(() => 
@@ -29,7 +30,6 @@ describe('Semua Barang Page', () => {
     expect(screen.getByText(/Semua Barang/i)).toBeInTheDocument();
   });
 
-  
   it('renders pagination buttons', () => {
     render(<SemuaBarang />);
     expect(screen.getByText('Prev')).toBeInTheDocument();
@@ -53,6 +53,48 @@ describe('Semua Barang Page', () => {
     await waitFor(() => {
       expect(screen.getByText('Produk A')).toBeInTheDocument();
       expect(screen.getByText('Rp 15000 / pcs')).toBeInTheDocument();
+    });
+  });
+
+  it('deletes a product when delete button is clicked', async () => {
+    window.confirm = jest.fn(() => true);
+    await act(async () => {
+      render(<ProductCard />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Produk A')).toBeInTheDocument();
+    });
+
+    const deleteButton = screen.getByRole('button', { name: /delete product/i });
+
+    await act(async () => {
+      userEvent.click(deleteButton);
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Produk A')).not.toBeInTheDocument();
+    });
+  });
+
+  it('does not delete product if user cancels confirmation', async () => {
+    window.confirm = jest.fn(() => false);
+    await act(async () => {
+      render(<ProductCard />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Produk A')).toBeInTheDocument();
+    });
+
+    const deleteButton = screen.getByRole('button', { name: /delete product/i });
+
+    await act(async () => {
+      userEvent.click(deleteButton);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Produk A')).toBeInTheDocument();
     });
   });
 });
