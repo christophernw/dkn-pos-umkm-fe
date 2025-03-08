@@ -1,55 +1,53 @@
 "use client"
 
 import Image from "next/image"
+import { act, useEffect, useState } from "react"
 
 interface ProductCardProps {
-  id: number
-  name: string
-  price: number
-  stock: number
-  image: string
+  id: number;
+  nama: string;
+  foto: string;
+  harga_modal: number;
+  harga_jual: number;
+  stok: number;
+  satuan: string;
+  kategori: string;
 }
 
 export default function ProductCard() {
-  const products: ProductCardProps[] = [
-    {
-      id: 1,
-      name: "Roti Gandum",
-      price: 15000,
-      stock: 450,
-      image: "https://img.freepik.com/free-photo/front-view-baked-bread-slices-grey-cloth_23-2148361603.jpg",
-    },
-    {
-      id: 2,
-      name: "Kue Apem",
-      price: 25000,
-      stock: 330,
-      image: "https://img.freepik.com/premium-photo/lemon-muffins-with-blueberries-shtreisel-with-fresh-berries-white-wooden-background_114420-1227.jpg",
-    },
-  ]
+  const [data, setData] = useState<ProductCardProps[]>([])
 
-  const formatPrice = (price: number) => {
-    return `Rp ${price.toLocaleString()}/Pcs`
-  }
+  useEffect(() => {
+    async function fetchData () {
+      const response = await fetch("http://localhost:8000/api/produk")
+      const data: ProductCardProps[] = await response.json()
+      act(() => { 
+        setData(data);
+      });
+    }
+
+    fetchData()
+  }, [])
+ 
 
   return (
     <div className="max-w-md mx-auto space-y-4">
-      {products.map((product) => (
+      {data.map((product) => (
         <div key={product.id} className="bg-white rounded-3xl flex overflow-hidden p-3 shadow-sm">
           <div className="w-28 h-28 relative rounded-2xl overflow-hidden mr-3">
             <Image 
-              src={product.image} 
-              alt={product.name} 
+              src={product.foto} 
+              alt={product.nama} 
               fill 
               className="object-cover"
             />
           </div>
           <div className="flex-1">
-            <h3 className="font-semibold text-base">{product.name}</h3>
+            <h3 className="font-semibold text-base">{product.nama}</h3>
             <p className="text-gray-500 text-sm mt-2">Harga Jual</p>
-            <p className="font-medium text-sm text-blue-700 mt-1">{formatPrice(product.price)}</p>
+            <p className="font-medium text-sm text-blue-700 mt-1">Rp {product.harga_jual} / {product.satuan}</p>
             <div className="flex justify-between items-center mt-2">
-              <span className="text-sm text-green-700 bg-green-100 px-2 py-1 rounded-lg">Stok : {product.stock}</span>
+              <span className="text-sm text-green-700 bg-green-100 px-2 py-1 rounded-lg">Stok : {product.stok}</span>
               <button className="text-xs h-8 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl">
                 Perbarui Stok
               </button>
