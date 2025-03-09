@@ -7,7 +7,7 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const PROTECTED_ROUTES = ["daftarProduk", "semuaBarang"];
+  const PROTECTED_ROUTES = ["daftarProduk", "semuaBarang","multirole"];
 
   const isProtectedRoute = PROTECTED_ROUTES.some((route) =>
     pathname.includes(route)
@@ -19,7 +19,7 @@ export default async function middleware(request: NextRequest) {
     if (!token) {
         const loginUrl = new URL(`${request.nextUrl.origin}/login`);
         loginUrl.searchParams.set("redirect", pathname);
-        
+
         return NextResponse.redirect(loginUrl);
       }
 
