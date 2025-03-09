@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState} from "react";
 import { useRouter } from "next/navigation";
 import { AiOutlineArrowLeft } from "react-icons/ai";
 
 type Props = {
-  onSubmit: (data: { name: string; role: string; email: string }) => void;
+  readonly onSubmit: (data: Readonly<{ name: string; role: string; email: string }>) => void;
 };
+
 
 export default function AddUserPage({onSubmit}: Props) {
   const router = useRouter();
