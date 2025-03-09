@@ -1,6 +1,9 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import AddUserPage from "@/src/app/multirole/adduser/page";
 
+const mockConsoleLog = jest.fn();
+console.log = mockConsoleLog;
+
 jest.mock("next/navigation", () => ({
     useRouter: () => ({
       back: jest.fn(),
@@ -8,8 +11,12 @@ jest.mock("next/navigation", () => ({
   }));
 
 describe("AddUserForm", () => {
+    beforeEach(() => {
+        mockConsoleLog.mockClear();
+    });
+
     it("renders form fields and submit button", () => {
-        render(<AddUserPage onSubmit={() => {}} />);
+        render(<AddUserPage />);
 
         expect(screen.getByLabelText(/Nama Lengkap/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/Role/i)).toBeInTheDocument();
@@ -18,7 +25,7 @@ describe("AddUserForm", () => {
     });
 
     it("allows user input", () => {
-        render(<AddUserPage onSubmit={() => {}} />);
+        render(<AddUserPage />);
 
         const nameInput = screen.getByLabelText(/Nama Lengkap/i);
         const roleSelect = screen.getByLabelText(/Role/i);
@@ -34,8 +41,7 @@ describe("AddUserForm", () => {
     });
 
     it("calls onSubmit when form is submitted", () => {
-        const handleSubmit = jest.fn();
-        render(<AddUserPage onSubmit={handleSubmit} />);
+        render(<AddUserPage />);
 
         fireEvent.change(screen.getByLabelText(/Nama Lengkap/i), { target: { value: "Hilmy Ammar Darmawan" } });
         fireEvent.change(screen.getByLabelText(/Role/i), { target: { value: "Karyawan" } });
@@ -43,7 +49,7 @@ describe("AddUserForm", () => {
 
         fireEvent.click(screen.getByRole("button", { name: /Lanjutkan/i }));
 
-        expect(handleSubmit).toHaveBeenCalledWith({
+        expect(mockConsoleLog).toHaveBeenCalledWith({
             name: "Hilmy Ammar Darmawan",
             role: "Karyawan",
             email: "hilmyammardarmawan@gmail.com",
@@ -51,12 +57,11 @@ describe("AddUserForm", () => {
     });
 
     it("prevents submission with empty fields", () => {
-        const handleSubmit = jest.fn();
-        render(<AddUserPage onSubmit={handleSubmit}/>);
+        render(<AddUserPage />);
 
         const submitButton = screen.getByRole("button", {name: /Lanjutkan/i})
         fireEvent.click(submitButton)
 
-        expect(handleSubmit).not.toHaveBeenCalled();
+        expect(mockConsoleLog).not.toHaveBeenCalled();
     });
 });

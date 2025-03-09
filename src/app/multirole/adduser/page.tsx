@@ -4,12 +4,7 @@ import { useState} from "react";
 import { useRouter } from "next/navigation";
 import { AiOutlineArrowLeft } from "react-icons/ai";
 
-type Props = {
-  readonly onSubmit: (data: Readonly<{ name: string; role: string; email: string }>) => void;
-};
-
-
-export default function AddUserPage({onSubmit}: Props) {
+export default function AddUserPage() {
   const router = useRouter();
   
   const handleBack = () => router.back();
@@ -20,9 +15,9 @@ export default function AddUserPage({onSubmit}: Props) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
+    
     if (name && role && email) {
-      onSubmit({ name, role, email }); 
+      console.log({ name, role, email });
     }
   };
 
