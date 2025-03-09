@@ -5,7 +5,7 @@ import { GoogleIcon } from '@/public/icons/GoogleIcon'
 
 export default function LoginPage() {
     async function googleLogin() {
-        await signIn("google")
+        await signIn("google", { callbackUrl: "/", redirect: false })
     }
 
     return (
