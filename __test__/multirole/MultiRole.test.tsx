@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import MultiRolePage from "@/src/app/(withNavbar)/multirole/page"; 
+import MultiRolePage from "@/src/app/multirole/page"; 
 
 const mockPush = jest.fn();
 const mockBack = jest.fn();
