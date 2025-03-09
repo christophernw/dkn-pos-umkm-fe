@@ -105,7 +105,7 @@ export default function ProductCard() {
       <div key={product.id} className="bg-white rounded-3xl flex overflow-hidden p-3 shadow-sm">
         <div className="w-28 h-28 relative rounded-2xl overflow-hidden mr-3">
           <Image 
-            src={product.foto || "/placeholder.jpg"} 
+            src={product.foto} 
             alt={product.nama} 
             fill 
             className="object-cover"
