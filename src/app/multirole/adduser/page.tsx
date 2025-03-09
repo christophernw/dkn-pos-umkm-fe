@@ -14,7 +14,7 @@ export default function AddUserPage({onSubmit}: Props) {
   const handleBack = () => router.back();
 
   const [name, setName] = useState("");
-  const [role, setRole] = useState("Karyawan");
+  const [role, setRole] = useState("");
   const [email, setEmail] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
