@@ -54,7 +54,7 @@ const MultiRolePage: React.FC = () => {
   const router = useRouter();
 
   const handleBack = () => router.back();
-  const handleAddUser = () => router.push("/multirole/add-user");
+  const handleAddUser = () => router.push("/multirole/adduser");
 
   return (
     <div className="min-h-screen bg-[#EDF1F9] p-4">
@@ -66,7 +66,7 @@ const MultiRolePage: React.FC = () => {
         >
           <ArrowLeft className="w-5 h-5 text-black" />
         </button>
-        <h1 className="text-xl font-semibold">Pengaturan Pengguna</h1>
+        <h1 className="text-xl font-semibold flex items-center justiify-center">Pengaturan Pengguna</h1>
         <button className="w-10 h-10 rounded-full bg-white hover:bg-gray-300 flex items-center justify-center">
           <MoreHorizontal className="w-5 h-5 text-black" />
         </button>
