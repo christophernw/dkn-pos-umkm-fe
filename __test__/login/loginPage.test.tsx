@@ -22,6 +22,6 @@ describe("LoginPage", () => {
     const googleButton = screen.getByText("Masuk dengan Google");
     fireEvent.click(googleButton);
     
-    expect(signIn).toHaveBeenCalledWith("google");
+    expect(signIn).toHaveBeenCalledWith("google", {"callbackUrl": "/", "redirect": false});
   });
 });

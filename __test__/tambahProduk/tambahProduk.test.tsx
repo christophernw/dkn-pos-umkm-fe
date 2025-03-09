@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import AddProductPage from "../src/app/tambahProduk/page";
+import AddProductPage from "../../src/app/tambahProduk/page";
 
 describe("AddProductPage", () => {
   const mockHistoryBack = jest.fn();
