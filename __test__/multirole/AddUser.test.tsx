@@ -64,4 +64,14 @@ describe("AddUserForm", () => {
 
         expect(mockConsoleLog).not.toHaveBeenCalled();
     });
+
+    it("navigates back when the back button is clicked", () => {
+        const mockRouter = { back: jest.fn() };
+        jest.spyOn(require("next/navigation"), "useRouter").mockReturnValue(mockRouter);
+    
+        render(<AddUserPage />);
+        fireEvent.click(screen.getByLabelText("Back"));
+    
+        expect(mockRouter.back).toHaveBeenCalled();
+    });    
 });
