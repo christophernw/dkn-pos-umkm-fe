@@ -18,6 +18,10 @@ export default function AddUserPage() {
     
     if (name && role && email) {
       console.log({ name, role, email });
+    } else {
+      console.log(
+        "Please fill out all fields"
+      )
     }
   };
 

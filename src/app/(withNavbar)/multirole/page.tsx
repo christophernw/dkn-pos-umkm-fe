@@ -17,18 +17,10 @@ const UserRole = ({ name, email }: { name: string; email: string }) => (
 
 const MultiRolePageContent: React.FC = () => {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
 
   const handleBack = () => router.back();
   const handleAddUser = () => router.push("/multirole/adduser");
-
-  if (status === "loading") {
-    return <p>Loading...</p>;
-  }
-
-  if (!session || !session.user) {
-    return <p>User is not authenticated</p>;
-  }
 
   return (
     <div className="relative min-h-screen pt-4 mt-4">
@@ -51,7 +43,11 @@ const MultiRolePageContent: React.FC = () => {
       <div className="bg-white p-4 rounded-2xl shadow-md">
         <h2 className="text-lg font-semibold pb-3 border-b">Pengguna</h2>
         <div>
-          <UserRole name={session.user.name ?? "Error"} email={session.user.email ?? "Error"} />
+          {session ? (
+            <UserRole name={session.user.name} email={session.user.email} />
+          ) : (
+            <p className="text-red-500">Session not found</p>
+          )}
         </div>
       </div>
 
