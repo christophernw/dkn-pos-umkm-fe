@@ -2,10 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 const HeaderProduk = () => {
   const pathname = usePathname();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+  const toggleDropdown = () => {
+    setIsDropdownOpen(!isDropdownOpen);
+  };
+
+  const handleSort = (order: "asc" | "desc") => {
+    console.log(`Sorting dengan order: ${order}`);
+    setIsDropdownOpen(false); 
+  };
 
   return (
     <div className="mt-8 mb-5">
@@ -45,21 +55,40 @@ const HeaderProduk = () => {
           >
             Semua Barang
           </Link>
-          <button
-            type="button"
-            className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              fill="currentColor"
-              className="bi bi-three-dots"
-              viewBox="0 0 16 16"
+          <div className="relative">
+            <button
+              type="button"
+              className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center"
+              onClick={toggleDropdown}
             >
-              <path d="M3 8a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0m4.5 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0m4.5 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0" />
-            </svg>
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="currentColor"
+                className="bi bi-three-dots"
+                viewBox="0 0 16 16"
+              >
+                <path d="M3 8a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0m4.5 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0m4.5 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0" />
+              </svg>
+            </button>
+            {isDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
+                <button
+                  className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                  onClick={() => handleSort("asc")}
+                >
+                  Stok Terendah
+                </button>
+                <button
+                  className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                  onClick={() => handleSort("desc")}
+                >
+                  Stok Tertinggi
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
       <div className="flex items-center max-w-md mx-auto">
@@ -81,18 +110,19 @@ const HeaderProduk = () => {
               />
             </svg>
             <span className="sr-only">Search</span>
-          </div>  
+          </div>
           <input
-            type={"search"}
-            name={"search"}
+            type="search"
+            name="search"
             id="simple-search"
             className="bg-white border border-[#EFF2F6] text-black rounded-full w-full py-3 pl-12 pr-14 focus:ring-1 focus:outline-none focus:ring-blue-600"
-            placeholder={"Cari Produk..."}
+            placeholder="Cari Produk..."
             required
           />
           <button
             type="button"
             className="absolute right-1.5 inline-flex items-center justify-center w-10 h-10 text-white bg-blue-600 rounded-full hover:bg-blue-700 focus:outline-none"
+            onClick={toggleDropdown}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

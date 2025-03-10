@@ -23,4 +23,14 @@ describe("Semua Barang Page", () => {
     expect(paginationButtonNext).toBeInTheDocument()
     expect(paginationButtonPrev).toBeInTheDocument()
   })
+<<<<<<< HEAD
+=======
+
+  it("renders tambah produk button", () => {
+      const tambahProdukButton =
+        screen.getByText("+") || 
+        screen.getByRole("button", { name: "+"});
+      expect(tambahProdukButton).toBeInTheDocument();
+  });
+>>>>>>> 6c5c6c94239cfb930cc29f70b3fd7b5a2467d25f
 })
