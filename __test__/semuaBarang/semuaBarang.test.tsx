@@ -32,58 +32,62 @@ global.fetch = jest.fn((url) =>
           : []
       ),
   } as Response)
-);
+)
 
 describe("Semua Barang Page", () => {
+  afterEach(() => {
+    jest.clearAllMocks()
+  })
+  
   it("renders the header", () => {
-    render(<SemuaBarang />);
-    expect(screen.getByText(/Informasi Stok/i)).toBeInTheDocument();
-    expect(screen.getByText(/Semua Barang/i)).toBeInTheDocument();
-  });
+    render(<SemuaBarang />)
+    expect(screen.getByText(/Informasi Stok/i)).toBeInTheDocument()
+    expect(screen.getByText(/Semua Barang/i)).toBeInTheDocument()
+  })
 
   it("renders tambah produk button", () => {
-    render(<SemuaBarang />);
+    render(<SemuaBarang />)
     const tambahProdukButton =
-      screen.getByText("+") || screen.getByRole("button", { name: "+" });
-    expect(tambahProdukButton).toBeInTheDocument();
-  });
+      screen.getByText("+") || screen.getByRole("button", { name: "+" })
+    expect(tambahProdukButton).toBeInTheDocument()
+  })
 
   it("renders the product list", async () => {
     await act(async () => {
-      render(<ProductCard />);
-    });
+      render(<ProductCard />)
+    })
 
     await waitFor(() => {
-      expect(screen.getByText("Produk A")).toBeInTheDocument();
-      expect(screen.getByText("Rp 15000 / pcs")).toBeInTheDocument();
-    });
-  });
+      expect(screen.getByText("Produk A")).toBeInTheDocument()
+      expect(screen.getByText("Rp 15000 / pcs")).toBeInTheDocument()
+    })
+  })
 
   it("handles pagination buttons correctly", async () => {
     await act(async () => {
-      render(<ProductCard />);
-    });
+      render(<ProductCard />)
+    })
 
     await waitFor(() => {
-      expect(screen.getByText("Produk A")).toBeInTheDocument();
-    });
+      expect(screen.getByText("Produk A")).toBeInTheDocument()
+    })
 
-    const nextButton = screen.getByRole("button", { name: "Next" });
-    const prevButton = screen.getByRole("button", { name: "Prev" });
+    const nextButton = screen.getByRole("button", { name: "Next" })
+    const prevButton = screen.getByRole("button", { name: "Prev" })
 
-    expect(nextButton).toBeEnabled();
-    expect(prevButton).toBeDisabled();
+    expect(nextButton).toBeEnabled()
+    expect(prevButton).toBeDisabled()
 
     await act(async () => {
-      userEvent.click(nextButton);
-    });
+      userEvent.click(nextButton)
+    })
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
         "http://localhost:8000/api/produk/page/2"
-      );
-    });
-  });
+      )
+    })
+  })
 
   it("shows empty state message when no products are available", async () => {
     (global.fetch as jest.Mock).mockImplementationOnce(() =>
@@ -98,65 +102,106 @@ describe("Semua Barang Page", () => {
             total_pages: 1,
           }),
       })
-    );
+    )
 
     await act(async () => {
-      render(<ProductCard />);
-    });
+      render(<ProductCard />)
+    })
 
     await waitFor(() => {
-      expect(screen.getByText("No data available")).toBeInTheDocument();
-    });
-  });
+      expect(screen.getByText("No data available")).toBeInTheDocument()
+    })
+  })
 
   it("deletes a product when delete button is clicked", async () => {
     window.confirm = jest.fn(() => true);
-    await act(async () => {
-      render(<ProductCard />);
+
+    const mockFetch = jest.fn();
+    const originalFetch = global.fetch;
+    global.fetch = mockFetch;
+   
+    mockFetch.mockImplementation((url, options) => {
+      if (options?.method === "DELETE" && url.includes('/api/produk/delete/')) {
+        return Promise.resolve({ ok: true });
+      }
+      return originalFetch(url, options);
     });
-
-    await waitFor(() => {
-      expect(screen.getByText("Produk A")).toBeInTheDocument();
-    });
-
-    const deleteButton = screen.getByRole("button", { name: /delete product/i });
-
-    await act(async () => {
-      userEvent.click(deleteButton);
-    });
-
-    await waitFor(() => {
-      expect(screen.queryByText("Produk A")).not.toBeInTheDocument();
-    });
-  });
-
-  it("does not delete product if user cancels confirmation", async () => {
-    window.confirm = jest.fn(() => false);
     
     await act(async () => {
       render(<ProductCard />);
     });
-
+    
     await waitFor(() => {
       expect(screen.getByText("Produk A")).toBeInTheDocument();
     });
 
+    mockFetch.mockClear();
+    
     const deleteButton = screen.getByRole("button", { name: /delete product/i });
-
+  
     await act(async () => {
       userEvent.click(deleteButton);
     });
+
     await waitFor(() => {
-      expect(screen.getByText("Produk A")).toBeInTheDocument();
-    });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/produk/delete/"),
+        expect.objectContaining({ method: "DELETE" })
+      );
   });
   
+  // Verify product is removed from the UI
+  await waitFor(() => {
+    expect(screen.queryByText("Produk A")).not.toBeInTheDocument();
+  });
+  
+  // Restore the original fetch
+  global.fetch = originalFetch;
+  })
+
+  it("does not delete product if user cancels confirmation", async () => {
+    window.confirm = jest.fn(() => false)
+
+    const mockFetch = jest.fn()
+    const originalFetch = global.fetch
+    global.fetch = mockFetch
+
+    mockFetch.mockImplementation((url, options) => {
+      if (options?.method === "DELETE") {
+        return Promise.resolve({ ok: true })
+      }
+      return originalFetch(url, options)
+    })
+    
+    await act(async () => {
+      render(<ProductCard />)
+    })
+    
+    await waitFor(() => {
+      expect(screen.getByText("Produk A")).toBeInTheDocument()
+    })
+ 
+    mockFetch.mockClear()
+    
+    const deleteButton = screen.getByRole("button", { name: /delete product/i })
+
+    await act(async () => {
+      userEvent.click(deleteButton)
+    })
+
+    await new Promise(resolve => setTimeout(resolve, 100))
+    expect(mockFetch).not.toHaveBeenCalled()
+    expect(screen.getByText("Produk A")).toBeInTheDocument()
+
+    global.fetch = originalFetch
+  })
+  
   it("shows an error message when deleting a product fails", async () => {
-    window.confirm = jest.fn(() => true);
-    const consoleErrorMock = jest.spyOn(console, "error").mockImplementation(() => {});
+    window.confirm = jest.fn(() => true)
+    const consoleErrorMock = jest.spyOn(console, "error").mockImplementation(() => {})
   
     await act(async () => {
-      render(<ProductCard />);
+      render(<ProductCard />)
     });
   
     (global.fetch as jest.Mock).mockImplementationOnce(() =>
@@ -164,71 +209,71 @@ describe("Semua Barang Page", () => {
         ok: false,
         status: 500,
       })
-    );
+    )
   
     await waitFor(() => {
-      expect(screen.getByText("Produk A")).toBeInTheDocument();
-    });
+      expect(screen.getByText("Produk A")).toBeInTheDocument()
+    })
   
-    const deleteButton = screen.getByRole("button", { name: /delete product/i });
+    const deleteButton = screen.getByRole("button", { name: /delete product/i })
   
     await act(async () => {
-      userEvent.click(deleteButton);
-    });
+      userEvent.click(deleteButton)
+    })
   
     await waitFor(() => {
-      expect(console.error).toHaveBeenCalledWith("Failed deleting produk");
-      expect(screen.getByText("Produk A")).toBeInTheDocument(); // Product should still be there
-    });
+      expect(console.error).toHaveBeenCalledWith("Failed deleting produk")
+      expect(screen.getByText("Produk A")).toBeInTheDocument() // Product should still be there
+    })
   
-    consoleErrorMock.mockRestore(); 
-  });
+    consoleErrorMock.mockRestore() 
+  })
 
   it("handles network error when deleting a product", async () => {
-    window.confirm = jest.fn(() => true);
-    const consoleErrorMock = jest.spyOn(console, "error").mockImplementation(() => {});
+    window.confirm = jest.fn(() => true)
+    const consoleErrorMock = jest.spyOn(console, "error").mockImplementation(() => {})
   
     await act(async () => {
-      render(<ProductCard />);
+      render(<ProductCard />)
     });
   
     (global.fetch as jest.Mock).mockImplementationOnce(() =>
       Promise.reject(new Error("Network Error"))
-    );
+    )
   
     await waitFor(() => {
-      expect(screen.getByText("Produk A")).toBeInTheDocument();
-    });
+      expect(screen.getByText("Produk A")).toBeInTheDocument()
+    })
   
-    const deleteButton = screen.getByRole("button", { name: /delete product/i });
+    const deleteButton = screen.getByRole("button", { name: /delete product/i })
   
     await act(async () => {
-      userEvent.click(deleteButton);
-    });
+      userEvent.click(deleteButton)
+    })
   
     await waitFor(() => {
-      expect(console.error).toHaveBeenCalledWith("Error deleting produk:", expect.any(Error));
-      expect(screen.getByText("Produk A")).toBeInTheDocument(); // Product should still be there
-    });
+      expect(console.error).toHaveBeenCalledWith("Error deleting produk:", expect.any(Error))
+      expect(screen.getByText("Produk A")).toBeInTheDocument() // Product should still be there
+    })
 
-    consoleErrorMock.mockRestore();
-  });
+    consoleErrorMock.mockRestore()
+  })
 
   it("logs an error when fetching data fails", async () => {
     const consoleErrorMock = jest.spyOn(console, "error").mockImplementation(() => {});
 
     (global.fetch as jest.Mock).mockImplementationOnce(() =>
       Promise.reject(new Error("Network Error"))
-    );
+    )
 
     await act(async () => {
-      render(<ProductCard />);
-    });
+      render(<ProductCard />)
+    })
 
     await waitFor(() => {
-      expect(console.error).toHaveBeenCalledWith("Error Fetching Data:", expect.any(Error));
-    });
+      expect(console.error).toHaveBeenCalledWith("Error Fetching Data:", expect.any(Error))
+    })
     
-    consoleErrorMock.mockRestore();
-  });
-});
+    consoleErrorMock.mockRestore()
+  })
+})
