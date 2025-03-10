@@ -3,7 +3,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, MoreHorizontal } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { useSession, SessionProvider } from "next-auth/react";
 
 const UserRole = ({ name, email }: { name: string; email: string }) => (
   <div className="flex items-center justify-between pb-3 pt-3 border-b">
@@ -15,7 +15,7 @@ const UserRole = ({ name, email }: { name: string; email: string }) => (
   </div>
 );
 
-const MultiRolePage: React.FC = () => {
+const MultiRolePageContent: React.FC = () => {
   const router = useRouter();
   const { data: session, status } = useSession();
 
@@ -31,7 +31,7 @@ const MultiRolePage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#EDF1F9] p-4">
+    <div className="relative min-h-screen pt-4 mt-4">
       <div className="w-full flex justify-between mb-6">
         <button
           onClick={handleBack}
@@ -66,5 +66,11 @@ const MultiRolePage: React.FC = () => {
     </div>
   );
 };
+
+const MultiRolePage: React.FC = () => (
+  <SessionProvider>
+    <MultiRolePageContent />
+  </SessionProvider>
+);
 
 export default MultiRolePage;

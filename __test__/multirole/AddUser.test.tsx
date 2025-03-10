@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import AddUserPage from "@/src/app/multirole/adduser/page";
+import AddUserPage from "@/src/app/(withNavbar)/multirole/adduser/page";
 
 const mockConsoleLog = jest.fn();
 console.log = mockConsoleLog;
