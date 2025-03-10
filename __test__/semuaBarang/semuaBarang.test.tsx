@@ -6,7 +6,7 @@ import "@testing-library/jest-dom"
 jest.mock('next/navigation', () => ({
   usePathname: jest.fn(),
   useSearchParams: jest.fn(() => ({
-    get: jest.fn(param => param === 'sort' ? null : null),
+    get: jest.fn(() => null),
   })),
   useRouter: jest.fn(() => ({
     push: jest.fn()
@@ -78,23 +78,28 @@ describe("Semua Barang Page", () => {
   })
 
   it("displays loading state before data is fetched", async () => {
-    (global.fetch as jest.Mock).mockImplementationOnce(() => 
-      new Promise(resolve => 
-        setTimeout(() => 
-          resolve({
-            ok: true, 
-            json: () => Promise.resolve({
-              items: [],
-              total: 0,
-              page: 1,
-              per_page: 10,
-              total_pages: 1
-            })
-          }),
-          100
-        )
-      )
-    );
+    const mockResponse = {
+      ok: true,
+      json: () => Promise.resolve({
+        items: [],
+        total: 0,
+        page: 1,
+        per_page: 10,
+        total_pages: 1 
+      })
+    };
+
+    const createDelayedResponse = () => {
+      return new Promise(resolve => {
+        delayedResolve(resolve, mockResponse);
+      });
+    };
+
+    const delayedResolve = (resolve: (value: unknown) => void, response: unknown) => {
+      setTimeout(() => resolve(response), 100);
+    };
+
+    (global.fetch as jest.Mock).mockImplementationOnce(() => createDelayedResponse());
     
     await act(async () => {
       render(<ProductCard />);

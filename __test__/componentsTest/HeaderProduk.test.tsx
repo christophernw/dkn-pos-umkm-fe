@@ -103,8 +103,7 @@ describe('HeaderProduk Component', () => {
   })
 
   it('should handle sort by ascending order', () => {
-    const mockParams = new URLSearchParams();
-    
+
     (usePathname as jest.Mock).mockReturnValue('/semuaBarang');
     (useSearchParams as jest.Mock).mockReturnValue({
       get: jest.fn(),
