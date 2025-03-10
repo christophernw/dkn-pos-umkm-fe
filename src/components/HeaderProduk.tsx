@@ -12,9 +12,22 @@ const HeaderProduk = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
 
-  const handleSort = (order: "asc" | "desc") => {
+  const handleSort = async (order: "asc" | "desc") => {
     console.log(`Sorting dengan order: ${order}`);
-    setIsDropdownOpen(false); 
+    
+    try {
+      const response = await fetch(`http://localhost:8080/api/produk?sort=${order}`);
+      
+      if (response.ok) {
+        window.location.href = `${pathname}?sort=${order}`;
+      } else {
+        console.error("Failed to sort products");
+      }
+    } catch (error) {
+      console.error("Error sorting products:", error);
+    }
+    
+    setIsDropdownOpen(false);
   };
 
   return (

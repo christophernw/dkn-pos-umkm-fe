@@ -2,6 +2,21 @@ import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import HeaderProduk from '@/src/components/HeaderProduk'
 
+Object.defineProperty(window, 'location', {
+  value: {
+    href: '/semuaBarang'
+  },
+  writable: true
+});
+
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve([]),
+  } as Response)
+);
+
 jest.mock('next/navigation', () => ({
   usePathname: jest.fn(),
 }))
@@ -11,7 +26,8 @@ import { usePathname } from 'next/navigation'
 describe('HeaderProduk Component', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    jest.spyOn(console, 'log').mockImplementation(() => {}) // Mock console.log
+    jest.spyOn(console, 'log').mockImplementation(() => {}) 
+    jest.spyOn(console, 'error').mockImplementation(() => {}) 
   })
   
   it('highlights "Informasi Stok" link when on /daftarProduk page', () => {
@@ -82,7 +98,7 @@ describe('HeaderProduk Component', () => {
     }
   })
 
-  it('logs sorting action in ascending order when clicked', () => {
+  it('logs sorting action in ascending order and calls fetch when clicked', () => {
     (usePathname as jest.Mock).mockReturnValue('/semuaBarang')
     render(<HeaderProduk />)
 
@@ -100,9 +116,10 @@ describe('HeaderProduk Component', () => {
     fireEvent.click(sortAscButton)
 
     expect(console.log).toHaveBeenCalledWith("Sorting dengan order: asc")
+    expect(fetch).toHaveBeenCalledWith("http://localhost:8080/api/produk?sort=asc")
   })
 
-  it('logs sorting action in descending order when clicked', () => {
+  it('logs sorting action in descending order and calls fetch when clicked', () => {
     (usePathname as jest.Mock).mockReturnValue('/semuaBarang')
     render(<HeaderProduk />)
 
@@ -120,5 +137,6 @@ describe('HeaderProduk Component', () => {
     fireEvent.click(sortDescButton)
 
     expect(console.log).toHaveBeenCalledWith("Sorting dengan order: desc")
+    expect(fetch).toHaveBeenCalledWith("http://localhost:8080/api/produk?sort=desc")
   })
 })
