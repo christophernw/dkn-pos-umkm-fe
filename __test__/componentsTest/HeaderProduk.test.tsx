@@ -4,14 +4,29 @@ import HeaderProduk from '@/src/components/HeaderProduk'
 
 jest.mock('next/navigation', () => ({
   usePathname: jest.fn(),
+  useSearchParams: jest.fn(() => ({
+    get: jest.fn(),
+    toString: jest.fn()
+  })),
+  useRouter: jest.fn(() => ({
+    push: jest.fn()
+  }))
 }))
 
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 
 describe('HeaderProduk Component', () => {
+  const mockPush = jest.fn();
+  
   beforeEach(() => {
-    jest.clearAllMocks()
-    jest.spyOn(console, 'log').mockImplementation(() => {}) // Mock console.log
+    jest.clearAllMocks();
+    (useRouter as jest.Mock).mockReturnValue({
+      push: mockPush
+    });
+    (useSearchParams as jest.Mock).mockReturnValue({
+      get: jest.fn(),
+      toString: jest.fn()
+    });
   })
   
   it('highlights "Informasi Stok" link when on /daftarProduk page', () => {
@@ -54,9 +69,9 @@ describe('HeaderProduk Component', () => {
     (usePathname as jest.Mock).mockReturnValue('/semuaBarang')
     render(<HeaderProduk />)
 
-    const informasiStokLink = screen.getByLabelText("back")
-    expect(informasiStokLink).toBeInTheDocument()
-    expect(informasiStokLink).toHaveAttribute('href', '/')
+    const backButton = screen.getByLabelText("back")
+    expect(backButton).toBeInTheDocument()
+    expect(backButton).toHaveAttribute('href', '/')
   })
 
   it("should have a link to informasi stok with the correct href", () => {
@@ -68,57 +83,72 @@ describe('HeaderProduk Component', () => {
     expect(informasiStokLink).toHaveAttribute('href', '/daftarProduk')
   })
   
-  it('three dots button is clickable', () => {
+  it('filter button toggles dropdown', () => {
     (usePathname as jest.Mock).mockReturnValue('/semuaBarang')
     render(<HeaderProduk />)
 
-    const buttons = screen.getAllByRole('button')
-    const threeDotsButton = buttons.find(button => 
-      button.querySelector('.bi-three-dots') !== null
-    )
-    expect(threeDotsButton).toBeInTheDocument()
-    if (threeDotsButton) {
-      fireEvent.click(threeDotsButton)
+    const filterButton = screen.getAllByRole('button').find(button => 
+      button.querySelector('svg') && button.closest('.right-1\\.5')
+    );
+    expect(filterButton).toBeInTheDocument();
+    
+    expect(screen.queryByText(/Stok Terendah/i)).not.toBeInTheDocument();
+    
+    if (filterButton) {
+      fireEvent.click(filterButton);
     }
+    
+    expect(screen.getByText(/Stok Terendah/i)).toBeInTheDocument();
+    expect(screen.getByText(/Stok Tertinggi/i)).toBeInTheDocument();
   })
 
-  it('logs sorting action in ascending order when clicked', () => {
-    (usePathname as jest.Mock).mockReturnValue('/semuaBarang')
+  it('should handle sort by ascending order', () => {
+    const mockParams = new URLSearchParams();
+    
+    (usePathname as jest.Mock).mockReturnValue('/semuaBarang');
+    (useSearchParams as jest.Mock).mockReturnValue({
+      get: jest.fn(),
+      toString: jest.fn(() => 'sort=asc')
+    });
+    
     render(<HeaderProduk />)
-
-    const buttons = screen.getAllByRole('button')
-    const menuButton = buttons.find(button =>
-      button.querySelector('.bi-three-dots') !== null
-    )
-
-    expect(menuButton).toBeInTheDocument()
-    if (menuButton) {
-      fireEvent.click(menuButton)
+    
+    const filterButton = screen.getAllByRole('button').find(button => 
+      button.querySelector('svg') && button.closest('.right-1\\.5')
+    );
+    if (filterButton) {
+      fireEvent.click(filterButton);
     }
-
-    const sortAscButton = screen.getByText(/stok terendah/i)
-    fireEvent.click(sortAscButton)
-
-    expect(console.log).toHaveBeenCalledWith("Sorting dengan order: asc")
+    
+    const ascButton = screen.getByText(/Stok Terendah/i);
+    fireEvent.click(ascButton);
+    
+    expect(mockPush).toHaveBeenCalled();
+    expect(mockPush.mock.calls[0][0]).toContain('/semuaBarang?');
+    expect(mockPush.mock.calls[0][0]).toContain('sort=asc');
   })
 
-  it('logs sorting action in descending order when clicked', () => {
-    (usePathname as jest.Mock).mockReturnValue('/semuaBarang')
+  it('should handle sort by descending order', () => {
+    (usePathname as jest.Mock).mockReturnValue('/semuaBarang');
+    (useSearchParams as jest.Mock).mockReturnValue({
+      get: jest.fn(),
+      toString: jest.fn(() => 'sort=desc')
+    });
+    
     render(<HeaderProduk />)
-
-    const buttons = screen.getAllByRole('button')
-    const menuButton = buttons.find(button =>
-      button.querySelector('.bi-three-dots') !== null
-    )
-
-    expect(menuButton).toBeInTheDocument()
-    if (menuButton) {
-      fireEvent.click(menuButton)
+    
+    const filterButton = screen.getAllByRole('button').find(button => 
+      button.querySelector('svg') && button.closest('.right-1\\.5')
+    );
+    if (filterButton) {
+      fireEvent.click(filterButton);
     }
-
-    const sortDescButton = screen.getByText(/stok tertinggi/i)
-    fireEvent.click(sortDescButton)
-
-    expect(console.log).toHaveBeenCalledWith("Sorting dengan order: desc")
+    
+    const descButton = screen.getByText(/Stok Tertinggi/i);
+    fireEvent.click(descButton);
+    
+    expect(mockPush).toHaveBeenCalled();
+    expect(mockPush.mock.calls[0][0]).toContain('/semuaBarang?');
+    expect(mockPush.mock.calls[0][0]).toContain('sort=desc');
   })
 })

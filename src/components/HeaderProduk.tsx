@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
 const HeaderProduk = () => {
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const toggleDropdown = () => {
@@ -13,8 +15,11 @@ const HeaderProduk = () => {
   };
 
   const handleSort = (order: "asc" | "desc") => {
-    console.log(`Sorting dengan order: ${order}`);
-    setIsDropdownOpen(false); 
+    const params = new URLSearchParams(searchParams);
+    params.set('sort', order);
+    
+    router.push(`${pathname}?${params.toString()}`);
+    setIsDropdownOpen(false);
   };
 
   return (
@@ -59,7 +64,6 @@ const HeaderProduk = () => {
             <button
               type="button"
               className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center"
-              onClick={toggleDropdown}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -72,22 +76,6 @@ const HeaderProduk = () => {
                 <path d="M3 8a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0m4.5 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0m4.5 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0" />
               </svg>
             </button>
-            {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
-                <button
-                  className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                  onClick={() => handleSort("asc")}
-                >
-                  Stok Terendah
-                </button>
-                <button
-                  className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                  onClick={() => handleSort("desc")}
-                >
-                  Stok Tertinggi
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </header>
@@ -147,6 +135,22 @@ const HeaderProduk = () => {
               <line x1="17" y1="16" x2="23" y2="16"></line>
             </svg>
           </button>
+          {isDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
+                <button
+                  className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                  onClick={() => handleSort("asc")}
+                >
+                  Stok Terendah
+                </button>
+                <button
+                  className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                  onClick={() => handleSort("desc")}
+                >
+                  Stok Tertinggi
+                </button>
+              </div>
+            )}
         </div>
       </div>
     </div>
