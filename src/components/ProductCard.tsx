@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation";
 
 interface ProductCardProps {
   id: number;
@@ -23,6 +24,7 @@ interface PaginatedResponse {
 }
 
 export default function ProductCard() {
+  const searchParams = useSearchParams();
   const [data, setData] = useState<ProductCardProps[]>([])
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -32,7 +34,14 @@ export default function ProductCard() {
     async function fetchData() {
       try {
         setIsLoading(true);
-        const response = await fetch(`http://localhost:8000/api/produk/page/${currentPage}`);
+        const sortParam = searchParams.get('sort');
+        
+        let url = `http://localhost:8080/api/produk/page/${currentPage}`;
+        if (sortParam) {
+          url += `?sort=${sortParam}`;
+        }
+        
+        const response = await fetch(url);
         const result: PaginatedResponse = await response.json();
         setData(result.items);
         setTotalPages(result.total_pages);
@@ -43,7 +52,7 @@ export default function ProductCard() {
       }
     }
     fetchData();
-  }, [currentPage]);
+  }, [currentPage, searchParams]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
