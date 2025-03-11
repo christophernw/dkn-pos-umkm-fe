@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import { useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation";
 
 interface ProductCardProps {
   id: number;
@@ -24,11 +24,11 @@ interface PaginatedResponse {
 }
 
 export default function ProductCard() {
+  const searchParams = useSearchParams();
   const [data, setData] = useState<ProductCardProps[]>([])
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const searchParams = useSearchParams();
   const sortParam = searchParams.get('sort');
 
   useEffect(() => {

@@ -1,7 +1,9 @@
-import { act, render, screen, fireEvent, waitFor } from "@testing-library/react"
-import SemuaBarang from "@/src/app/semuaBarang/page"
-import ProductCard from "@/src/components/ProductCard"
-import "@testing-library/jest-dom"
+import { act, render, fireEvent, screen, waitFor } from "@testing-library/react";
+import ProductCard from "@/src/components/ProductCard";
+import "@testing-library/jest-dom";
+import SemuaBarang from "@/src/app/(withNavbar)/semuaBarang/page";
+import HeaderProduk from "@/src/components/HeaderProduk";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 jest.mock('next/navigation', () => ({
   usePathname: jest.fn(),
@@ -52,13 +54,17 @@ describe("Semua Barang Page", () => {
   });
   
   it("renders the header", () => {
-    render(<SemuaBarang />)
+    render(<HeaderProduk />)
     expect(screen.getByText(/Informasi Stok/i)).toBeInTheDocument()
     expect(screen.getByText(/Semua Barang/i)).toBeInTheDocument()
   })
 
   it("renders tambah produk button", () => {
-    render(<SemuaBarang />)
+    render(
+      <AuthProvider>
+        <SemuaBarang />
+      </AuthProvider>
+    )
     const tambahProdukButton =
       screen.getByText("+") || screen.getByRole("button", { name: "+" })
     expect(tambahProdukButton).toBeInTheDocument()

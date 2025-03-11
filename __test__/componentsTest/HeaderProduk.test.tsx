@@ -2,6 +2,21 @@ import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import HeaderProduk from '@/src/components/HeaderProduk'
 
+Object.defineProperty(window, 'location', {
+  value: {
+    href: '/semuaBarang'
+  },
+  writable: true
+});
+
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve([]),
+  } as Response)
+);
+
 jest.mock('next/navigation', () => ({
   usePathname: jest.fn(),
   useSearchParams: jest.fn(() => ({
