@@ -35,7 +35,7 @@ export default function ProductCard() {
     async function fetchData() {
       try {
         setIsLoading(true);
-        let url = `http://localhost:8080/api/produk/page/${currentPage}`;
+        let url = `http://localhost:8000/api/produk/page/${currentPage}`;
         
         if (sortParam) {
           url += `?sort=${sortParam}`;

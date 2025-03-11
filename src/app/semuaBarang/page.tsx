@@ -1,14 +1,16 @@
 import HeaderProduk from '@/src/components/HeaderProduk'
 import ProductCard from '@/src/components/ProductCard';
-import React from 'react' 
+import React, { Suspense } from 'react'
 
 const semuaBarang = () => {
   return (
     <div className=''>
-      <HeaderProduk />
-      <main>
+      <Suspense fallback={<div>Loading header...</div>}>
+        <HeaderProduk />
+      </Suspense>
+      <Suspense fallback={<div>Loading products...</div>}>
         <ProductCard />
-      </main>
+      </Suspense>
       <div className='fixed bottom-4 flex justify-end px-4 pb-24'>
         <button className="bg-blue-600 hover:bg-blue-700 text-white text-4xl just flex items-center justify-center h-14 w-14 font-medium rounded-full shadow-md">
           +
@@ -18,4 +20,4 @@ const semuaBarang = () => {
   );
 };
 
-export default semuaBarang
+export default semuaBarang;
