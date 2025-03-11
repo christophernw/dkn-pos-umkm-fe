@@ -19,7 +19,7 @@ export default function LoginPage() {
         if (session) {
             setLoading(true);
             // Send session data to your Django backend
-            fetch(config.apiUrl, {
+            fetch(`${config.apiUrl}/api/auth/process-session`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
