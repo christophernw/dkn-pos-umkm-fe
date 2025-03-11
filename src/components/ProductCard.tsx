@@ -1,62 +1,71 @@
 "use client"
+import React from 'react';
 
-import Image from "next/image"
+interface Product {
+  id: number;
+  nama: string;
+  foto: string;
+  harga_modal: number;
+  harga_jual: number;
+  stok: number;
+  satuan: string;
+  kategori: string;
+}
 
 interface ProductCardProps {
-  id: number
-  name: string
-  price: number
-  stock: number
-  image: string
+  product: Product;
+  onDelete: () => void;
 }
 
-export default function ProductCard() {
-  const products: ProductCardProps[] = [
-    {
-      id: 1,
-      name: "Roti Gandum",
-      price: 15000,
-      stock: 450,
-      image: "https://img.freepik.com/free-photo/front-view-baked-bread-slices-grey-cloth_23-2148361603.jpg",
-    },
-    {
-      id: 2,
-      name: "Kue Apem",
-      price: 25000,
-      stock: 330,
-      image: "https://img.freepik.com/premium-photo/lemon-muffins-with-blueberries-shtreisel-with-fresh-berries-white-wooden-background_114420-1227.jpg",
-    },
-  ]
-
-  const formatPrice = (price: number) => {
-    return `Rp ${price.toLocaleString()}/Pcs`
-  }
+const ProductCard: React.FC<ProductCardProps> = ({ product, onDelete }) => {
+  // Format the image URL
+  const getImageUrl = (url: string) => {
+    if (!url) return '/placeholder-image.jpg';
+    if (url.startsWith('http')) return url;
+    return `http://localhost:8000${url.startsWith('/') ? '' : '/'}${url}`;
+  };
 
   return (
-    <div className="max-w-md mx-auto space-y-4">
-      {products.map((product) => (
-        <div key={product.id} className="bg-white rounded-3xl flex overflow-hidden p-3 shadow-sm">
-          <div className="w-28 h-28 relative rounded-2xl overflow-hidden mr-3">
-            <Image 
-              src={product.image} 
-              alt={product.name} 
-              fill 
-              className="object-cover"
-            />
+    <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
+      <div className="relative h-48 w-full mb-4 overflow-hidden">
+        {product.foto ? (
+          <img 
+            src={getImageUrl(product.foto)} 
+            alt={product.nama}
+            className="h-full w-full object-cover rounded-md"
+          />
+        ) : (
+          <div className="h-full w-full bg-gray-200 rounded-md flex items-center justify-center">
+            <span className="text-gray-500">No Image</span>
           </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-base">{product.name}</h3>
-            <p className="text-gray-500 text-sm mt-2">Harga Jual</p>
-            <p className="font-medium text-sm text-blue-700 mt-1">{formatPrice(product.price)}</p>
-            <div className="flex justify-between items-center mt-2">
-              <span className="text-sm text-green-700 bg-green-100 px-2 py-1 rounded-lg">Stok : {product.stock}</span>
-              <button className="text-xs h-8 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl">
-                Perbarui Stok
-              </button>
-            </div>
-          </div>
-        </div>
-      ))}
+        )}
+      </div>
+      <h3 className="font-semibold text-lg">{product.nama}</h3>
+      <p className="text-gray-600">Kategori: {product.kategori}</p>
+      <div className="flex justify-between items-center mt-2">
+        <span className="font-medium">Rp{product.harga_jual.toLocaleString()}</span>
+        <span className={`px-2 py-1 rounded ${
+          product.stok < 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+        }`}>
+          {product.stok} {product.satuan}
+        </span>
+      </div>
+      <div className="mt-4 flex justify-between">
+        <button 
+          onClick={() => window.location.href = `/produk/edit/${product.id}`}
+          className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Edit
+        </button>
+        <button 
+          onClick={onDelete}
+          className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Delete
+        </button>
+      </div>
     </div>
-  )
-}
+  );
+};
+
+export default ProductCard;
