@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { fetchProduct, updateProduct } from "@/src/services/productServices";
 import { validateProductData } from "@/src/services/validation";
 import ConfirmDialog from "@/src/components/ConfirmDialog";
@@ -13,10 +13,9 @@ interface Product {
   stock: string;
 }
 
-export default function EditProductPage() {
+export default function EditProductPage({params} : {params : {id:string}}) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const productId = searchParams.get("id");
+  const productId = params.id
 
   const [product, setProduct] = useState<Product>({
     name: "",

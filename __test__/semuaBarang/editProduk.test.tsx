@@ -1,22 +1,37 @@
 import "@testing-library/jest-dom";
 import { render, screen, fireEvent } from "@testing-library/react";
-import EditProductPage from "../src/app/editProduk/page";
+import EditProductPage from "../../src/app/editProduk/[id]/page";
+jest.mock("next/navigation", () => ({
+  useRouter: jest.fn(() => ({
+    push: jest.fn(), // Mock fungsi push()
+  })),
+  useSearchParams: jest.fn(() => ({
+    get: jest.fn((param) => (param === "id" ? "123" : null)), // Mock search params
+  })),
+}));
+
 
 describe("EditProductPage", () => {
   it("Menampilkan input dengan data produk awal", async () => {
-    render(<EditProductPage />);
+    const mockParams = { id: "123" }; // Mock params
+
+    render(<EditProductPage params={mockParams} />);
     expect(await screen.findByLabelText(/Nama Produk/i)).toBeInTheDocument();
   });
 
   it("Mengedit nama produk", () => {
-    render(<EditProductPage />);
+    const mockParams = { id: "123" }; // Mock params
+
+    render(<EditProductPage params={mockParams} />);
     const nameInput = screen.getByLabelText(/Nama Produk/i) as HTMLInputElement;
     fireEvent.change(nameInput, { target: { value: "Produk Baru" } });
     expect(nameInput.value).toBe("Produk Baru");
   });
 
   it("Menampilkan error jika harga di bawah 1000", () => {
-    render(<EditProductPage />);
+    const mockParams = { id: "123" }; // Mock params
+
+    render(<EditProductPage params={mockParams} />);
     const priceInput = screen.getByLabelText(/Harga/i) as HTMLInputElement;
     fireEvent.change(priceInput, { target: { value: "500" } });
 
@@ -26,7 +41,9 @@ describe("EditProductPage", () => {
   });
 
   it("Menampilkan error jika stok negatif", () => {
-    render(<EditProductPage />);
+    const mockParams = { id: "123" }; // Mock params
+
+    render(<EditProductPage params={mockParams} />);
     const stockInput = screen.getByLabelText(/Stok/i) as HTMLInputElement;
     fireEvent.change(stockInput, { target: { value: "-5" } });
 
@@ -36,7 +53,9 @@ describe("EditProductPage", () => {
   });
 
   it("Menolak input non-angka di harga", () => {
-    render(<EditProductPage />);
+    const mockParams = { id: "123" }; // Mock params
+
+    render(<EditProductPage params={mockParams} />);
     const priceInput = screen.getByLabelText(/Harga/i) as HTMLInputElement;
     fireEvent.change(priceInput, { target: { value: "abc" } });
 
@@ -44,7 +63,9 @@ describe("EditProductPage", () => {
   });
 
   it("Menolak input non-angka di stok", () => {
-    render(<EditProductPage />);
+    const mockParams = { id: "123" }; // Mock params
+
+    render(<EditProductPage params={mockParams} />);
     const stockInput = screen.getByLabelText(/Stok/i) as HTMLInputElement;
     fireEvent.change(stockInput, { target: { value: "xyz" } });
 

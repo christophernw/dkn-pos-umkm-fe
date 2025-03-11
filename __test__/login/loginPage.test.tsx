@@ -1,13 +1,17 @@
 import LoginPage from "@/src/app/(auth)/login/page";
 import { render, screen, fireEvent } from "@testing-library/react";
-
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 
 jest.mock("next-auth/react", () => ({
   signIn: jest.fn(),
+  useSession: jest.fn(),
 }));
 
 describe("LoginPage", () => {
+  beforeEach(() => {
+    (useSession as jest.Mock).mockReturnValue({ data: null, status: "unauthenticated" });
+  });
+
   it("renders login page correctly", () => {
     render(<LoginPage />);
     
