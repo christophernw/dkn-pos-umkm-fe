@@ -4,6 +4,7 @@ import "./globals.css";
 import { getServerSession } from "next-auth";
 import Provider from "./Provider";
 import { options } from "./lib/authoptions";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,13 +32,14 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen overflow-x-hidden custom-scrollbar-hidden antialiased flex justify-center`}
       >
-      <Provider session={session}>
-        <div className="w-full sm:w-[402px] min-h-screen bg-[#EDF1F9]">
-            <div className="h-full">
-              {children}
+        <Provider session={session}>
+          <AuthProvider>
+            {" "}
+            <div className="w-full sm:w-[402px] min-h-screen bg-[#EDF1F9]">
+              <div className="h-full">{children}</div>
             </div>
-        </div>
-      </Provider>
+          </AuthProvider>
+        </Provider>
       </body>
     </html>
   );
