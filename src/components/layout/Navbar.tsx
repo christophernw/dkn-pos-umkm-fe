@@ -15,7 +15,7 @@ export const Navbar = () => {
         { text: 'Transaction', icon: TransactionIcon, route: "/transaksi" },
         { text: 'Product', icon: ProductIcon, route: "/daftarProduk" },
         { text: 'Report', icon: ReportIcon, route: "/report" },
-        { text: 'Setting', icon: SettingsIcon, route: "/setting" },
+        { text: 'Setting', icon: SettingsIcon, route: "/pengaturan" },
     ], []);
 
     const [activeItem, setActiveItem] = useState<string | null>(null);
