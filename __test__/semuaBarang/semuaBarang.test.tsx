@@ -178,7 +178,7 @@ describe("Semua Barang Page", () => {
       fireEvent.click(pageButton);
     });
     
-    expect(global.fetch).toHaveBeenCalledWith("http://localhost:8080/api/produk/page/2");
+    expect(global.fetch).toHaveBeenCalledWith("http://localhost:8000/api/produk/page/2");
   });
 
   it("handles click on Next button correctly", async () => {
@@ -198,7 +198,7 @@ describe("Semua Barang Page", () => {
       fireEvent.click(nextButton);
     });
     
-    expect(global.fetch).toHaveBeenCalledWith("http://localhost:8080/api/produk/page/2");
+    expect(global.fetch).toHaveBeenCalledWith("http://localhost:8000/api/produk/page/2");
   });
 
   it("handles click on Prev button correctly when on page 2", async () => {
@@ -222,7 +222,7 @@ describe("Semua Barang Page", () => {
       fireEvent.click(prevButton);
     });
     
-    expect(global.fetch).toHaveBeenCalledWith("http://localhost:8080/api/produk/page/1");
+    expect(global.fetch).toHaveBeenCalledWith("http://localhost:8000/api/produk/page/1");
   });
 
   it("handles sorting by search parameters", async () => {
@@ -236,7 +236,7 @@ describe("Semua Barang Page", () => {
     });
     
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith("http://localhost:8080/api/produk/page/1?sort=desc");
+      expect(global.fetch).toHaveBeenCalledWith("http://localhost:8000/api/produk/page/1?sort=desc");
     });
   });
 
