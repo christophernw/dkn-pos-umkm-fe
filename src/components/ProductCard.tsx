@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { useSearchParams } from "next/navigation";
 
 interface ProductCardProps {
