@@ -1,5 +1,8 @@
 "use client";
-import { useState, ChangeEvent, FormEvent } from "react";
+import { useState, ChangeEvent } from "react";
+import TextInput from "./components/textInput";
+import { useAuth } from "@/contexts/AuthContext";
+import config from "@/src/config";
 
 export default function AddProductPage() {
   const [productName, setProductName] = useState("");
@@ -10,10 +13,14 @@ export default function AddProductPage() {
   const [minimumStock, setMinimumStock] = useState("");
   const [unit, setUnit] = useState("Kg");
   const [previewImg, setPreviewImg] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const { accessToken } = useAuth();
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
     const file = e.target.files[0];
+    setImageFile(file);
+
     const reader = new FileReader();
     reader.onload = () => {
       setPreviewImg(reader.result as string);
@@ -21,20 +28,49 @@ export default function AddProductPage() {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const productData = {
-      productName,
-      category,
-      priceSell,
-      priceCost,
-      currentStock,
-      minimumStock,
-      unit,
 
+    const formData = new FormData();
+
+    const payload = {
+      nama: productName,
+      kategori: category,
+      harga_jual: parseFloat(priceSell),
+      harga_modal: parseFloat(priceCost),
+      stok: parseFloat(currentStock),
+      satuan: unit,
     };
-    console.log("Product Data:", productData);
-    alert("Product submitted!");
+
+    formData.append("payload", JSON.stringify(payload));
+
+    if (imageFile) {
+      formData.append("foto", imageFile);
+    }
+
+    try {
+      const response = await fetch(`${config.apiUrl}/produk/create`, {
+        method: "POST",
+        body: formData,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (response.status === 201) {
+        alert("Produk berhasil ditambahkan!");
+        window.location.href = "/semuaBarang";
+      } else {
+        const errorData = await response.json();
+        console.error("Error creating product:", errorData);
+        alert(
+          `Gagal menambahkan produk: ${errorData.detail || "Unknown error"}`
+        );
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+      alert("Terjadi kesalahan jaringan. Silakan coba lagi.");
+    }
   };
 
   return (
@@ -52,6 +88,7 @@ export default function AddProductPage() {
       <form
         onSubmit={handleSubmit}
         className="bg-white rounded-lg p-4 shadow-sm space-y-4"
+        encType="multipart/form-data"
       >
         {/* Placeholder/gambar */}
         <div className="flex justify-center">
@@ -94,77 +131,42 @@ export default function AddProductPage() {
           />
         </div>
 
-        {/* Nama Produk */}
-        <div>
-          <label
-            htmlFor="productName"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Nama Produk
-          </label>
-          <input
-            id="productName"
-            type="text"
-            value={productName}
-            onChange={(e) => setProductName(e.target.value)}
-            placeholder="Pie Jeruk"
-            className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          />
-        </div>
+        {/* Rest of the form remains the same */}
+        <TextInput
+          id="productName"
+          label="Nama Produk"
+          value={productName}
+          onChange={setProductName}
+          placeholder="Pie Jeruk"
+        />
 
-        {/* Kategori */}
-        <div>
-          <label
-            htmlFor="category"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Kategori
-          </label>
-          <input
-            id="category"
-            type="text"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            placeholder="Makanan"
-            className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          />
-        </div>
+        {/* Other fields remain the same... */}
 
-        {/* Harga Jual */}
-        <div>
-          <label
-            htmlFor="priceSell"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Harga Jual
-          </label>
-          <input
-            id="priceSell"
-            type="number"
-            value={priceSell}
-            onChange={(e) => setPriceSell(e.target.value)}
-            placeholder="Rp 13.000"
-            className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          />
-        </div>
+        <TextInput
+          id="category"
+          label="Kategori"
+          value={category}
+          onChange={setCategory}
+          placeholder="Makanan"
+        />
 
-        {/* Harga Modal */}
-        <div>
-          <label
-            htmlFor="priceCost"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Harga Modal
-          </label>
-          <input
-            id="priceCost"
-            type="number"
-            value={priceCost}
-            onChange={(e) => setPriceCost(e.target.value)}
-            placeholder="Rp 9.000"
-            className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          />
-        </div>
+        <TextInput
+          id="priceSell"
+          label="Harga Jual"
+          value={priceSell}
+          onChange={setPriceSell}
+          placeholder="Rp 13.000"
+          type="number"
+        />
+
+        <TextInput
+          id="priceCost"
+          label="Harga Modal"
+          value={priceCost}
+          onChange={setPriceCost}
+          placeholder="Rp 9.000"
+          type="number"
+        />
 
         {/* Satuan (Unit) dan Stok */}
         <div className="flex items-center justify-between space-x-4">
@@ -191,37 +193,25 @@ export default function AddProductPage() {
 
           {/* Stok Saat Ini */}
           <div className="w-1/3">
-            <label
-              htmlFor="currentStock"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Stok Saat Ini
-            </label>
-            <input
+            <TextInput
               id="currentStock"
-              type="number"
+              label="Stok Saat Ini"
               value={currentStock}
-              onChange={(e) => setCurrentStock(e.target.value)}
+              onChange={setCurrentStock}
               placeholder="450"
-              className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              type="number"
             />
           </div>
 
           {/* Stok Minimum */}
           <div className="w-1/3">
-            <label
-              htmlFor="minimumStock"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Stok Minimum
-            </label>
-            <input
+            <TextInput
               id="minimumStock"
-              type="number"
+              label="Stok Minimum"
               value={minimumStock}
-              onChange={(e) => setMinimumStock(e.target.value)}
+              onChange={setMinimumStock}
               placeholder="10"
-              className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              type="number"
             />
           </div>
         </div>

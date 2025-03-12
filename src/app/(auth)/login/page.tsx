@@ -1,4 +1,5 @@
 "use client"
+
 import React from 'react'
 import { signIn } from 'next-auth/react'
 import { GoogleIcon } from '@/public/icons/GoogleIcon'
@@ -6,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import config from '@/src/config';
 
 export default function LoginPage() {
     const { data: session } = useSession();
@@ -16,8 +18,7 @@ export default function LoginPage() {
     useEffect(() => {
         if (session) {
             setLoading(true);
-            // Send session data to your Django backend
-            fetch('http://localhost:8000/api/auth/process-session', {
+            fetch(`${config.apiUrl}/auth/process-session`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -32,12 +33,10 @@ export default function LoginPage() {
                     refresh: data.refresh
                 });
                 
-                // Redirect user to dashboard or home page
                 router.push('/');
             })
             .catch(error => {
                 console.error('Authentication error:', error);
-                // Handle error - show error message to user
             })
             .finally(() => {
                 setLoading(false);
@@ -46,7 +45,7 @@ export default function LoginPage() {
     }, [session, router]);
 
     async function googleLogin() {
-        await signIn("google")
+        await signIn("google", { callbackUrl: "/login", redirect: false })
     }
 
     return (
