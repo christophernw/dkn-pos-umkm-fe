@@ -198,7 +198,7 @@ export default function ProductCard() {
           <Image
             src={
               product.foto
-                ? `${config.apiUrl}/${product.foto}`
+                ? `${config.apiUrl}${product.foto}`
                 : "/images/placeholder.svg"
             }
             alt={product.nama}
