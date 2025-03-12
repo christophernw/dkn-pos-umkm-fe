@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react'
 import { Header } from './module-element/Header'
-import Link from 'next/link'
 import { Modal } from '@/src/components/elements/modal/Modal'
 import { signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
