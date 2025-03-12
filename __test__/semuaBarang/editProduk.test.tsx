@@ -1,74 +1,281 @@
-import "@testing-library/jest-dom";
-import { render, screen, fireEvent } from "@testing-library/react";
-import EditProductPage from "../../src/app/editProduk/[id]/page";
-jest.mock("next/navigation", () => ({
-  useRouter: jest.fn(() => ({
-    push: jest.fn(), // Mock fungsi push()
-  })),
-  useSearchParams: jest.fn(() => ({
-    get: jest.fn((param) => (param === "id" ? "123" : null)), // Mock search params
-  })),
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import EditProductPage from '@/src/app/editProduk/[id]/page';
+import { fetchProduct, updateProduct } from '@/src/services/productServices';
+import { validateProductData } from '@/src/services/validation';
+import '@testing-library/jest-dom';
+import { useRouter } from 'next/navigation';
+
+// Mock dependencies
+jest.mock('next/navigation', () => ({
+  useRouter: jest.fn(),
 }));
 
+jest.mock('@/src/services/productServices', () => ({
+  fetchProduct: jest.fn(),
+  updateProduct: jest.fn(),
+}));
 
-describe("EditProductPage", () => {
-  it("Menampilkan input dengan data produk awal", async () => {
-    const mockParams = { id: "123" }; // Mock params
+jest.mock('@/src/services/validation', () => ({
+  validateProductData: jest.fn(),
+}));
 
-    render(<EditProductPage params={mockParams} />);
-    expect(await screen.findByLabelText(/Nama Produk/i)).toBeInTheDocument();
+jest.mock('@/src/components/ConfirmDialog', () => {
+  return function MockConfirmDialog({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
+    return (
+      <div data-testid="confirm-dialog">
+        <button data-testid="confirm-button" onClick={onConfirm}>
+          Confirm
+        </button>
+        <button data-testid="cancel-button" onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+    );
+  };
+});
+
+describe('EditProductPage Component', () => {
+  const mockRouter = {
+    push: jest.fn(),
+  };
+  
+  const mockProduct = {
+    nama: 'Test Product',
+    kategori: 'Test Category',
+    harga_modal: '10000',
+    harga_jual: '15000',
+    stok: '50',
+    foto: null,
+    satuan: 'Pcs',
+  };
+
+  // Create a resolved promise for params
+  const mockParams = Promise.resolve({ id: '123' });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (useRouter as jest.Mock).mockReturnValue(mockRouter);
+    (fetchProduct as jest.Mock).mockResolvedValue(mockProduct);
+    (validateProductData as jest.Mock).mockReturnValue(null); // No validation errors
+    global.alert = jest.fn();
+    global.FileReader = class {
+      onload: (() => void) | null = null;
+      result: string | null = null;
+      readAsDataURL = jest.fn(() => {
+        this.result = 'data:image/jpeg;base64,testImageData';
+        if (this.onload) this.onload();
+      });
+    } as unknown as typeof FileReader;
+    Object.defineProperty(window, 'history', {
+      value: { back: jest.fn() },
+      writable: true,
+    });
   });
 
-  it("Mengedit nama produk", () => {
-    const mockParams = { id: "123" }; // Mock params
-
-    render(<EditProductPage params={mockParams} />);
-    const nameInput = screen.getByLabelText(/Nama Produk/i) as HTMLInputElement;
-    fireEvent.change(nameInput, { target: { value: "Produk Baru" } });
-    expect(nameInput.value).toBe("Produk Baru");
+  test('renders product form with correct initial state', async () => {
+    // Use act to wrap the initial render
+    await act(async () => {
+      render(<EditProductPage params={mockParams} />);
+    });
+    
+    // Wait for the product data to be fetched and rendered
+    await waitFor(() => {
+      expect(fetchProduct).toHaveBeenCalledWith('123');
+    });
+    
+    // Check if form elements are rendered with correct values
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Nama Produk/i)).toHaveValue('Test Product');
+      expect(screen.getByLabelText(/Kategori/i)).toHaveValue('Test Category');
+      expect(screen.getByLabelText(/Harga Modal/i)).toHaveValue(10000);
+      expect(screen.getByLabelText(/Harga Jual/i)).toHaveValue(15000);
+      expect(screen.getByLabelText(/Stok Saat Ini/i)).toHaveValue(50);
+      expect(screen.getByLabelText(/Pilih Satuan/i)).toHaveValue('Pcs');
+    });
   });
 
-  it("Menampilkan error jika harga di bawah 1000", () => {
-    const mockParams = { id: "123" }; // Mock params
-
-    render(<EditProductPage params={mockParams} />);
-    const priceInput = screen.getByLabelText(/Harga/i) as HTMLInputElement;
-    fireEvent.change(priceInput, { target: { value: "500" } });
-
-    fireEvent.click(screen.getByRole("button", { name: /Simpan Perubahan/i }));
-
-    expect(screen.getByText(/Harga harus minimal Rp 1000/i)).toBeInTheDocument();
+  test('updates form fields when user types into inputs', async () => {
+    await act(async () => {
+      render(<EditProductPage params={mockParams} />);
+    });
+    
+    await waitFor(() => {
+      expect(fetchProduct).toHaveBeenCalledWith('123');
+    });
+    
+    // Change form field values
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText(/Nama Produk/i), { target: { value: 'Updated Product' } });
+      fireEvent.change(screen.getByLabelText(/Kategori/i), { target: { value: 'Updated Category' } });
+      fireEvent.change(screen.getByLabelText(/Harga Jual/i), { target: { value: '20000' } });
+    });
+    
+    // Check if the form fields were updated
+    expect(screen.getByLabelText(/Nama Produk/i)).toHaveValue('Updated Product');
+    expect(screen.getByLabelText(/Kategori/i)).toHaveValue('Updated Category');
+    expect(screen.getByLabelText(/Harga Jual/i)).toHaveValue(20000);
   });
 
-  it("Menampilkan error jika stok negatif", () => {
-    const mockParams = { id: "123" }; // Mock params
-
-    render(<EditProductPage params={mockParams} />);
-    const stockInput = screen.getByLabelText(/Stok/i) as HTMLInputElement;
-    fireEvent.change(stockInput, { target: { value: "-5" } });
-
-    fireEvent.click(screen.getByRole("button", { name: /Simpan Perubahan/i }));
-
-    expect(screen.getByText(/Stok tidak boleh negatif/i)).toBeInTheDocument();
+  test('shows validation error message on form submission with invalid data', async () => {
+    (validateProductData as jest.Mock).mockReturnValue('Invalid product data');
+    
+    await act(async () => {
+      render(<EditProductPage params={mockParams} />);
+    });
+    
+    await waitFor(() => {
+      expect(fetchProduct).toHaveBeenCalledWith('123');
+    });
+    
+    // Submit the form
+    await act(async () => {
+      fireEvent.submit(screen.getByText('Simpan Perubahan'));
+    });
+    
+    // Check if validation was called and alert was shown
+    expect(validateProductData).toHaveBeenCalled();
+    expect(global.alert).toHaveBeenCalledWith('Invalid product data');
+    expect(screen.queryByTestId('confirm-dialog')).not.toBeInTheDocument();
   });
 
-  it("Menolak input non-angka di harga", () => {
-    const mockParams = { id: "123" }; // Mock params
-
-    render(<EditProductPage params={mockParams} />);
-    const priceInput = screen.getByLabelText(/Harga/i) as HTMLInputElement;
-    fireEvent.change(priceInput, { target: { value: "abc" } });
-
-    expect(priceInput.value).toBe(""); // Input harus kosong jika bukan angka
+  test('shows confirm dialog when form is submitted with valid data', async () => {
+    await act(async () => {
+      render(<EditProductPage params={mockParams} />);
+    });
+    
+    await waitFor(() => {
+      expect(fetchProduct).toHaveBeenCalledWith('123');
+    });
+    
+    // Submit the form
+    await act(async () => {
+      fireEvent.submit(screen.getByText('Simpan Perubahan'));
+    });
+    
+    // Check if confirm dialog is shown
+    expect(screen.getByTestId('confirm-dialog')).toBeInTheDocument();
   });
 
-  it("Menolak input non-angka di stok", () => {
-    const mockParams = { id: "123" }; // Mock params
+  test('calls updateProduct service when user confirms update', async () => {
+    // Mock successful update
+    (updateProduct as jest.Mock).mockResolvedValue({ ok: true });
+    
+    await act(async () => {
+      render(<EditProductPage params={mockParams} />);
+    });
+    
+    await waitFor(() => {
+      expect(fetchProduct).toHaveBeenCalledWith('123');
+    });
+    
+    // Submit the form
+    await act(async () => {
+      fireEvent.submit(screen.getByText('Simpan Perubahan'));
+    });
+    
+    // Confirm the update
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('confirm-button'));
+    });
+    
+    // Wait for the asynchronous update to complete
+    await waitFor(() => {
+      // Check if updateProduct was called with correct parameters
+      expect(updateProduct).toHaveBeenCalledWith('123', mockProduct);
+      expect(global.alert).toHaveBeenCalledWith('Produk berhasil diupdate!');
+      expect(mockRouter.push).toHaveBeenCalledWith('/semuaBarang');
+    });
+  });
 
-    render(<EditProductPage params={mockParams} />);
-    const stockInput = screen.getByLabelText(/Stok/i) as HTMLInputElement;
-    fireEvent.change(stockInput, { target: { value: "xyz" } });
+  test('shows error message when update fails', async () => {
+    // Mock failed update
+    (updateProduct as jest.Mock).mockResolvedValue({ ok: false });
+    
+    await act(async () => {
+      render(<EditProductPage params={mockParams} />);
+    });
+    
+    await waitFor(() => {
+      expect(fetchProduct).toHaveBeenCalledWith('123');
+    });
+    
+    // Submit the form
+    await act(async () => {
+      fireEvent.submit(screen.getByText('Simpan Perubahan'));
+    });
+    
+    // Confirm the update
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('confirm-button'));
+    });
+    
+    // Wait for the asynchronous update to complete
+    await waitFor(() => {
+      // Check if error alert was shown
+      expect(global.alert).toHaveBeenCalledWith('Gagal mengupdate produk.');
+      expect(mockRouter.push).not.toHaveBeenCalled();
+    });
+  });
 
-    expect(stockInput.value).toBe(""); // Input harus kosong jika bukan angka
+  test('closes confirm dialog when user cancels update', async () => {
+    await act(async () => {
+      render(<EditProductPage params={mockParams} />);
+    });
+    
+    await waitFor(() => {
+      expect(fetchProduct).toHaveBeenCalledWith('123');
+    });
+    
+    // Submit the form
+    await act(async () => {
+      fireEvent.submit(screen.getByText('Simpan Perubahan'));
+    });
+    
+    // Cancel the update
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('cancel-button'));
+    });
+    
+    // Check if confirm dialog is closed
+    expect(screen.queryByTestId('confirm-dialog')).not.toBeInTheDocument();
+    expect(updateProduct).not.toHaveBeenCalled();
+  });
+
+  test('navigates back when back button is clicked', async () => {
+    await act(async () => {
+      render(<EditProductPage params={mockParams} />);
+    });
+    
+    // Click back button
+    await act(async () => {
+      fireEvent.click(screen.getByText('←'));
+    });
+    
+    // Check if window.history.back was called
+    expect(window.history.back).toHaveBeenCalled();
+  });
+
+  test('handles image upload correctly', async () => {
+    await act(async () => {
+      render(<EditProductPage params={mockParams} />);
+    });
+    
+    await waitFor(() => {
+      expect(fetchProduct).toHaveBeenCalledWith('123');
+    });
+    
+    // Create a test file
+    const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+    
+    // Upload the file
+    await act(async () => {
+      const fileInput = screen.getByLabelText(/Upload/i);
+      fireEvent.change(fileInput, { target: { files: [file] } });
+    });
+    
+    // Check if the image preview is updated
+    await waitFor(() => {
+      expect(screen.getByAltText('Product Preview')).toBeInTheDocument();
+    });
   });
 });
