@@ -176,7 +176,7 @@ describe("AddProductPage", () => {
     
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost/api/produk/create",
+        "http://localhost/produk/create",
         expect.objectContaining({
           method: "POST",
           headers: { Authorization: "Bearer dummy-token" },

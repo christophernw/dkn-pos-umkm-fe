@@ -17,7 +17,7 @@ describe("config", () => {
       });
       jest.resetModules();
       const config = require("@/src/config").default;
-      expect(config.apiUrl).toBe("http://localhost:8000");
+      expect(config.apiUrl).toBe("http://localhost:8000/api");
       expect(config.hostname).toBe("http://localhost:3000/");
     });
   
@@ -28,7 +28,7 @@ describe("config", () => {
       });
       jest.resetModules();
       const config = require("@/src/config").default;
-      expect(config.apiUrl).toBe("http://localhost:8000");
+      expect(config.apiUrl).toBe("http://localhost:8000/api");
       expect(config.hostname).toBe("http://localhost:3000/");
     });
   
@@ -39,7 +39,7 @@ describe("config", () => {
       });
       jest.resetModules();
       const config = require("@/src/config").default;
-      expect(config.apiUrl).toBe("http://103.177.95.190:8000");
+      expect(config.apiUrl).toBe("api");
       expect(config.hostname).toBe("https://dkn-pos-umkm-fe.vercel.app/");
     });
   
@@ -50,7 +50,7 @@ describe("config", () => {
       });
       jest.resetModules();
       const config = require("@/src/config").default;
-      expect(config.apiUrl).toBe("http://103.177.95.190:8000");
+      expect(config.apiUrl).toBe("api");
       expect(config.hostname).toBe("https://dkn-pos-umkm-fe-staging.vercel.app/");
     });
   
@@ -61,7 +61,7 @@ describe("config", () => {
       });
       jest.resetModules();
       const config = require("@/src/config").default;
-      expect(config.apiUrl).toBe("http://103.177.95.190:8000");
+      expect(config.apiUrl).toBe("api");
       expect(config.hostname).toBe("http://localhost:3000/");
     });
   });
