@@ -39,7 +39,7 @@ describe("config", () => {
       });
       jest.resetModules();
       const config = require("@/src/config").default;
-      expect(config.apiUrl).toBe("api");
+      expect(config.apiUrl).toBe("backend-api");
       expect(config.hostname).toBe("https://dkn-pos-umkm-fe.vercel.app/");
     });
   
@@ -50,7 +50,7 @@ describe("config", () => {
       });
       jest.resetModules();
       const config = require("@/src/config").default;
-      expect(config.apiUrl).toBe("api");
+      expect(config.apiUrl).toBe("backend-api");
       expect(config.hostname).toBe("https://dkn-pos-umkm-fe-staging.vercel.app/");
     });
   
@@ -61,7 +61,7 @@ describe("config", () => {
       });
       jest.resetModules();
       const config = require("@/src/config").default;
-      expect(config.apiUrl).toBe("api");
+      expect(config.apiUrl).toBe("backend-api");
       expect(config.hostname).toBe("http://localhost:3000/");
     });
   });
