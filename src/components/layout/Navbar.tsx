@@ -8,32 +8,30 @@ import ProductIcon from '@/public/icons/navbar/ProductIcon'
 import SettingsIcon from '@/public/icons/navbar/SettingsIcon'
 import ReportIcon from '@/public/icons/navbar/ReportIcon'
 
-
 export const Navbar = () => {
     const navItems = React.useMemo(() => [
-        { text: 'Home', icon: HomeIcon, route: "/" },
-        { text: 'Transaction', icon: TransactionIcon, route: "/transaksi" },
-        { text: 'Product', icon: ProductIcon, route: "/daftarProduk" },
-        { text: 'Report', icon: ReportIcon, route: "/report" },
-        { text: 'Setting', icon: SettingsIcon, route: "/pengaturan" },
+        { text: 'Home', icon: HomeIcon, route: ["/"] },
+        { text: 'Transaction', icon: TransactionIcon, route: ["/transaksi"] },
+        { text: 'Product', icon: ProductIcon, route: ["/daftarProduk", "/semuaBarang"] },
+        { text: 'Report', icon: ReportIcon, route: ["/report"] },
+        { text: 'Setting', icon: SettingsIcon, route: ["/pengaturan"] },
     ], []);
 
     const [activeItem, setActiveItem] = useState<string | null>(null);
     const pathname = usePathname();
 
     useEffect(() => {
-      const activeMenuItem = navItems.find(item => 
-        pathname === item.route
-      );
-      
-      if (activeMenuItem) {
-        setActiveItem(activeMenuItem.text);
-      }
-
+        const activeMenuItem = navItems.find(item => 
+            item.route.some(r => r === pathname) // Cek apakah pathname ada di dalam array route
+        );
+        
+        if (activeMenuItem) {
+            setActiveItem(activeMenuItem.text);
+        }
     }, [pathname, navItems]);
-  
+
     const handleItemClick = (title: string) => {
-      setActiveItem(prev => (prev === title ? prev : title));
+        setActiveItem(prev => (prev === title ? prev : title));
     };
 
     return (
@@ -46,10 +44,10 @@ export const Navbar = () => {
                         toggleButton={() => handleItemClick(item.text)}
                         icon={item.icon}
                         text={item.text}
-                        route={item.route}
+                        route={item.route[0]} // Ambil route pertama sebagai navigasi default
                     />
                 ))}
             </div>
         </div>
-    )
-}
+    );
+};
