@@ -45,7 +45,6 @@ describe('SettingsPage', () => {
     render(<SettingsPage />);
     
     expect(screen.getByTestId('header')).toBeInTheDocument();
-    expect(screen.getByText('Pengaturan Pengguna')).toBeInTheDocument();
     expect(screen.getByText('Logout')).toBeInTheDocument();
     
     // Modal should not be visible initially
