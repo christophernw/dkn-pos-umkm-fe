@@ -23,15 +23,15 @@ const config: Config = {
     apiUrl: "http://localhost:8000",
   },
   production: {
-    apiUrl: "api",
+    apiUrl: "",
     hostname: "https://dkn-pos-umkm-fe.vercel.app/",
   },
   staging: {
-    apiUrl: "api",
+    apiUrl: "",
     hostname: "https://dkn-pos-umkm-fe-staging.vercel.app/",
   },
   test: {
-    apiUrl: "api",
+    apiUrl: "",
     hostname: "http://localhost:3000/",
   },
 };
