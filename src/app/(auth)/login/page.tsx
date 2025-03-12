@@ -18,7 +18,7 @@ export default function LoginPage() {
     useEffect(() => {
         if (session) {
             setLoading(true);
-            fetch(`${config.apiUrl}/api/auth/process-session`, {
+            fetch(`${config.apiUrl}/auth/process-session`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

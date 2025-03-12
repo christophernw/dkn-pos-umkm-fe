@@ -217,7 +217,7 @@ describe("AddProductPage handleSubmit functionality", () => {
     
     // Verify fetch was called with correct arguments
     expect(mockFetch).toHaveBeenCalledWith(
-      `${config.apiUrl}/api/produk/create`,
+      `${config.apiUrl}/produk/create`,
       expect.objectContaining({
         method: "POST",
         headers: {

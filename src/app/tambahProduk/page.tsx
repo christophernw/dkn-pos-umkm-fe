@@ -49,7 +49,7 @@ export default function AddProductPage() {
     }
 
     try {
-      const response = await fetch(`${config.apiUrl}/api/produk/create`, {
+      const response = await fetch(`${config.apiUrl}/produk/create`, {
         method: "POST",
         body: formData,
         headers: {

@@ -46,7 +46,7 @@ export default function ProductCard() {
         setIsLoading(true);
 
         const queryParam = searchParams.get("q") || "";
-        let url = `${config.apiUrl}/api/produk/page/${currentPage}`;
+        let url = `${config.apiUrl}/produk/page/${currentPage}`;
         const params = new URLSearchParams();
 
         if (sortParam) {
@@ -111,7 +111,7 @@ export default function ProductCard() {
 
     if (!isConfirmed) return;
     try {
-      const response = await fetch(`${config.apiUrl}/api/produk/delete/${id}`, {
+      const response = await fetch(`${config.apiUrl}/produk/delete/${id}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -147,7 +147,7 @@ export default function ProductCard() {
 
     try {
       const response = await fetch(
-        `${config.apiUrl}/api/produk/update/${selectedProduct.id}`,
+        `${config.apiUrl}/produk/update/${selectedProduct.id}`,
         {
           method: "PATCH",
           headers: {
