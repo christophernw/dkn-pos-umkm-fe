@@ -57,15 +57,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem('refreshToken');
     };
 
+    const value = React.useMemo(() => ({
+        user, 
+        accessToken, 
+        refreshToken, 
+        isAuthenticated: !!user, 
+        logout,
+        setAuthData 
+    }), [user, accessToken, refreshToken]);
+
     return (
-        <AuthContext.Provider value={{ 
-            user, 
-            accessToken, 
-            refreshToken, 
-            isAuthenticated: !!user, 
-            logout,
-            setAuthData 
-        }}>
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );
@@ -76,6 +78,6 @@ export const useAuth = () => {
     if (context === undefined) {
         throw new Error('useAuth must be used within an AuthProvider');
     }
-    console.log(context)
+    
     return context;
 };

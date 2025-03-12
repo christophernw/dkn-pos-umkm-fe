@@ -1,11 +1,13 @@
 import HeaderProduk from '@/src/components/HeaderProduk';
-import React from 'react' 
+import React, { Suspense } from 'react' 
 // rafce
 
 const DaftarProduk = () => {
   return (
     <div>
-      <HeaderProduk />
+      <Suspense fallback={<div>Loading header...</div>}>
+              <HeaderProduk />
+            </Suspense>
     </div>
   );
 }
