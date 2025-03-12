@@ -2,7 +2,8 @@
 
 import Image from "next/image"
 import { useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation"
+import config from '@/src/config';
 
 interface ProductCardProps {
   id: number;
@@ -29,14 +30,14 @@ export default function ProductCard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const sortParam = searchParams.get('sort');
 
   useEffect(() => {
     async function fetchData() {
       try {
         setIsLoading(true);
-        const sortParam = searchParams.get('sort');
+        let url = `${config.apiUrl}/api/produk/page/${currentPage}`;
         
-        let url = `http://localhost:8080/api/produk/page/${currentPage}`;
         if (sortParam) {
           url += `?sort=${sortParam}`;
         }
@@ -52,7 +53,7 @@ export default function ProductCard() {
       }
     }
     fetchData();
-  }, [currentPage, searchParams]);
+  }, [currentPage, sortParam]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -83,7 +84,7 @@ export default function ProductCard() {
     
     if (!isConfirmed) return; 
     try {
-      const response = await fetch(`http://localhost:8000/api/produk/delete/${id}`, {
+      const response = await fetch(`${config.apiUrl}/api/produk/delete/${id}`, {
         method: "DELETE",
       });
 
