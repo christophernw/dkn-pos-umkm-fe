@@ -3,7 +3,7 @@
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
-import { useSearchParams } from "next/navigation";
+import config from '@/src/config';
 
 interface ProductCardProps {
   id: number;
@@ -36,7 +36,7 @@ export default function ProductCard() {
     async function fetchData() {
       try {
         setIsLoading(true);
-        let url = `http://localhost:8000/api/produk/page/${currentPage}`;
+        let url = `${config.apiUrl}/api/produk/page/${currentPage}`;
         
         if (sortParam) {
           url += `?sort=${sortParam}`;
@@ -84,7 +84,7 @@ export default function ProductCard() {
     
     if (!isConfirmed) return; 
     try {
-      const response = await fetch(`http://localhost:8000/api/produk/delete/${id}`, {
+      const response = await fetch(`${config.apiUrl}/api/produk/delete/${id}`, {
         method: "DELETE",
       });
 
