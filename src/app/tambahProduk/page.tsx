@@ -1,5 +1,5 @@
 "use client";
-import { useState, ChangeEvent, FormEvent } from "react";
+import { useState, ChangeEvent } from "react";
 import TextInput from "./components/textInput";
 import { useAuth } from "@/contexts/AuthContext";
 import config from "@/src/config";
@@ -58,7 +58,6 @@ export default function AddProductPage() {
       });
 
       if (response.status === 201) {
-        const data = await response.json();
         alert("Produk berhasil ditambahkan!");
         window.location.href = "/semuaBarang";
       } else {
