@@ -18,8 +18,7 @@ export default function LoginPage() {
     useEffect(() => {
         if (session) {
             setLoading(true);
-            // Send session data to your Django backend
-            fetch(config.apiUrl, {
+            fetch(`${config.apiUrl}/api/auth/process-session`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -34,12 +33,10 @@ export default function LoginPage() {
                     refresh: data.refresh
                 });
                 
-                // Redirect user to dashboard or home page
                 router.push('/');
             })
             .catch(error => {
                 console.error('Authentication error:', error);
-                // Handle error - show error message to user
             })
             .finally(() => {
                 setLoading(false);
@@ -48,7 +45,7 @@ export default function LoginPage() {
     }, [session, router]);
 
     async function googleLogin() {
-        await signIn("google", { callbackUrl: "/", redirect: false })
+        await signIn("google", { callbackUrl: "/login", redirect: false })
     }
 
     return (

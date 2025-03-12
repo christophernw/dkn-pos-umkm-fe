@@ -2,15 +2,21 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, FormEvent } from "react";
 
 const HeaderProduk = () => {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const isSemuaBarangPage = pathname === "/semuaBarang";
+
+  useEffect(() => {
+    const currentSearchTerm = searchParams.get("q") || "";
+    setSearchTerm(currentSearchTerm);
+  }, [searchParams]);
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -22,6 +28,20 @@ const HeaderProduk = () => {
     
     router.push(`${pathname}?${params.toString()}`);
     setIsDropdownOpen(false);
+  };
+
+  const handleSearch = (e: FormEvent) => {
+    e.preventDefault();
+    
+    const params = new URLSearchParams(searchParams);
+    
+    if (searchTerm) {
+      params.set('q', searchTerm);
+    } else {
+      params.delete('q');
+    }
+    
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   return (
@@ -81,7 +101,7 @@ const HeaderProduk = () => {
           </div>
         </div>
       </header>
-      <div className="flex items-center max-w-md mx-auto">
+      <form onSubmit={handleSearch} className="flex items-center max-w-md mx-auto">
         <div className="relative flex w-full items-center bg-white rounded-full shadow-sm">
           <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
             <svg
@@ -107,7 +127,9 @@ const HeaderProduk = () => {
             id="simple-search"
             className="bg-white border border-[#EFF2F6] text-black rounded-full w-full py-3 pl-12 pr-14 focus:ring-1 focus:outline-none focus:ring-blue-600"
             placeholder="Cari Produk..."
-            required
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            required={false}
           />
           {/* Only show filter button on /semuaBarang page */}
           {isSemuaBarangPage ? (
@@ -159,7 +181,7 @@ const HeaderProduk = () => {
             </div>
           )}
         </div>
-      </div>
+      </form>
     </div>
   );
 };

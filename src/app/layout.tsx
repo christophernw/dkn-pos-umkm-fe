@@ -5,7 +5,6 @@ import { getServerSession } from "next-auth";
 import Provider from "./Provider";
 import { options } from "./lib/authoptions";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { useEffect, useState } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
