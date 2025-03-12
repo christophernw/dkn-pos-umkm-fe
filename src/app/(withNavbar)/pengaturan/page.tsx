@@ -20,11 +20,6 @@ export default function SettingsPage() {
     <div>
       <Header/>
       <div className="flex flex-col gap-2">
-        <Link href={'/multirole'}>
-          <div className="bg-white rounded-xl py-3 px-4 border">
-            <p>Pengaturan Pengguna</p>
-          </div>
-        </Link>
         <div onClick={() => setIsModalOpen(true)} className="bg-white rounded-xl py-3 px-4 border">
           <p>Logout</p>
         </div>
