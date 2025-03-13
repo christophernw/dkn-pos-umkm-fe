@@ -155,8 +155,9 @@ export default function AddProductPage() {
           label="Harga Jual"
           value={priceSell}
           onChange={setPriceSell}
-          placeholder="Rp 13.000"
+          placeholder="13.000"
           type="number"
+          currency
         />
 
         <TextInput
@@ -164,8 +165,9 @@ export default function AddProductPage() {
           label="Harga Modal"
           value={priceCost}
           onChange={setPriceCost}
-          placeholder="Rp 9.000"
+          placeholder="9.000"
           type="number"
+          currency
         />
 
         {/* Satuan (Unit) dan Stok */}
