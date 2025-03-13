@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react'
 import { Header } from './module-element/Header'
-import Link from 'next/link'
 import { Modal } from '@/src/components/elements/modal/Modal'
 import { signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -25,9 +25,9 @@ export default function SettingsPage() {
             <p>Pengaturan Pengguna</p>
           </div>
         </Link>
-        <div onClick={() => setIsModalOpen(true)} className="bg-white rounded-xl py-3 px-4 border">
-          <p>Logout</p>
-        </div>
+        <button onClick={() => setIsModalOpen(true)} className="bg-white rounded-xl py-3 px-4 border">
+          <p className="text-left">Logout</p>
+        </button>
       </div>
       {isModalOpen && 
           <Modal onClose={() => setIsModalOpen(false)}>

@@ -1,6 +1,9 @@
 "use client";
-import { useState, ChangeEvent, FormEvent } from "react";
+import { useState, ChangeEvent } from "react";
 import TextInput from "./components/textInput";
+import { useAuth } from "@/contexts/AuthContext";
+import config from "@/src/config";
+import { useRouter } from 'next/navigation';
 
 export default function AddProductPage() {
   const [productName, setProductName] = useState("");
@@ -11,10 +14,15 @@ export default function AddProductPage() {
   const [minimumStock, setMinimumStock] = useState("");
   const [unit, setUnit] = useState("Kg");
   const [previewImg, setPreviewImg] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const { accessToken } = useAuth();
+  const router = useRouter();
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
     const file = e.target.files[0];
+    setImageFile(file);
+
     const reader = new FileReader();
     reader.onload = () => {
       setPreviewImg(reader.result as string);
@@ -22,30 +30,73 @@ export default function AddProductPage() {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const productData = {
-      productName,
-      category,
-      priceSell,
-      priceCost,
-      currentStock,
-      minimumStock,
-      unit,
 
+    const formData = new FormData();
+
+    const payload = {
+      nama: productName,
+      kategori: category,
+      harga_jual: parseFloat(priceSell),
+      harga_modal: parseFloat(priceCost),
+      stok: parseFloat(currentStock),
+      satuan: unit,
     };
-    console.log("Product Data:", productData);
-    alert("Product submitted!");
+
+    formData.append("payload", JSON.stringify(payload));
+
+    if (imageFile) {
+      formData.append("foto", imageFile);
+    }
+
+    try {
+      const response = await fetch(`${config.apiUrl}/produk/create`, {
+        method: "POST",
+        body: formData,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (response.status === 201) {
+        alert("Produk berhasil ditambahkan!");
+        window.location.href = "/semuaBarang";
+      } else {
+        const errorData = await response.json();
+        console.error("Error creating product:", errorData);
+        alert(
+          `Gagal menambahkan produk: ${errorData.detail || "Unknown error"}`
+        );
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+      alert("Terjadi kesalahan jaringan. Silakan coba lagi.");
+    }
   };
 
   return (
-    <div className="max-w-md mx-auto p-4">
-      <header className="flex items-center mb-4">
+    <div className="max-w-md mx-auto p-4 mt-8">
+      <header className="flex items-center mb-5">
         <button
-          onClick={() => window.history.back()}
-          className="mr-2 text-gray-600 hover:text-gray-800"
+          onClick={() => router.back()}
+          className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2"
         >
-          ←
+          <svg
+            className="w-4 h-4 transform scale-x-[-1]"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 14 10"
+          >
+            <path
+              stroke="black"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M1 5h12m0 0L9 1m4 4L9 9"
+            />
+          </svg>
         </button>
         <h1 className="text-xl font-semibold">Tambah Produk Baru</h1>
       </header>
@@ -53,6 +104,7 @@ export default function AddProductPage() {
       <form
         onSubmit={handleSubmit}
         className="bg-white rounded-lg p-4 shadow-sm space-y-4"
+        encType="multipart/form-data"
       >
         {/* Placeholder/gambar */}
         <div className="flex justify-center">
@@ -95,6 +147,7 @@ export default function AddProductPage() {
           />
         </div>
 
+        {/* Rest of the form remains the same */}
         <TextInput
           id="productName"
           label="Nama Produk"
@@ -102,6 +155,8 @@ export default function AddProductPage() {
           onChange={setProductName}
           placeholder="Pie Jeruk"
         />
+
+        {/* Other fields remain the same... */}
 
         <TextInput
           id="category"
@@ -117,7 +172,7 @@ export default function AddProductPage() {
           value={priceSell}
           onChange={setPriceSell}
           placeholder="Rp 13.000"
-          type="number" 
+          type="number"
         />
 
         <TextInput

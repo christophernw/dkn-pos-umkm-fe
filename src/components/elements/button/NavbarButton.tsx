@@ -1,3 +1,5 @@
+'use client'
+
 import { IconInterface } from '@/public/icons/type';
 import Link from 'next/link';
 import React from 'react'
