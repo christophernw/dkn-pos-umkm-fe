@@ -15,8 +15,10 @@ export default function LoginPage() {
     const router = useRouter();
     const { setAuthData } = useAuth();
 
+    
     useEffect(() => {
         if (session) {
+            
             setLoading(true);
             // Send session data to your Django backend
             fetch(`${config.apiUrl}/api/auth/process-session`, {
