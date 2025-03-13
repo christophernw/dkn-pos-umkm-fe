@@ -67,7 +67,7 @@ export default function ProductCard() {
             "Content-Type": "application/json",
           },
         });
-        
+
         const result: PaginatedResponse = await response.json();
         setData(result.items);
         setTotalPages(result.total_pages);
@@ -128,11 +128,9 @@ export default function ProductCard() {
     }
   }
 
-  // Open stock update modal
   const handleOpenStockModal = (product: ProductCardProps) => {
-    setSelectedProduct(product);
-    setNewStockValue(product.stok);
-    setIsModalOpen(true);
+    // Redirect to edit page with product ID
+    window.location.href = `/editProduk/${product.id}`;
   };
 
   // Close stock update modal
@@ -246,7 +244,7 @@ export default function ProductCard() {
               className="text-xs h-8 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
               onClick={() => handleOpenStockModal(product)}
             >
-              Perbarui Stok
+              Perbarui Produk
             </button>
           </div>
         </div>
