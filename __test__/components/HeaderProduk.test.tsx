@@ -165,4 +165,39 @@ describe('HeaderProduk Component', () => {
     expect(mockPush.mock.calls[0][0]).toContain('/semuaBarang?');
     expect(mockPush.mock.calls[0][0]).toContain('sort=desc');
   })
+
+  it('should add search term to URL when form submitted with non-empty search', () => {
+    // Set up mocks
+    (usePathname as jest.Mock).mockReturnValue('/semuaBarang');
+    const mockToString = jest.fn(() => 'q=test%20search');
+    
+    // Create mock for URLSearchParams
+    const mockSet = jest.fn();
+    const mockDelete = jest.fn();
+    const originalURLSearchParams = global.URLSearchParams;
+    global.URLSearchParams = jest.fn().mockImplementation(() => ({
+      set: mockSet,
+      delete: mockDelete,
+      toString: mockToString
+    })) as any;
+    
+    render(<HeaderProduk />);
+    
+    // Fill in the search input
+    const searchInput = screen.getByPlaceholderText('Cari Produk...');
+    fireEvent.change(searchInput, { target: { value: 'test search' } });
+    
+    // Submit the form
+    const form = searchInput.closest('form');
+    fireEvent.submit(form!);
+    
+    // Check that the search parameter was set
+    expect(mockSet).toHaveBeenCalledWith('q', 'test search');
+    
+    // Check that router.push was called with the constructed URL
+    expect(mockPush).toHaveBeenCalledWith('/semuaBarang?q=test%20search');
+    
+    // Restore original URLSearchParams
+    global.URLSearchParams = originalURLSearchParams;
+  });
 })

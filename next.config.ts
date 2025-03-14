@@ -2,7 +2,8 @@
 const nextConfig = {
   images: {
       domains: [
-          "lancar.s3.amazonaws.com" 
+          "lancar.s3.amazonaws.com",
+          "localhost",
       ],
   },
 };
