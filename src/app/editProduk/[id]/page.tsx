@@ -1,95 +1,128 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { fetchProduct, updateProduct } from "@/src/services/productServices";
-import { validateProductData } from "@/src/services/validation";
-import ConfirmDialog from "@/src/components/ConfirmDialog";
+import { useState, useEffect, ChangeEvent } from "react";
+import { useParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import config from "@/src/config";
+import TextInput from "../../tambahProduk/components/textInput";
 
-// Definisikan tipe untuk data produk (untuk TypeScript)
-interface Product {
-  nama: string;
-  kategori: string;
-  harga_modal: string;
-  harga_jual: string;
-  stok: string;
-  foto: string | null;
-  satuan: string;
-}
+export default function EditProductPage() {
+  const { id } = useParams();
+  const [productName, setProductName] = useState("");
+  const [category, setCategory] = useState("");
+  const [priceSell, setPriceSell] = useState("");
+  const [priceCost, setPriceCost] = useState("");
+  const [currentStock, setCurrentStock] = useState("");
+  const [unit, setUnit] = useState("Kg");
+  const [previewImg, setPreviewImg] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { accessToken } = useAuth();
 
-export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
-  const router = useRouter();
-  const { accessToken } = useAuth() || { accessToken: "" };
-  const [productId, setProductId] = useState<string | null>(null);
-  const [product, setProduct] = useState<Product>({
-    nama: "",
-    kategori: "",
-    harga_modal: "",
-    harga_jual: "",
-    stok: "",
-    foto: null,
-    satuan: "",
-  });
-  const [showConfirm, setShowConfirm] = useState(false);
-
+  // Fetch product data when component mounts
   useEffect(() => {
-    params.then((resolvedParams) => {
-      setProductId(resolvedParams.id);
-    });
-  }, [params]);
-
-  useEffect(() => {
-    if (!productId) return;
-    if (accessToken) {
-      fetchProduct(productId, accessToken)
-      .then((data: Product) => setProduct(data))
-    } else {
-      console.error("Access token is missing");
+    async function fetchProduct() {
+      if (!accessToken || !id) return;
+      
+      try {
+        const response = await fetch(`${config.apiUrl}/produk/${id}`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        });
+        
+        if (response.ok) {
+          const product = await response.json();
+          
+          // Populate form with existing data
+          setProductName(product.nama || "");
+          setCategory(product.kategori || "");
+          setPriceSell(product.harga_jual?.toString() || "");
+          setPriceCost(product.harga_modal?.toString() || "");
+          setCurrentStock(product.stok?.toString() || "");
+          setUnit(product.satuan || "Kg");
+          
+          // If product has an image, set the preview
+          if (product.foto) {
+            setPreviewImg(`${config.apiUrl}${product.foto.slice(4)}`);
+          }
+        } else {
+          console.error("Failed to fetch product");
+        }
+      } catch (error) {
+        console.error("Error fetching product:", error);
+      } finally {
+        setLoading(false);
+      }
     }
-  }, [productId, accessToken]);
+    
+    fetchProduct();
+  }, [id, accessToken]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setProduct({ ...product, [e.target.name]: e.target.value });
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
     const file = e.target.files[0];
+    setImageFile(file);
+
     const reader = new FileReader();
     reader.onload = () => {
-      setProduct({ ...product, foto: reader.result as string });
+      setPreviewImg(reader.result as string);
     };
     reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const errorMessage = validateProductData({
-      price: product.harga_jual,
-      stock: product.stok,
-    });
-    if (errorMessage) {
-      alert(errorMessage);
-      return;
+
+    const formData = new FormData();
+
+    const payload = {
+      nama: productName,
+      kategori: category,
+      harga_jual: parseFloat(priceSell),
+      harga_modal: parseFloat(priceCost),
+      stok: parseFloat(currentStock),
+      satuan: unit,
+    };
+
+    formData.append("payload", JSON.stringify(payload));
+
+    if (imageFile) {
+      formData.append("foto", imageFile);
     }
-    setShowConfirm(true);
+
+    try {
+      const response = await fetch(`${config.apiUrl}/produk/update/${id}`, {
+        method: "POST",
+        body: formData,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (response.ok) {
+        alert("Produk berhasil diperbarui!");
+        window.location.href = "/semuaBarang";
+      } else {
+        const errorData = await response.json();
+        console.error("Error updating product:", errorData);
+        alert(
+          `Gagal memperbarui produk: ${errorData.detail || "Unknown error"}`
+        );
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+      alert("Terjadi kesalahan jaringan. Silakan coba lagi.");
+    }
   };
 
-  const handleConfirmUpdate = async () => {
-    if (!productId || !accessToken) {
-      console.error("Product ID or access token is missing");
-      return;
-    }
-    
-    setShowConfirm(false);
-    const response = await updateProduct(productId!, product, accessToken);
-    if (response.ok) {
-      alert("Produk berhasil diperbarui!");
-      window.location.href="/semuaBarang";
-    } else {
-      alert("Gagal memperbarui produk");
-    }
-  };
+  if (loading) {
+    return (
+      <div className="max-w-md mx-auto p-4 flex justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-md mx-auto p-4">
@@ -102,21 +135,21 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         </button>
         <h1 className="text-xl font-semibold">Edit Produk</h1>
       </header>
-      {showConfirm && (
-        <ConfirmDialog
-          onConfirm={handleConfirmUpdate}
-          onCancel={() => setShowConfirm(false)}
-        />
-      )}
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg p-4 shadow-sm space-y-4">
+
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white rounded-lg p-4 shadow-sm space-y-4"
+        encType="multipart/form-data"
+      >
+        {/* Placeholder/gambar */}
         <div className="flex justify-center">
           <label
             htmlFor="imageUpload"
             className="w-32 h-32 flex items-center justify-center border border-dashed border-gray-300 rounded cursor-pointer"
           >
-            {product.foto ? (
+            {previewImg ? (
               <img
-                src={product.foto}
+                src={previewImg}
                 alt="Product Preview"
                 className="object-cover w-full h-full rounded"
               />
@@ -149,76 +182,52 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           />
         </div>
 
-        <div>
-          <label htmlFor="nama" className="block text-sm font-medium text-gray-700">
-            Nama Produk
-          </label>
-          <input
-            id="nama"
-            type="text"
-            name="nama"
-            value={product.nama}
-            onChange={handleChange}
-            placeholder={product.nama}
-            className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          />
-        </div>
+        <TextInput
+          id="productName"
+          label="Nama Produk"
+          value={productName}
+          onChange={setProductName}
+          placeholder="Pie Jeruk"
+        />
 
-        <div>
-          <label htmlFor="kategori" className="block text-sm font-medium text-gray-700">
-            Kategori
-          </label>
-          <input
-            id="kategori"
-            type="text"
-            name="kategori"
-            value={product.kategori}
-            onChange={handleChange}
-            placeholder={product.kategori}
-            className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          />
-        </div>
+        <TextInput
+          id="category"
+          label="Kategori"
+          value={category}
+          onChange={setCategory}
+          placeholder="Makanan"
+        />
 
-        <div>
-          <label htmlFor="harga_jual" className="block text-sm font-medium text-gray-700">
-            Harga Jual
-          </label>
-          <input
-            id="harga_jual"
-            type="number"
-            name="harga_jual"
-            value={product.harga_jual}
-            onChange={handleChange}
-            placeholder={product.harga_jual}
-            className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          />
-        </div>
-          
-        <div>
-          <label htmlFor="harga_modal" className="block text-sm font-medium text-gray-700">
-            Harga Modal
-          </label>
-          <input
-            id="harga_modal"
-            type="number"
-            name="harga_modal"
-            value={product.harga_modal}
-            onChange={handleChange}
-            placeholder={product.harga_modal}
-            className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          />
-        </div>
+        <TextInput
+          id="priceSell"
+          label="Harga Jual"
+          value={priceSell}
+          onChange={setPriceSell}
+          placeholder="Rp 13.000"
+          type="number"
+        />
+
+        <TextInput
+          id="priceCost"
+          label="Harga Modal"
+          value={priceCost}
+          onChange={setPriceCost}
+          placeholder="Rp 9.000"
+          type="number"
+        />
 
         <div className="flex items-center justify-between space-x-4">
           <div className="w-1/3">
-            <label htmlFor="unit" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="unit"
+              className="block text-sm font-medium text-gray-700"
+            >
               Pilih Satuan
             </label>
             <select
               id="unit"
-              name="satuan"
-              value={product.satuan}
-              onChange={handleChange}
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
               className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             >
               <option value="Pcs">Pcs</option>
@@ -228,25 +237,26 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             </select>
           </div>
 
-          <div>
-            <label htmlFor="stok" className="block text-sm font-medium text-gray-700">
-              Stok Saat Ini
-            </label>
-            <input
-              id="stok"
+          <div className="w-2/3">
+            <TextInput
+              id="currentStock"
+              label="Stok Saat Ini"
+              value={currentStock}
+              onChange={setCurrentStock}
+              placeholder="450"
               type="number"
-              name="stok"
-              value={product.stok}
-              onChange={handleChange}
-              placeholder={product.stok}
-              className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
         </div>
 
-        <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-          Simpan Perubahan
-        </button>
+        <div className="pt-4">
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+          >
+            Simpan Perubahan
+          </button>
+        </div>
       </form>
     </div>
   );

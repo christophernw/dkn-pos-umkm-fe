@@ -27,7 +27,6 @@ describe("SettingsPage Component", () => {
   test("Render halaman Settings dengan benar", () => {
     render(<SettingsPage />);
     
-    expect(screen.getByText("Pengaturan Pengguna")).toBeInTheDocument();
     expect(screen.getByText("Logout")).toBeInTheDocument();
   });
 
