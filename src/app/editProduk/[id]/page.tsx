@@ -74,6 +74,11 @@ export default function EditProductPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!productName || !category || !priceSell || !currentStock || !unit) {
+      alert("Semua kolom harus diisi sebelum menyimpan perubahan.");
+      return;
+    }  
+
     const formData = new FormData();
 
     const payload = {
@@ -188,6 +193,7 @@ export default function EditProductPage() {
           value={productName}
           onChange={setProductName}
           placeholder="Pie Jeruk"
+          required={true}
         />
 
         <TextInput
@@ -196,6 +202,7 @@ export default function EditProductPage() {
           value={category}
           onChange={setCategory}
           placeholder="Makanan"
+          required={true}
         />
 
         <TextInput
@@ -205,6 +212,7 @@ export default function EditProductPage() {
           onChange={setPriceSell}
           placeholder="Rp 13.000"
           type="number"
+          required={true}
         />
 
         <TextInput
@@ -214,6 +222,9 @@ export default function EditProductPage() {
           onChange={setPriceCost}
           placeholder="Rp 9.000"
           type="number"
+          disabled={true} // Tambahkan ini
+          className="bg-gray-100 cursor-not-allowed mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+
         />
 
         <div className="flex items-center justify-between space-x-4">
