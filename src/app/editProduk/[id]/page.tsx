@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, ChangeEvent } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import config from "@/src/config";
 import TextInput from "../../tambahProduk/components/textInput";
@@ -17,6 +17,7 @@ export default function EditProductPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
   const { accessToken } = useAuth();
+  const router = useRouter();
 
   // Fetch product data when component mounts
   useEffect(() => {
@@ -125,13 +126,27 @@ export default function EditProductPage() {
   }
 
   return (
-    <div className="max-w-md mx-auto p-4">
-      <header className="flex items-center mb-4">
-        <button
-          onClick={() => window.history.back()}
-          className="mr-2 text-gray-600 hover:text-gray-800"
+    <div className="max-w-md mx-auto p-4 mt-8">
+      <header className="flex items-center mb-5">
+      <button
+          onClick={() => router.back()}
+          className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2"
         >
-          ←
+          <svg
+            className="w-4 h-4 transform scale-x-[-1]"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 14 10"
+          >
+            <path
+              stroke="black"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M1 5h12m0 0L9 1m4 4L9 9"
+            />
+          </svg>
         </button>
         <h1 className="text-xl font-semibold">Edit Produk</h1>
       </header>

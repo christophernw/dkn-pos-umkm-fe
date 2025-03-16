@@ -2,11 +2,32 @@
 
 import HeaderProduk from "@/src/components/HeaderProduk";
 import ProductCard from "@/src/components/ProductCard";
-import React, { Suspense } from "react";
+import React, { Suspense, useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const SemuaBarang = () => {
   const { user } = useAuth();
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const controlButton = () => {
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY > lastScrollY) {
+        setIsVisible(false);
+      } else {
+        setIsVisible(true);
+      }
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", controlButton);
+
+    return () => {
+      window.removeEventListener("scroll", controlButton);
+    };
+  }, [lastScrollY]); 
 
   return (
     <div className="relative min-h-screen">
@@ -22,7 +43,11 @@ const SemuaBarang = () => {
       <Suspense fallback={<div>Loading...</div>}>
         <ProductCard />
       </Suspense>
-      <div className="fixed bottom-4 flex justify-end px-4 pb-24">
+      <div 
+        className={`fixed bottom-4 flex justify-end px-4 pb-24 transition-all duration-300 ${
+          isVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'
+        }`}
+      >
         <button
           className="bg-blue-600 hover:bg-blue-700 text-white text-4xl flex items-center justify-center h-14 w-14 font-medium rounded-full shadow-md"
           onClick={() => (window.location.href = "/tambahProduk")}
