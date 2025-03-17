@@ -368,4 +368,47 @@ describe("AddProductPage handleSubmit functionality", () => {
       expect(previewImg).toHaveClass("rounded");
     });
   });
+
+  it("rejects a file larger than 3MB", async () => {
+    render(<AddProductPage />);
+
+    // Create a mock 4MB file (should be rejected)
+    const largeFile = new File([new Uint8Array(4 * 1024 * 1024)], "large.jpg", {
+      type: "image/jpeg",
+    });
+
+    const fileInput = screen.getByLabelText("Upload") as HTMLInputElement;
+
+    // Try to upload a file
+    fireEvent.change(fileInput, { target: { files: [largeFile] } });
+
+    // Check if alert is triggered
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith(
+        "Ukuran file terlalu besar! Maksimal 3MB."
+      );
+    });
+  });
+  
+  it("accepts a valid image file (<=3MB)", async () => {
+    render(<AddProductPage />);
+
+    // Create a mock valid image file (2MB)
+    const validFile = new File([new Uint8Array(2 * 1024 * 1024)], "image.png", {
+      type: "image/png",
+    });
+
+    const fileInput = screen.getByLabelText("Upload") as HTMLInputElement;
+
+    // Try to upload a file
+    fireEvent.change(fileInput, { target: { files: [validFile] } });
+
+    // Ensure no alert is triggered
+    await waitFor(() => {
+      expect(window.alert).not.toHaveBeenCalled();
+    });
+
+    // Check if image preview is displayed
+    expect(screen.getByAltText("Product Preview")).toBeInTheDocument();
+  });
 });

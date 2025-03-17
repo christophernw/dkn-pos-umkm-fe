@@ -21,9 +21,16 @@ export default function AddProductPage() {
     const file = e.target.files[0];
 
     const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+    const maxSizeMB = 3;
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
     if (!allowedTypes.includes(file.type)) {
       alert("Format file tidak didukung! Silakan unggah PNG, JPG, atau JPEG.");
+      return;
+    }
+
+    if (file.size > maxSizeBytes) {
+      alert(`Ukuran file terlalu besar! Maksimal ${maxSizeMB}MB.`);
       return;
     }
   
