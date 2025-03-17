@@ -1,3 +1,4 @@
+// src/app/editProduk/[id]/page.tsx
 "use client";
 import { useState, useEffect, ChangeEvent } from "react";
 import { useParams } from "next/navigation";
@@ -181,6 +182,7 @@ export default function EditProductPage() {
           <input
             type="file"
             id="imageUpload"
+            data-testid="upload-input"
             className="hidden"
             accept="image/*"
             onChange={handleImageChange}
