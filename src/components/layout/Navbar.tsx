@@ -10,9 +10,9 @@ import ReportIcon from '@/public/icons/navbar/ReportIcon'
 
 export const Navbar = () => {
     const navItems = React.useMemo(() => [
-        { text: 'Home', icon: HomeIcon, route: ["/"] },
-        { text: 'Transaction', icon: TransactionIcon, route: ["/transaksi"] },
         { text: 'Product', icon: ProductIcon, route: ["/daftarProduk", "/semuaBarang"] },
+        { text: 'Transaction', icon: TransactionIcon, route: ["/transaksi"] },
+        { text: 'Home', icon: HomeIcon, route: ["/"] },
         { text: 'Report', icon: ReportIcon, route: ["/report"] },
         { text: 'Setting', icon: SettingsIcon, route: ["/pengaturan"] },
     ], []);
@@ -36,7 +36,7 @@ export const Navbar = () => {
 
     return (
         <div className="bg-white fixed bottom-0 w-full sm:w-[402px] py-3 pb-7 shadow-[0_-4px_6px_0px_rgba(0,0,0,0.1)]">
-            <div className="flex gap-4 justify-center ">
+            <div className="grid grid-cols-5 px-2 gap-1">
                 {navItems.map((item) => (
                     <NavbarButton
                         key={item.text}
