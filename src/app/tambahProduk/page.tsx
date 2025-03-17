@@ -19,6 +19,14 @@ export default function AddProductPage() {
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
     const file = e.target.files[0];
+
+    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+
+    if (!allowedTypes.includes(file.type)) {
+      alert("Format file tidak didukung! Silakan unggah PNG, JPG, atau JPEG.");
+      return;
+    }
+  
     setImageFile(file);
 
     const reader = new FileReader();
@@ -26,7 +34,7 @@ export default function AddProductPage() {
       setPreviewImg(reader.result as string);
     };
     reader.readAsDataURL(file);
-  };
+  };  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,7 +144,7 @@ export default function AddProductPage() {
           id="productName"
           label="Nama Produk"
           value={productName}
-          onChange={setProductName}
+          onChange={(value) => setProductName(value)}
           placeholder="Pie Jeruk"
         />
 
@@ -146,7 +154,7 @@ export default function AddProductPage() {
           id="category"
           label="Kategori"
           value={category}
-          onChange={setCategory}
+          onChange={(value) => setCategory(value)}
           placeholder="Makanan"
         />
 
@@ -154,7 +162,7 @@ export default function AddProductPage() {
           id="priceSell"
           label="Harga Jual"
           value={priceSell}
-          onChange={setPriceSell}
+          onChange={(_, raw) => setPriceSell(raw)}
           placeholder="13.000"
           type="number"
           currency
@@ -164,7 +172,7 @@ export default function AddProductPage() {
           id="priceCost"
           label="Harga Modal"
           value={priceCost}
-          onChange={setPriceCost}
+          onChange={(_, raw) => setPriceCost(raw)}
           placeholder="9.000"
           type="number"
           currency

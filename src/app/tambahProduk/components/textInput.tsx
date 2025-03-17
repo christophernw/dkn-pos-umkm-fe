@@ -1,14 +1,19 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 
 interface TextInputProps {
   id: string;
   label: string;
   value: string;
-  onChange: (value: string) => void;
+  onChange: (formatted: string, raw: string) => void;
   placeholder?: string;
   type?: React.InputHTMLAttributes<HTMLInputElement>["type"];
   currency?: boolean;
+}
+
+function formatHarga(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 export default function TextInput({
@@ -20,42 +25,22 @@ export default function TextInput({
   type = "text",
   currency = false,
 }: TextInputProps) {
+  const [inputValue, setInputValue] = useState(value);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let newValue = e.target.value;
 
-    if (type === "number") {
-      newValue = newValue.replace(/[^0-9.]/g, "");
-
-      const parts = newValue.split(".");
-      if (parts.length > 2) {
-        newValue = parts[0] + "." + parts.slice(1).join("");
-      }
+    if (type === "number" && currency) {
+      newValue = newValue.replace(/\D/g, "");
+      const formattedValue = formatHarga(newValue);
+      setInputValue(formattedValue);
+      onChange(formattedValue, newValue);
+      return;
     }
-    onChange(newValue);
+
+    setInputValue(newValue);
+    onChange(newValue, newValue);
   };
-  if (type === "number" && currency) {
-    return (
-      <div>
-        <label htmlFor={id} className="block text-sm font-medium text-gray-700">
-          {label}
-        </label>
-        <div className="relative mt-1">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-            Rp
-          </span>
-          <input
-            id={id}
-            type="text"
-            inputMode="decimal"
-            value={value}
-            onChange={handleChange}
-            placeholder={placeholder}
-            className="mt-1 block w-full rounded border-gray-300 shadow-sm pl-10 focus:border-blue-500 focus:ring-blue-500"
-          />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div>
@@ -65,8 +50,8 @@ export default function TextInput({
       <input
         id={id}
         type={type === "number" ? "text" : type}
-        inputMode={type === "number" ? "decimal" : undefined}
-        value={value}
+        inputMode={type === "number" ? "numeric" : "text"}
+        value={inputValue}
         placeholder={placeholder}
         onChange={handleChange}
         className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
