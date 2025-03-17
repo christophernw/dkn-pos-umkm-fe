@@ -21,6 +21,21 @@ export default function AddProductPage() {
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
     const file = e.target.files[0];
+
+    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+    const maxSizeMB = 3;
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+
+    if (!allowedTypes.includes(file.type)) {
+      alert("Format file tidak didukung! Silakan unggah PNG, JPG, atau JPEG.");
+      return;
+    }
+
+    if (file.size > maxSizeBytes) {
+      alert(`Ukuran file terlalu besar! Maksimal ${maxSizeMB}MB.`);
+      return;
+    }
+  
     setImageFile(file);
 
     const reader = new FileReader();
@@ -28,7 +43,7 @@ export default function AddProductPage() {
       setPreviewImg(reader.result as string);
     };
     reader.readAsDataURL(file);
-  };
+  };  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,7 +167,7 @@ export default function AddProductPage() {
           id="productName"
           label="Nama Produk"
           value={productName}
-          onChange={setProductName}
+          onChange={(value) => setProductName(value)}
           placeholder="Pie Jeruk"
         />
 
@@ -162,7 +177,7 @@ export default function AddProductPage() {
           id="category"
           label="Kategori"
           value={category}
-          onChange={setCategory}
+          onChange={(value) => setCategory(value)}
           placeholder="Makanan"
         />
 
@@ -170,18 +185,20 @@ export default function AddProductPage() {
           id="priceSell"
           label="Harga Jual"
           value={priceSell}
-          onChange={setPriceSell}
-          placeholder="Rp 13.000"
+          onChange={(_, raw) => setPriceSell(raw)}
+          placeholder="13.000"
           type="number"
+          currency
         />
 
         <TextInput
           id="priceCost"
           label="Harga Modal"
           value={priceCost}
-          onChange={setPriceCost}
-          placeholder="Rp 9.000"
+          onChange={(_, raw) => setPriceCost(raw)}
+          placeholder="9.000"
           type="number"
+          currency
         />
 
         {/* Satuan (Unit) dan Stok */}

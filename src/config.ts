@@ -31,7 +31,7 @@ const config: Config = {
     hostname: "https://dkn-pos-umkm-fe-staging.vercel.app/",
   },
   test: {
-    apiUrl: "/backend-api",
+    apiUrl: "backend-api",
     hostname: "http://localhost:3000/",
   },
 };

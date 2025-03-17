@@ -25,6 +25,10 @@ interface PaginatedResponse {
   total_pages: number;
 }
 
+function formatHarga(num: number): string {
+  return String(num).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
 export default function ProductCard() {
   const searchParams = useSearchParams();
   const [data, setData] = useState<ProductCardProps[]>([]);
@@ -234,7 +238,7 @@ export default function ProductCard() {
           </div>
           <p className="text-gray-500 text-sm mt-2">Harga Jual</p>
           <p className="font-medium text-sm text-blue-700 mt-1">
-            Rp {product.harga_jual} / {product.satuan}
+            Rp {formatHarga(product.harga_jual)} / {product.satuan}
           </p>
           <div className="flex justify-between items-center mt-2">
             <span className="text-sm text-green-700 bg-green-100 px-2 py-1 rounded-lg">
