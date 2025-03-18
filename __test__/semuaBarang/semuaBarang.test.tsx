@@ -59,9 +59,8 @@ describe("SemuaBarang", () => {
     useAuth.mockReturnValue({ user: { name: "John Doe" } });
     
     render(<SemuaBarang />);
-    
-    // Get the button with "+"
-    const button = screen.getByRole("button", { name: "+" });
+
+    const button = screen.getByRole("button", { name: "tambah produk button" });
     fireEvent.click(button);
     
     // Check that window.location.href is updated
