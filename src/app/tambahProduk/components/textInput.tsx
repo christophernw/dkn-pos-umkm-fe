@@ -47,6 +47,22 @@ export default function TextInput({
       <label htmlFor={id} className="block text-sm font-medium text-gray-700">
         {label}
       </label>
+      {currency ? (
+        <div className="relative mt-1">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+            Rp
+          </span>
+          <input
+            id={id}
+            type="text"
+            inputMode="numeric"
+            value={inputValue}
+            placeholder={placeholder}
+            onChange={handleChange}
+            className="mt-1 block w-full rounded border-gray-300 shadow-sm pl-10 focus:border-blue-500 focus:ring-blue-500"
+          />
+        </div>
+      ) : (
       <input
         id={id}
         type={type === "number" ? "text" : type}
@@ -56,6 +72,7 @@ export default function TextInput({
         onChange={handleChange}
         className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
       />
+      )}
     </div>
   );
 }
