@@ -42,6 +42,10 @@ export default function ProductCard() {
   const [selectedProduct, setSelectedProduct] =
     useState<ProductCardProps | null>(null);
   const [newStockValue, setNewStockValue] = useState(0);
+  
+  const handleEdit = (id: number) => {
+    window.location.href = `/editProduk/${id}`
+  }
 
   useEffect(() => {
     async function fetchData() {
@@ -249,6 +253,12 @@ export default function ProductCard() {
               onClick={() => handleOpenStockModal(product)}
             >
               Perbarui Produk
+            </button>
+            <button 
+                className="text-xs h-8 px-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
+                onClick={() => handleEdit(product.id)}
+              >
+                Edit Produk
             </button>
           </div>
         </div>
