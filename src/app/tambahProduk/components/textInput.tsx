@@ -9,6 +9,9 @@ interface TextInputProps {
   placeholder?: string;
   type?: React.InputHTMLAttributes<HTMLInputElement>["type"];
   currency?: boolean;
+  disabled?: boolean;
+  className?: string;
+  required?: boolean;
 }
 
 function formatHarga(value: string): string {

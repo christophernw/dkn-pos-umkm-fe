@@ -43,6 +43,10 @@ export default function ProductCard() {
     useState<ProductCardProps | null>(null);
   const [newStockValue, setNewStockValue] = useState(0);
 
+  const handleEdit = (id: number) => {
+    window.location.href = '/editProduk/${id}'
+  }
+
   useEffect(() => {
     async function fetchData() {
       if (!accessToken) return;
@@ -134,9 +138,7 @@ export default function ProductCard() {
 
   // Open stock update modal
   const handleOpenStockModal = (product: ProductCardProps) => {
-    setSelectedProduct(product);
-    setNewStockValue(product.stok);
-    setIsModalOpen(true);
+    window.location.href = `/editProduk/${product.id}`;
   };
 
   // Close stock update modal
@@ -251,6 +253,12 @@ export default function ProductCard() {
               onClick={() => handleOpenStockModal(product)}
             >
               Perbarui Stok
+            </button>
+            <button
+                className="text-xs h-8 px-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
+                onClick={() => handleEdit(product.id)}
+              >
+                Edit Produk
             </button>
           </div>
         </div>
