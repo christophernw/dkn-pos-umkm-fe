@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -11,7 +11,7 @@ jest.mock("next/navigation", () => ({
 }));
 
 jest.mock("next-auth/react", () => ({
-  signOut: jest.fn(),
+  signOut: jest.fn(() => Promise.resolve()),
 }));
 
 describe("SettingsPage Component", () => {
@@ -41,8 +41,17 @@ describe("SettingsPage Component", () => {
   test("calls signOut and redirects on confirm logout", async () => {
     render(<SettingsPage />);
     
+    // Buka modal logout
     fireEvent.click(screen.getByText("Logout"));
-    fireEvent.click(screen.getByText("Ya"));
+    
+    // Gunakan act untuk wrap operasi async
+    await act(async () => {
+      // Klik tombol Ya
+      fireEvent.click(screen.getByText("Ya"));
+    });
+
+    // Tunggu proses async selesai
+    await new Promise(resolve => setTimeout(resolve, 0));
     
     expect(signOut).toHaveBeenCalledWith({ redirect: false });
     expect(mockPush).toHaveBeenCalledWith("/");

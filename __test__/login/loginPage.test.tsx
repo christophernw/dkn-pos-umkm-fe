@@ -1,7 +1,6 @@
 import LoginPage from "@/src/app/(auth)/login/page";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { useRouter } from 'next/navigation';
-import { signIn, useSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
 
 // Mock semua modul yang diperlukan
 jest.mock("next-auth/react", () => ({
