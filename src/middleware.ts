@@ -7,7 +7,7 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const PROTECTED_ROUTES = ["daftarProduk", "semuaBarang","multirole"];
+  const PROTECTED_ROUTES = ["daftarProduk", "semuaBarang","multirole","pengaturan", "tambahProduk"];
 
   const isProtectedRoute = PROTECTED_ROUTES.some((route) =>
     pathname.includes(route)

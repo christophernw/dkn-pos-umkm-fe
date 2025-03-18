@@ -27,6 +27,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await getServerSession(options);
+
   return (
     <html lang="en">
       <body
@@ -34,7 +35,6 @@ export default async function RootLayout({
       >
         <Provider session={session}>
           <AuthProvider>
-            {" "}
             <div className="w-full sm:w-[402px] min-h-screen bg-[#EDF1F9]">
               <div className="h-full">{children}</div>
             </div>
