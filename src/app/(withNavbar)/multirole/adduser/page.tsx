@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AiOutlineArrowLeft } from "react-icons/ai";
-import DOMPurify from "dompurify"; // Import DOMPurify for sanitization
+import DOMPurify from "dompurify";
+import { sendEmail } from "@/src/app/lib/sendInvitationEmail";
 
 export default function AddUserPage() {
   const router = useRouter();
@@ -12,6 +13,8 @@ export default function AddUserPage() {
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
   const [errors, setErrors] = useState({
     name: "",
@@ -19,9 +22,7 @@ export default function AddUserPage() {
     email: "",
   });
 
-  const sanitizeInput = (input: string) => {
-    return DOMPurify.sanitize(input.trim());
-  };
+  const sanitizeInput = (input: string) => DOMPurify.sanitize(input.trim());
 
   const validateInputs = () => {
     let valid = true;
@@ -36,15 +37,11 @@ export default function AddUserPage() {
     } else if (cleanName.length < 3) {
       newErrors.name = "Nama minimal 3 karakter";
       valid = false;
-    } else {
-      valid = true;
     }
 
     if (!role) {
       newErrors.role = "Pilih role terlebih dahulu";
       valid = false;
-    } else {
-      valid = true;
     }
 
     if (!cleanEmail) {
@@ -53,27 +50,37 @@ export default function AddUserPage() {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
       newErrors.email = "Format email tidak valid";
       valid = false;
-    } else {
-      valid = true;
     }
 
     setErrors(newErrors);
     return valid;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (validateInputs()) {
-      const sanitizedData = {
-        name: sanitizeInput(name),
-        role: sanitizeInput(role),
-        email: sanitizeInput(email),
-      };
-
-      console.log(sanitizedData);
+  
+    if (!validateInputs()) return;
+  
+    setLoading(true);
+    setMessage("");
+  
+    try {
+      const inviteLink = `${process.env.NEXT_PUBLIC_EMAILJS_URL}/auth/invite?email=${encodeURIComponent(email)}`;
+  
+      await sendEmail({ to: email, inviteLink });
+  
+      setMessage("Undangan berhasil dikirim!");
+      setName("");
+      setRole("");
+      setEmail("");
+    } catch (error) {
+      console.error("Email sending failed:", error);
+      setMessage("Terjadi kesalahan saat mengirim undangan.");
+    } finally {
+      setLoading(false);
     }
   };
+  
 
   return (
     <div className="min-h-screen bg-[#EDF1F9] p-4">
@@ -88,8 +95,8 @@ export default function AddUserPage() {
       </div>
 
       <h1 className="text-xl font-semibold mb-6">Tambah Pengguna</h1>
+
       <form onSubmit={handleSubmit}>
-        {/* Name Input */}
         <label className="block text-gray-400 text-sm font-semibold mb-2" htmlFor="name">
           Nama lengkap
         </label>
@@ -103,7 +110,6 @@ export default function AddUserPage() {
         />
         {errors.name && <p className="text-red-500 text-sm mb-4">{errors.name}</p>}
 
-        {/* Role Selection */}
         <label className="block text-gray-400 text-sm font-semibold mb-2" htmlFor="role">
           Role
         </label>
@@ -114,16 +120,13 @@ export default function AddUserPage() {
             onChange={(e) => setRole(e.target.value)}
             className="w-full outline-none font-light text-gray-400"
           >
-            <option value="" disabled>
-              Pilih Role
-            </option>
+            <option value="" disabled>Pilih Role</option>
             <option value="Pemilik">Pemilik</option>
             <option value="Karyawan">Karyawan</option>
-          </select>
+          </select> 
         </div>
         {errors.role && <p className="text-red-500 text-sm mb-4">{errors.role}</p>}
 
-        {/* Email Input */}
         <label className="block text-gray-400 text-sm font-semibold mb-2" htmlFor="email">
           Email
         </label>
@@ -137,13 +140,16 @@ export default function AddUserPage() {
         />
         {errors.email && <p className="text-red-500 text-sm mb-4">{errors.email}</p>}
 
-        {/* Submit Button */}
+        {message && <p className={`text-sm mt-2 ${message.includes("berhasil") ? "text-green-500" : "text-red-500"}`}>{message}</p>}
+
         <button
-          id="lanjutkan"
           type="submit"
-          className="mt-10 w-full bg-blue-600 text-white p-3 rounded-3xl font-semibold"
+          className={`mt-10 w-full p-3 rounded-3xl font-semibold ${
+            loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 text-white"
+          }`}
+          disabled={loading}
         >
-          Lanjutkan
+          {loading ? "Mengirim..." : "Lanjutkan"}
         </button>
       </form>
     </div>
