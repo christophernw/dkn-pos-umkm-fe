@@ -44,7 +44,7 @@ export default function ProductCard() {
   const [newStockValue, setNewStockValue] = useState(0);
 
   const handleEdit = (id: number) => {
-    window.location.href = '/editProduk/${id}'
+    window.location.href = `/editProduk/${id}`
   }
 
   useEffect(() => {

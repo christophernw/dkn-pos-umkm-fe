@@ -1,4 +1,4 @@
-import config from "../../config";
+import config from "../config";
 
 // services/productService.ts
 export async function fetchProduct(productId: string, accessToken: string) {
