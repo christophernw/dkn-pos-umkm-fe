@@ -83,6 +83,7 @@ export default function AddProductPage() {
         );
       }
     } catch (error) {
+      console.log(error)
       console.error("Network error:", error);
       alert("Terjadi kesalahan jaringan. Silakan coba lagi.");
     }
