@@ -15,6 +15,7 @@ export default function AddProductPage() {
   const [previewImg, setPreviewImg] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const { accessToken } = useAuth();
+  const [loading, setLoading] = useState(false);
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
@@ -45,6 +46,9 @@ export default function AddProductPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (loading) return;
+    setLoading(true);
 
     const formData = new FormData();
 
@@ -86,6 +90,8 @@ export default function AddProductPage() {
       console.log(error)
       console.error("Network error:", error);
       alert("Terjadi kesalahan jaringan. Silakan coba lagi.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -236,11 +242,9 @@ export default function AddProductPage() {
 
         {/* Tombol Submit */}
         <div className="pt-4">
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-          >
-            Lanjut
+          <button type="submit" 
+          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400" disabled={loading}>
+            {loading ? "Menambahkan Produk..." : "Lanjut"}
           </button>
         </div>
       </form>

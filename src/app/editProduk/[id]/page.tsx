@@ -1,4 +1,3 @@
-// src/app/editProduk/[id]/page.tsx
 "use client";
 import { useState, useEffect, ChangeEvent } from "react";
 import { useParams } from "next/navigation";
@@ -224,7 +223,7 @@ export default function EditProductPage() {
           onChange={setPriceCost}
           placeholder="Rp 9.000"
           type="number"
-          disabled={true} // Tambahkan ini
+          disabled={true} 
           className="bg-gray-100 cursor-not-allowed mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
 
         />

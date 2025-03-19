@@ -40,9 +40,9 @@ export default function ProductCard() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] =
-    useState<ProductCardProps | null>(null);
+  useState<ProductCardProps | null>(null);
   const [newStockValue, setNewStockValue] = useState(0);
-  
+
   const handleEdit = (id: number) => {
     window.location.href = `/editProduk/${id}`
   }
@@ -137,7 +137,6 @@ export default function ProductCard() {
   }
 
   const handleOpenStockModal = (product: ProductCardProps) => {
-    // Redirect to edit page with product ID
     window.location.href = `/editProduk/${product.id}`;
   };
 

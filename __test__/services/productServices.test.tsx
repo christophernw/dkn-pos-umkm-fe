@@ -1,5 +1,4 @@
-// __test__/services/productServices.test.tsx
-import { fetchProduct, updateProduct } from "src/services/productServices";
+import { fetchProduct, updateProduct } from "../../src/services/productServices";
 import fetchMock from "jest-fetch-mock";
 import config from "@/src/config";
 
