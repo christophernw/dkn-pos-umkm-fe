@@ -12,6 +12,7 @@ interface TextInputProps {
   disabled?: boolean;
   className?: string;
   required?: boolean;
+  readOnly?: boolean;
 }
 
 function formatHarga(value: string): string {
@@ -27,6 +28,9 @@ export default function TextInput({
   placeholder = "",
   type = "text",
   currency = false,
+  readOnly = false,
+  disabled = false,
+  required = false,
 }: TextInputProps) {
   const [inputValue, setInputValue] = useState(value);
 
@@ -62,6 +66,9 @@ export default function TextInput({
             value={inputValue}
             placeholder={placeholder}
             onChange={handleChange}
+            readOnly={readOnly}
+            disabled={disabled}
+            required={required}
             className="mt-1 block w-full rounded border-gray-300 shadow-sm pl-10 focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
@@ -73,6 +80,9 @@ export default function TextInput({
         value={inputValue}
         placeholder={placeholder}
         onChange={handleChange}
+        readOnly={readOnly}
+        disabled={disabled}
+        required={required}
         className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
       />
       )}

@@ -3,6 +3,7 @@ import { useState, ChangeEvent } from "react";
 import TextInput from "./components/textInput";
 import { useAuth } from "@/contexts/AuthContext";
 import config from "@/src/config";
+import PopupAlert from "./components/PopupAlert";
 
 export default function AddProductPage() {
   const [productName, setProductName] = useState("");
@@ -16,6 +17,8 @@ export default function AddProductPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const { accessToken } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [popupMsg, setPopupMsg] = useState("");
+  const [popupType, setPopupType] = useState<"success" | "error">("error");
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
@@ -26,12 +29,14 @@ export default function AddProductPage() {
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
     if (!allowedTypes.includes(file.type)) {
-      alert("Format file tidak didukung! Silakan unggah PNG, JPG, atau JPEG.");
+      setPopupMsg("Format file tidak didukung! Silakan unggah PNG, JPG, atau JPEG.");
+      setPopupType("error");
       return;
     }
 
     if (file.size > maxSizeBytes) {
-      alert(`Ukuran file terlalu besar! Maksimal ${maxSizeMB}MB.`);
+      setPopupMsg(`Ukuran file terlalu besar! Maksimal ${maxSizeMB}MB.`);
+      setPopupType("error");
       return;
     }
   
@@ -77,18 +82,19 @@ export default function AddProductPage() {
       });
 
       if (response.status === 201) {
-        alert("Produk berhasil ditambahkan!");
+        setPopupMsg("Produk berhasil ditambahkan!");
+        setPopupType("success");
         window.location.href = "/semuaBarang";
       } else {
         const errorData = await response.json();
         console.error("Error creating product:", errorData);
-        alert(
-          `Gagal menambahkan produk: ${errorData.detail || "Unknown error"}`
-        );
+        setPopupMsg(`Gagal menambahkan produk: ${errorData.detail || "Unknown error"}`);
+        setPopupType("error");
       }
     } catch (error) {
       console.error("Network error:", error);
-      alert("Terjadi kesalahan jaringan. Silakan coba lagi.");
+      setPopupMsg("Terjadi kesalahan jaringan. Silakan coba lagi.");
+      setPopupType("error");
     } finally {
       setLoading(false);
     }
@@ -96,6 +102,7 @@ export default function AddProductPage() {
 
   return (
     <div className="max-w-md mx-auto p-4">
+      {popupMsg && <PopupAlert message={popupMsg} type={popupType} onClose={() => setPopupMsg("")} />}
       <header className="flex items-center mb-4">
         <button
           onClick={() => window.history.back()}
