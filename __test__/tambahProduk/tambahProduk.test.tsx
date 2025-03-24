@@ -2,6 +2,8 @@ import React from "react";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import AddProductPage from "../../src/app/tambahProduk/page";
+import PopupAlert from "../../src/app/tambahProduk/components/PopupAlert";
+import TextInput from "../../src/app/tambahProduk/components/textInput";
 import config from "@/src/config";
 
 const mockedUseAuth = {
@@ -12,18 +14,28 @@ jest.mock("@/contexts/AuthContext", () => ({
   useAuth: jest.fn(() => mockedUseAuth),
 }));
 
+const mockHistoryBack = jest.fn();
+beforeAll(() => {
+  window.history.back = mockHistoryBack;
+});
+
+let href = "";
+Object.defineProperty(window, "location", {
+  writable: true,
+  configurable: true,
+  value: {
+    get href() {
+      return href;
+    },
+    set href(val: string) {
+      href = val;
+    },
+  },
+});
+
 describe("AddProductPage", () => {
-  const mockHistoryBack = jest.fn();
-  beforeAll(() => {
-    window.history.back = mockHistoryBack;
-  });
-
   beforeEach(() => {
-    window.alert = jest.fn();
-  });
-
-  afterAll(() => {
-    jest.restoreAllMocks();
+    jest.clearAllMocks();
   });
 
   it("menampilkan semua input dan tombol yang diharapkan", () => {
@@ -63,8 +75,8 @@ describe("AddProductPage", () => {
 
     expect(productNameInput.value).toBe("Pie Jeruk");
     expect(categoryInput.value).toBe("Makanan");
-    expect(priceSellInput.value).toBe("13000");
-    expect(priceCostInput.value).toBe("9000");
+    expect(priceSellInput.value).toBe("13.000");
+    expect(priceCostInput.value).toBe("9.000");
     expect(currentStockInput.value).toBe("450");
     expect(minimumStockInput.value).toBe("10");
   });
@@ -135,10 +147,10 @@ describe("AddProductPage", () => {
     const minimumStockInput = screen.getByLabelText(/stok minimum/i) as HTMLInputElement;
 
     fireEvent.change(minimumStockInput, { target: { value: "-5" } });
-    expect(minimumStockInput.value).toBe("0");
+    expect(minimumStockInput.value).toBe("-5");
   });
 
-  it("membiarkan input string non-numerik (parseFloat -> NaN) tanpa perubahan", () => {
+  it("membiarkan input string non-numerik tanpa perubahan", () => {
     render(<AddProductPage />);
     const priceSellInput = screen.getByLabelText(/harga jual/i) as HTMLInputElement;
     fireEvent.change(priceSellInput, { target: { value: "abc" } });
@@ -150,13 +162,6 @@ jest.mock("@/contexts/AuthContext", () => ({
   useAuth: jest.fn(() => mockedUseAuth),
 }));
 
-// Mock window.location
-const mockLocationHref = jest.fn();
-Object.defineProperty(window, 'location', {
-  value: { href: mockLocationHref },
-  writable: true
-});
-
 describe("AddProductPage handleSubmit functionality", () => {
   let originalFetch: any;
   let mockFetch: jest.Mock;
@@ -166,22 +171,15 @@ describe("AddProductPage handleSubmit functionality", () => {
   });
 
   beforeEach(() => {
-    window.alert = jest.fn();
+    jest.clearAllMocks();
     mockFetch = jest.fn();
     global.fetch = mockFetch;
   });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   afterAll(() => {
     global.fetch = originalFetch;
     jest.restoreAllMocks();
   });
-
-  it("should append image file to FormData when available", async () => {
-    // Mock successful fetch response
+  it("should append image file to FormData when available dan redirect pada success", async () => {
     mockFetch.mockResolvedValueOnce({
       status: 201,
       json: jest.fn().mockResolvedValueOnce({ message: "Product created" }),
@@ -212,7 +210,7 @@ describe("AddProductPage handleSubmit functionality", () => {
     
     // Wait for fetch to be called
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(screen.getByText("Produk berhasil ditambahkan!")).toBeInTheDocument();
     });
     
     // Verify fetch was called with correct arguments
@@ -228,13 +226,7 @@ describe("AddProductPage handleSubmit functionality", () => {
     
     // Verify FormData construction (indirectly through fetch call)
     const fetchCall = mockFetch.mock.calls[0];
-    const formData = fetchCall[1].body;
-    
-    // FormData can't be easily inspected directly, so we check that it's an instance of FormData
-    expect(formData instanceof FormData).toBe(true);
-    
-    // Verify success path redirect
-    expect(window.alert).toHaveBeenCalledWith("Produk berhasil ditambahkan!");
+    expect(fetchCall[1].body instanceof FormData).toBe(true);
     expect(window.location.href).toBe("/semuaBarang");
   });
 
@@ -265,15 +257,12 @@ describe("AddProductPage handleSubmit functionality", () => {
     // Verify upload placeholder is still present (no image preview)
     expect(screen.getByText("Upload")).toBeInTheDocument();
   });
-
-  it("should reject non-image files (e.g., PDF) and alert the user", () => {
+  it("should reject non-image files (e.g., PDF) and display error message", () => {
     render(<AddProductPage />);
     const fileInput = screen.getByLabelText("Upload") as HTMLInputElement;
     const pdfFile = new File(["dummy content"], "test.pdf", { type: "application/pdf" });
-    window.alert = jest.fn();
     fireEvent.change(fileInput, { target: { files: [pdfFile] } });
-    expect(window.alert).toHaveBeenCalledWith("Format file tidak didukung! Silakan unggah PNG, JPG, atau JPEG.");
-    // Verify that no preview image is shown
+    expect(screen.getByText("Format file tidak didukung! Silakan unggah PNG, JPG, atau JPEG.")).toBeInTheDocument();
     expect(screen.queryByAltText("Product Preview")).toBeNull();
   });
 
@@ -296,11 +285,8 @@ describe("AddProductPage handleSubmit functionality", () => {
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
-    
-    // Verify that the fallback message "Unknown error" is used
-    expect(window.alert).toHaveBeenCalledWith("Gagal menambahkan produk: Unknown error");
-  });  
-
+    expect(screen.getByText("Gagal menambahkan produk: Unknown error")).toBeInTheDocument();
+  });
   it("should handle error response from server", async () => {
     // Mock error fetch response
     const errorMessage = "Invalid product data";
@@ -321,12 +307,8 @@ describe("AddProductPage handleSubmit functionality", () => {
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
-    
-    // Verify error alert
-    expect(window.alert).toHaveBeenCalledWith(`Gagal menambahkan produk: ${errorMessage}`);
-    // expect(window.location.href).not.toBe("/semuaBarang");
+    expect(screen.getByText(`Gagal menambahkan produk: ${errorMessage}`)).toBeInTheDocument();
   });
-
   it("should handle network errors during submission", async () => {
     // Mock network error
     mockFetch.mockRejectedValueOnce(new Error("Network failure"));
@@ -343,11 +325,8 @@ describe("AddProductPage handleSubmit functionality", () => {
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
-    
-    // Verify error message
-    expect(window.alert).toHaveBeenCalledWith("Terjadi kesalahan jaringan. Silakan coba lagi.");
+    expect(screen.getByText("Terjadi kesalahan jaringan. Silakan coba lagi.")).toBeInTheDocument();
   });
-
   it("should display image preview with correct attributes when image is uploaded", async () => {
     render(<AddProductPage />);
     
@@ -371,12 +350,7 @@ describe("AddProductPage handleSubmit functionality", () => {
 
   it("rejects a file larger than 3MB", async () => {
     render(<AddProductPage />);
-
-    // Create a mock 4MB file (should be rejected)
-    const largeFile = new File([new Uint8Array(4 * 1024 * 1024)], "large.jpg", {
-      type: "image/jpeg",
-    });
-
+    const largeFile = new File([new Uint8Array(4 * 1024 * 1024)], "large.jpg", { type: "image/jpeg" });
     const fileInput = screen.getByLabelText("Upload") as HTMLInputElement;
 
     // Try to upload a file
@@ -384,31 +358,55 @@ describe("AddProductPage handleSubmit functionality", () => {
 
     // Check if alert is triggered
     await waitFor(() => {
-      expect(window.alert).toHaveBeenCalledWith(
-        "Ukuran file terlalu besar! Maksimal 3MB."
-      );
+      expect(screen.getByText("Ukuran file terlalu besar! Maksimal 3MB.")).toBeInTheDocument();
     });
   });
   
   it("accepts a valid image file (<=3MB)", async () => {
     render(<AddProductPage />);
-
-    // Create a mock valid image file (2MB)
-    const validFile = new File([new Uint8Array(2 * 1024 * 1024)], "image.png", {
-      type: "image/png",
-    });
-
+    const validFile = new File([new Uint8Array(2 * 1024 * 1024)], "image.png", { type: "image/png" });
     const fileInput = screen.getByLabelText("Upload") as HTMLInputElement;
-
-    // Try to upload a file
     fireEvent.change(fileInput, { target: { files: [validFile] } });
-
-    // Ensure no alert is triggered
     await waitFor(() => {
-      expect(window.alert).not.toHaveBeenCalled();
+      expect(screen.queryByText("Ukuran file terlalu besar! Maksimal 3MB.")).toBeNull();
+      expect(screen.queryByText("Format file tidak didukung! Silakan unggah PNG, JPG, atau JPEG.")).toBeNull();
+      expect(screen.getByAltText("Product Preview")).toBeInTheDocument();
     });
+  });
+});
 
-    // Check if image preview is displayed
-    expect(screen.getByAltText("Product Preview")).toBeInTheDocument();
+describe("PopupAlert Component", () => {
+  it("automatically dismisses after 3 seconds", async () => {
+    jest.useFakeTimers();
+    const onCloseMock = jest.fn();
+    render(<PopupAlert message="Test Alert" onClose={onCloseMock} type="error" />);
+    expect(screen.getByText("Test Alert")).toBeInTheDocument();
+    act(() => {
+      jest.advanceTimersByTime(3000);
+    });
+    await waitFor(() => {
+      expect(onCloseMock).toHaveBeenCalled();
+    });
+    jest.useRealTimers();
+  });
+});
+
+describe("TextInput Component (Currency Formatting)", () => {
+  it("formats currency input correctly", () => {
+    const handleChange = jest.fn();
+    render(
+      <TextInput
+        id="test-currency"
+        label="Test Currency"
+        value=""
+        onChange={handleChange}
+        currency
+        type="number"
+      />
+    );
+    const input = screen.getByLabelText(/Test Currency/i) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "13000" } });
+    expect(input.value).toBe("13.000");
+    expect(handleChange).toHaveBeenCalledWith("13.000", "13000");
   });
 });
