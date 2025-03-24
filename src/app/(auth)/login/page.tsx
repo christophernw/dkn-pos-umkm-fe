@@ -18,7 +18,7 @@ export default function LoginPage() {
     useEffect(() => {
         if (session) {
             setLoading(true);
-            fetch(`${config.apiUrl}/auth/process-session`, {
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/process-session`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -32,7 +32,6 @@ export default function LoginPage() {
                     access: data.access,
                     refresh: data.refresh
                 });
-                
                 router.push('/');
             })
             .catch(error => {

@@ -46,7 +46,7 @@ export default function ProductCard() {
         setIsLoading(true);
 
         const queryParam = searchParams.get("q") || "";
-        let url = `${config.apiUrl}/produk/page/${currentPage}`;
+        let url = `${process.env.NEXT_PUBLIC_API_URL}/produk/page/${currentPage}`;
         const params = new URLSearchParams();
 
         if (sortParam) {

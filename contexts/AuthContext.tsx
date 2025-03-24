@@ -6,6 +6,7 @@ type User = {
     id: number;
     email: string;
     name: string;
+    role: "Pemilik" | "Karyawan";
 };
 
 type AuthContextType = {

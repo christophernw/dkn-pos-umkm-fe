@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AiOutlineArrowLeft } from "react-icons/ai";
 import DOMPurify from "dompurify";
 import { sendEmail } from "@/src/app/lib/sendInvitationEmail";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function AddUserPage() {
   const router = useRouter();
   const handleBack = () => router.back();
-
+  const { user, isAuthenticated, accessToken, logout} = useAuth(); 
+  
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [email, setEmail] = useState("");
@@ -65,20 +67,54 @@ export default function AddUserPage() {
     setMessage("");
   
     try {
-      const inviteLink = `${process.env.NEXT_PUBLIC_EMAILJS_URL}/auth/invite?email=${encodeURIComponent(email)}`;
+      // Kirim data ke API /add-user
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/add-user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          name: sanitizeInput(name),
+          email: sanitizeInput(email),
+          role: role,
+        }),
+      });
   
-      await sendEmail({ to: email, inviteLink });
+      const result = await response.json();
   
-      setMessage("Undangan berhasil dikirim!");
-      setName("");
-      setRole("");
-      setEmail("");
+      if (response.ok) {
+
+        setMessage("Pengguna berhasil ditambahkan!");
+
+        setName("");
+        setRole("");
+        setEmail("");
+      } else {
+        setMessage(result.error || "Terjadi kesalahan.");
+      }
     } catch (error) {
-      console.error("Email sending failed:", error);
-      setMessage("Terjadi kesalahan saat mengirim undangan.");
+      console.error("Gagal mengirim data:", error);
+      setMessage("Terjadi kesalahan saat mengirim data.");
     } finally {
       setLoading(false);
     }
+
+    // try {
+    //   const inviteLink = `${process.env.NEXT_PUBLIC_EMAILJS_URL}/auth/invite?email=${encodeURIComponent(email)}`;
+  
+    //   await sendEmail({ to: email, inviteLink });
+  
+    //   setMessage("Undangan berhasil dikirim!");
+    //   setName("");
+    //   setRole("");
+    //   setEmail("");
+    // } catch (error) {
+    //   console.error("Email sending failed:", error);
+    //   setMessage("Terjadi kesalahan saat mengirim undangan.");
+    // } finally {
+    //   setLoading(false);
+    // }
   };
   
 
