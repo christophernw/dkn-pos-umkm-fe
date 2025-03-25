@@ -35,7 +35,7 @@ export const Navbar = () => {
     };
 
     return (
-        <div className="bg-white fixed bottom-0 w-full sm:w-[402px] py-3 pb-7 shadow-[0_-4px_6px_0px_rgba(0,0,0,0.1)]">
+        <div className="bg-white fixed bottom-0 w-full sm:w-[420px] py-3 pb-7 shadow-[0_-4px_6px_0px_rgba(0,0,0,0.1)]">
             <div className="grid grid-cols-5 px-2 gap-1">
                 {navItems.map((item) => (
                     <NavbarButton

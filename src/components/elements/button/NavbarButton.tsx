@@ -16,10 +16,10 @@ interface NavbarButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement
 export const NavbarButton = ({isActive, toggleButton, icon: Icon, text, route} : NavbarButtonProps) => {
   return (
     <div>
-        <div className={`rounded-3xl py-3 px-3 ${isActive ? "bg-[#3554C1]" : "bg-white"}`}>
+        <div className={`rounded-2xl py-2 px-3 ${isActive ? "bg-[#3554C1]" : "bg-white"}`}>
                 <Link href={route} onClick={toggleButton} className="flex flex-col text-sm items-center">
                     <Icon stroke={isActive ? "white" : "black"} />
-                    <div className={`${isActive ? "text-white" : "text-black"}`}>{text}</div>
+                    <div className={`${isActive ? "text-white" : "text-black"} text-xs`}>{text}</div>
                 </Link>
         </div>
     </div>
