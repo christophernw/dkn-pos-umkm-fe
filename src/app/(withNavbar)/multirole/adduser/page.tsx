@@ -67,8 +67,7 @@ export default function AddUserPage() {
     setMessage("");
   
     try {
-      // Kirim data ke API /add-user
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/add-user`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/send-invitation`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -84,12 +83,23 @@ export default function AddUserPage() {
       const result = await response.json();
   
       if (response.ok) {
-
-        setMessage("Pengguna berhasil ditambahkan!");
-
-        setName("");
-        setRole("");
-        setEmail("");
+        const token = result.token;
+        const inviteLink = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/auth/invite?token=${encodeURIComponent(token)}`;
+  
+        try {
+          await sendEmail({
+            to: email,
+            inviteLink,
+          });
+  
+          setMessage("Pengguna berhasil ditambahkan dan undangan dikirim!");
+          setName("");
+          setRole("Karyawan"); // 
+          setEmail("");
+        } catch (error) {
+          console.error("Gagal mengirim email:", error);
+          setMessage("Terjadi kesalahan saat mengirim undangan.");
+        }
       } else {
         setMessage(result.error || "Terjadi kesalahan.");
       }
@@ -99,24 +109,7 @@ export default function AddUserPage() {
     } finally {
       setLoading(false);
     }
-
-    // try {
-    //   const inviteLink = `${process.env.NEXT_PUBLIC_EMAILJS_URL}/auth/invite?email=${encodeURIComponent(email)}`;
-  
-    //   await sendEmail({ to: email, inviteLink });
-  
-    //   setMessage("Undangan berhasil dikirim!");
-    //   setName("");
-    //   setRole("");
-    //   setEmail("");
-    // } catch (error) {
-    //   console.error("Email sending failed:", error);
-    //   setMessage("Terjadi kesalahan saat mengirim undangan.");
-    // } finally {
-    //   setLoading(false);
-    // }
   };
-  
 
   return (
     <div className="min-h-screen bg-[#EDF1F9] p-4">

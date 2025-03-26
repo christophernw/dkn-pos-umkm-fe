@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
-// Define the User interface
 interface User {
   id: number;
   email: string;
@@ -17,7 +16,6 @@ const UserList = () => {
   const [loading, setLoading] = useState<boolean>(true); // Loading state
   const [error, setError] = useState<string | null>(null); // Error state
 
-  // Fetch users from the API
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -34,16 +32,16 @@ const UserList = () => {
         }
 
         const data = await response.json();
-        setUsers(data); // Set the fetched users
+        setUsers(data); 
       } catch (error: any) {
-        setError(error.message); // Handle error
+        setError(error.message); 
       } finally {
-        setLoading(false); // Set loading to false once fetch is complete
+        setLoading(false); 
       }
     };
 
     fetchUsers();
-  }, [accessToken]); // Run again if the accessToken changes
+  }, [accessToken]); 
 
   return (
     <div className="bg-white p-4 rounded-2xl shadow-md">
@@ -52,13 +50,13 @@ const UserList = () => {
         {!user ? (
           <p className="text-red-500">You are not authenticated</p>
         ) : loading ? (
-          <p>Loading...</p> // Show loading message
+          <p>Loading...</p>
         ) : error ? (
-          <p className="text-red-500">{error}</p> // Show error if any
+          <p className="text-red-500">{error}</p> 
         ) : (
           <div>
             {users.length === 0 ? (
-              <p>No users found.</p> // Show message if no users found
+              <p>No users found.</p> 
             ) : (
               <ul>
                 {users.map((user) => (

@@ -26,7 +26,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [refreshToken, setRefreshToken] = useState<string | null>(null);
 
     useEffect(() => {
-        // Load auth data from localStorage on initial load
         const storedUser = localStorage.getItem('user');
         const storedAccessToken = localStorage.getItem('accessToken');
         const storedRefreshToken = localStorage.getItem('refreshToken');
