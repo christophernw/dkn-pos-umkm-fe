@@ -6,11 +6,14 @@ import { AiOutlineArrowLeft } from "react-icons/ai";
 import DOMPurify from "dompurify";
 import { sendEmail } from "@/src/app/lib/sendInvitationEmail";
 import { useAuth } from "@/contexts/AuthContext";
+import { sanitizeInput, validateInputs } from "./utils/inputValidation";
+import { sendInvitation } from "../adduser/services/invitationService";
+import { InvitationPayload, InvitationResponse } from "./types/types";
 
 export default function AddUserPage() {
   const router = useRouter();
   const handleBack = () => router.back();
-  const { user, isAuthenticated, accessToken, logout} = useAuth(); 
+  const {accessToken} = useAuth(); 
   
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
@@ -24,77 +27,37 @@ export default function AddUserPage() {
     email: "",
   });
 
-  const sanitizeInput = (input: string) => DOMPurify.sanitize(input.trim());
-
-  const validateInputs = () => {
-    let valid = true;
-    const newErrors = { name: "", role: "", email: "" };
-
-    const cleanName = sanitizeInput(name);
-    const cleanEmail = sanitizeInput(email);
-
-    if (!cleanName) {
-      newErrors.name = "Nama lengkap wajib diisi";
-      valid = false;
-    } else if (cleanName.length < 3) {
-      newErrors.name = "Nama minimal 3 karakter";
-      valid = false;
-    }
-
-    if (!role) {
-      newErrors.role = "Pilih role terlebih dahulu";
-      valid = false;
-    }
-
-    if (!cleanEmail) {
-      newErrors.email = "Email wajib diisi";
-      valid = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-      newErrors.email = "Format email tidak valid";
-      valid = false;
-    }
-
-    setErrors(newErrors);
-    return valid;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
   
-    if (!validateInputs()) return;
+    const { valid, errors } = validateInputs({ name, role, email });
+    setErrors(errors);
   
+    if (!valid) return;
     setLoading(true);
     setMessage("");
   
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/send-invitation`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          name: sanitizeInput(name),
-          email: sanitizeInput(email),
-          role: role,
-        }),
-      });
+      const payload: InvitationPayload = {
+        name: sanitizeInput(name),
+        email: sanitizeInput(email),
+        role: role as "Pemilik" | "Karyawan",
+        accessToken: accessToken as string,
+      };
   
-      const result = await response.json();
-  
-      if (response.ok) {
-        const token = result.token;
+      const response = await sendInvitation(payload);
+      const result: InvitationResponse = await response.json();
+      
+      if (response.ok && result.success) {
+        const token = result.token!;
         const inviteLink = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/auth/invite?token=${encodeURIComponent(token)}`;
   
         try {
-          await sendEmail({
-            to: email,
-            inviteLink,
-          });
+          await sendEmail({ to: email, inviteLink });
   
           setMessage("Pengguna berhasil ditambahkan dan undangan dikirim!");
           setName("");
-          setRole("Karyawan"); // 
+          setRole("Karyawan");
           setEmail("");
         } catch (error) {
           console.error("Gagal mengirim email:", error);
@@ -110,6 +73,7 @@ export default function AddUserPage() {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className="min-h-screen bg-[#EDF1F9] p-4">
