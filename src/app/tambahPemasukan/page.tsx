@@ -1,4 +1,3 @@
-// src/app/pemasukan/baru/page.tsx (Corrected)
 "use client";
 
 import Image from "next/image";
@@ -172,8 +171,6 @@ export default function PemasukanBaruPage() {
         }
     };
 
-
-    // --- Render ---
     return (
          <div className="p-4 max-w-md mx-auto bg-gray-50 min-h-screen pb-24">
             {/* Header */}
