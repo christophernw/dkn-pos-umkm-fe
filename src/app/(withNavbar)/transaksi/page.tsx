@@ -52,7 +52,7 @@ export default function TransactionMainPage() {
         {modalOpen ? (
             <>
             <Link href="/tambahPengeluaran">Tambah Pengeluaran</Link>
-            <Link href="/tambahPemasukkan">Tambah Pemasukan</Link>
+            <Link href="/tambahPemasukan">Tambah Pemasukan</Link>
             </>
         ) : null}
     </div>

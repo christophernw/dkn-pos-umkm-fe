@@ -20,6 +20,8 @@ export default function LoginPage() {
         if (session) {
             
             setLoading(true);
+            console.log(config)
+            console.log(`${config.apiUrl}/auth/process-session`)
             fetch(`${config.apiUrl}/auth/process-session`, {
                 method: 'POST',
                 headers: {
