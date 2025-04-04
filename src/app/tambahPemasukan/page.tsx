@@ -2,15 +2,13 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext"; // Adjust path if needed
-import ProductSelectorModal from "@/src/components/ProductSelectorModal"; // <<< CORRECTED PATH (assuming @/ maps to src)
+import { useAuth } from "@/contexts/AuthContext";
+import ProductSelectorModal from "@/src/components/ProductSelectorModal";
 import config from "@/src/config";
 import { CoinIcon } from '@/public/icons/CoinIcon';
-// import { ShoppingBagIcon } from '@/public/icons/';
 
-// Interfaces (ProductCardProps, SelectedProductItem) remain the same
 interface ProductCardProps {
     id: number;
     nama: string;
@@ -27,24 +25,20 @@ interface SelectedProductItem {
     quantity: number;
 }
 
-// formatHarga function remains the same
 function formatHarga(num: number): string {
     return String(num).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
-// --- Main Component ---
 export default function PemasukanBaruPage() {
     const router = useRouter();
     const { accessToken } = useAuth();
     const [selectedProducts, setSelectedProducts] = useState<SelectedProductItem[]>([]);
     const [status, setStatus] = useState<'Lunas' | 'Belum Lunas'>('Lunas');
-    const [isLoading, setIsLoading] = useState(false); // Loading state for saving transaction
+    const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // --- State for Product Selection Modal ---
     const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
 
-    // Memos (totalPemasukan, totalModal, keuntungan) remain the same
      const totalPemasukan = useMemo(() => {
         return selectedProducts.reduce((sum, item) => {
             return sum + item.product.harga_jual * item.quantity;
@@ -61,8 +55,6 @@ export default function PemasukanBaruPage() {
         return totalPemasukan - totalModal;
     }, [totalPemasukan, totalModal]);
 
-
-    // Handlers (handleQuantityChange, handleRemoveItem, handleStatusChange, handleNavigateToManageProducts) remain the same
      const handleQuantityChange = (productId: number, change: number) => {
         setSelectedProducts(currentItems => {
             const updatedItems = currentItems.map(item => {
@@ -95,11 +87,6 @@ export default function PemasukanBaruPage() {
         setStatus(newStatus);
     };
 
-    const handleNavigateToManageProducts = () => {
-        router.push('/produk'); // Adjust if your product management page is different
-    };
-
-    // --- Product Selection Logic ---
     const handleOpenProductSelector = () => {
         setIsProductSelectorOpen(true);
     };
@@ -123,7 +110,6 @@ export default function PemasukanBaruPage() {
         }
     };
 
-    // handleSave function remains the same
     const handleSave = async () => {
         if (selectedProducts.length === 0) {
             setError("Tambahkan setidaknya satu barang.");
@@ -131,16 +117,14 @@ export default function PemasukanBaruPage() {
         }
         if (!accessToken) {
             setError("Autentikasi diperlukan.");
-            // Consider redirecting to login: router.push('/login');
             return;
         }
-        // Ensure config and apiUrl are available
+        
         if (!config?.apiUrl) {
             setError("Konfigurasi API tidak ditemukan.");
             console.error("config or config.apiUrl is missing!");
             return;
         }
-
 
         setIsLoading(true);
         setError(null);
@@ -160,7 +144,6 @@ export default function PemasukanBaruPage() {
         };
 
         try {
-            // Using config.apiUrl now
             const response = await fetch(`${config.apiUrl}/transaksi/pemasukan`, {
                 method: 'POST',
                 headers: {
@@ -176,11 +159,14 @@ export default function PemasukanBaruPage() {
             }
 
             alert('Transaksi berhasil disimpan!');
-            router.push('/dashboard'); // Adjust if your target page after save is different
+            router.push('/dashboard');
 
-        } catch (err: any) {
-            console.error("Error saving transaction:", err);
-            setError(err.message || "Terjadi kesalahan saat menyimpan.");
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message || "Terjadi kesalahan saat menyimpan.");
+            } else {
+                setError("Terjadi kesalahan yang tidak diketahui.");
+            }
         } finally {
             setIsLoading(false);
         }
@@ -383,4 +369,3 @@ export default function PemasukanBaruPage() {
         </div>
     );
 }
-// REMOVED "use it here"
