@@ -206,6 +206,12 @@ export default function PemasukanBaruPage() {
                     style={{paddingLeft: "56px", paddingRight: "40px"}}
                 >
                     <option>Penjualan Barang</option>
+                    <option>Penambahan Modal</option>
+                    <option>Pendapatan Di Luar Usaha</option>
+                    <option>Pendapatan Lain-Lain</option>
+                    <option>Pendapatan Jasa/Komisi</option>
+                    <option>Terima Pinjaman</option>
+                    <option>Penagihan Utang/Cicilan</option>
                 </select>
                 {/* Bell Icon (left) */}
                 <div className="absolute left-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
