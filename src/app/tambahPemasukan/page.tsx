@@ -180,7 +180,7 @@ export default function PemasukanBaruPage() {
     };
 
     try {
-      const response = await fetch(`${config.apiUrl}/transaksi/pemasukan`, {
+      const response = await fetch(`${config.apiUrl}/transaksi`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -199,7 +199,7 @@ export default function PemasukanBaruPage() {
       }
 
       alert("Transaksi berhasil disimpan!");
-      router.push("/dashboard");
+      router.push("/transaksi");
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message || "Terjadi kesalahan saat menyimpan.");
