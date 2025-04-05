@@ -52,10 +52,8 @@ export default function PemasukanBaruPage() {
   }, [selectedProducts]);
 
   const calculatedTotalModal = useMemo(() => {
-    return selectedProducts.reduce((sum, item) => {
-      return sum + (item.product.harga_modal || 0) * item.quantity;
-    }, 0);
-  }, [selectedProducts]);
+    return 0;
+  }, []);
 
   const effectiveTotalPemasukan = manualTotalPemasukan
     ? parseInt(manualTotalPemasukan.replace(/\./g, ""), 10) || 0
@@ -163,20 +161,22 @@ export default function PemasukanBaruPage() {
     setError(null);
 
     const transactionData = {
-      type: incomeType,
-      items:
-        incomeType === "Penjualan Barang"
-          ? selectedProducts.map((item) => ({
-              product_id: item.product.id,
-              quantity: item.quantity,
-              harga_jual_saat_transaksi: item.product.harga_jual,
-              harga_modal_saat_transaksi: item.product.harga_modal,
+        transaction_type: "pemasukan",
+        category: incomeType,
+        total_amount: effectiveTotalPemasukan,
+        total_modal: incomeType === "Penjualan Barang" ? effectiveTotalModal : 0,
+        amount: incomeType === "Penjualan Barang" ? keuntungan : effectiveTotalPemasukan,
+        
+        items: incomeType === "Penjualan Barang"
+            ? selectedProducts.map((item) => ({
+                product_id: item.product.id,
+                quantity: item.quantity,
+                harga_jual_saat_transaksi: item.product.harga_jual,
+                harga_modal_saat_transaksi: item.product.harga_modal,
             }))
-          : [],
-      total_pemasukan: effectiveTotalPemasukan,
-      total_modal: incomeType === "Penjualan Barang" ? effectiveTotalModal : 0,
-      keuntungan: incomeType === "Penjualan Barang" ? keuntungan : 0,
-      status: status,
+            : [],
+            
+        status: status,
     };
 
     try {
@@ -436,7 +436,7 @@ export default function PemasukanBaruPage() {
 
         {incomeType === "Penjualan Barang" && (
           <div className="flex justify-between items-center text-sm">
-            <span className="text-gray-500">Modal</span>
+            <span className="text-gray-500">Modal Tambahan</span>
             <div className="flex items-center border rounded px-2 focus-within:border-blue-500">
               <span className="text-gray-500 text-sm mr-1">Rp</span>
               <input
