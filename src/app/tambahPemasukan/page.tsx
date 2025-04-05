@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import ProductSelectorModal from "@/src/components/ProductSelectorModal";
 import config from "@/src/config";
 import { CoinIcon } from '@/public/icons/CoinIcon';
+import { StockIcon } from "@/public/icons/StockIcon";
 
 interface ProductCardProps {
     id: number;
@@ -185,16 +186,17 @@ export default function PemasukanBaruPage() {
             </div>
 
             {/* Tabs */}
-            <div className="flex mb-4 bg-white rounded-full p-1 shadow-sm">
-                <button className="flex-1 bg-green-100 text-green-700 rounded-full py-2 px-4 text-sm font-medium text-center flex items-center justify-center">
+            {/* Tabs */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+                <button className="bg-green-50 shadow-sm rounded-3xl py-3 px-4 text-sm font-medium text-center flex items-center justify-center bg-green-100 text-green-700">
                     <div className="bg-primary-blue p-1.5 rounded-full mr-2">
                         <CoinIcon />
                     </div>
                     Pemasukan
                 </button>
-                <button className="flex-1 text-gray-500 py-2 px-4 text-sm font-medium text-center hover:bg-gray-100 rounded-full flex items-center justify-center">
+                <button className="bg-white shadow-sm rounded-3xl py-3 px-4 text-sm font-medium text-center flex items-center justify-center text-gray-500 hover:bg-gray-50">
                     <div className="bg-gray-200 p-1.5 rounded-full mr-2">
-                        <CoinIcon />
+                        <StockIcon />
                     </div>
                     Pengeluaran
                 </button>
