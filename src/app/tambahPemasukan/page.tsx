@@ -8,6 +8,7 @@ import ProductSelectorModal from "@/src/components/ProductSelectorModal";
 import config from "@/src/config";
 import { CoinIcon } from '@/public/icons/CoinIcon';
 import { StockIcon } from "@/public/icons/StockIcon";
+import { BellIcon } from "@/public/icons/BellIcon";
 
 interface ProductCardProps {
     id: number;
@@ -202,16 +203,28 @@ export default function PemasukanBaruPage() {
             </div>
 
             {/* Type Selector */}
-            <div className="mb-6 bg-white p-3 rounded-lg shadow-sm">
-                <label htmlFor="incomeType" className="block text-sm font-medium text-gray-700 mb-1">Jenis Pemasukan</label>
+            <div className="relative mb-6">
                 <select
                     id="incomeType"
                     name="incomeType"
-                    className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2 bg-gray-100"
+                    className="w-full bg-white shadow-sm rounded-3xl py-3 px-4 text-sm font-medium text-gray-500 appearance-none flex items-center justify-center"
                     defaultValue="Penjualan Barang"
+                    style={{paddingLeft: "56px", paddingRight: "40px"}}
                 >
                     <option>Penjualan Barang</option>
                 </select>
+                {/* Bell Icon (left) */}
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <div className="bg-gray-200 p-1.5 rounded-full">
+                        <BellIcon />
+                    </div>
+                </div>
+                {/* Dropdown V indicator (right) */}
+                <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-500">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                    </svg>
+                </div>
             </div>
 
              {/* Barang Section Header */}
