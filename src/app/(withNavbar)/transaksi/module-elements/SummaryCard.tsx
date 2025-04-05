@@ -15,7 +15,7 @@ export const SummaryCard = ({title, nominal, percentage, logo}: SummaryCardProps
     if (logo) return React.createElement(logo);
     if (title === "Pemasukan") return <CoinIcon />;
     if (title === "Pengeluaran") return <StockIcon />;
-    return <CoinIcon />; // Default fallback
+    return <CoinIcon />;
   };
 
   return (

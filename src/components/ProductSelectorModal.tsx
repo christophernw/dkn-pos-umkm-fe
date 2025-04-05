@@ -131,7 +131,7 @@ export default function ProductSelectorModal({ isOpen, onClose, onProductSelect 
         // Simplified pagination for modal: Prev, Current/Total, Next
          const maxButtonsToShow = 5; // Limit number of direct page buttons
          let startPage = Math.max(1, currentPage - Math.floor(maxButtonsToShow / 2));
-         let endPage = Math.min(totalPages, startPage + maxButtonsToShow - 1);
+         const endPage = Math.min(totalPages, startPage + maxButtonsToShow - 1);
 
          if (endPage - startPage + 1 < maxButtonsToShow) {
             startPage = Math.max(1, endPage - maxButtonsToShow + 1);
@@ -247,8 +247,11 @@ export default function ProductSelectorModal({ isOpen, onClose, onProductSelect 
                                 </div>
                                 <button
                                     className="text-sm h-8 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex-shrink-0 disabled:opacity-50"
-                                    onClick={() => onProductSelect(product)}
-                                    disabled={product.stok <= 0} // Disable if out of stock
+                                    onClick={() => {
+                                        onProductSelect(product);
+                                        onClose();
+                                    }}
+                                    disabled={product.stok <= 0}
                                 >
                                     Pilih
                                 </button>

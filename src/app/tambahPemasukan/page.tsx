@@ -186,7 +186,6 @@ export default function PemasukanBaruPage() {
             </div>
 
             {/* Tabs */}
-            {/* Tabs */}
             <div className="grid grid-cols-2 gap-3 mb-4">
                 <button className="bg-green-50 shadow-sm rounded-3xl py-3 px-4 text-sm font-medium text-center flex items-center justify-center bg-green-100 text-green-700">
                     <div className="bg-primary-blue p-1.5 rounded-full mr-2">
