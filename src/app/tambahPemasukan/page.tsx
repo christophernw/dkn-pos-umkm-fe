@@ -120,12 +120,6 @@ export default function PemasukanBaruPage() {
             setError("Autentikasi diperlukan.");
             return;
         }
-        
-        if (!config?.apiUrl) {
-            setError("Konfigurasi API tidak ditemukan.");
-            console.error("config or config.apiUrl is missing!");
-            return;
-        }
 
         setIsLoading(true);
         setError(null);

@@ -49,12 +49,33 @@ export default function TransactionMainPage() {
         <button className="bg-primary-indigo rounded-full w-fit fixed bottom-4 right-4 sm:right-[calc(50%-(420px/2)+1rem)] p-4 mb-24" onClick={() => setModalOpen(!modalOpen)}>
             <PlusIcon/>
         </button>
-        {modalOpen ? (
+        {modalOpen && (
             <>
-            <Link href="/tambahPengeluaran">Tambah Pengeluaran</Link>
-            <Link href="/tambahPemasukan">Tambah Pemasukan</Link>
+                {/* Backdrop overlay */}
+                <div 
+                    className="fixed inset-0 bg-black bg-opacity-30 z-40" 
+                    onClick={() => setModalOpen(false)}
+                />
+                
+                {/* Modal popup */}
+                <div className="fixed bottom-24 right-4 sm:right-[calc(50%-(420px/2)+1rem)] z-50 flex flex-col gap-3 bg-white p-4 rounded-xl shadow-lg">
+                    <Link 
+                        href="/tambahPemasukan" 
+                        className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 rounded-lg text-primary-indigo font-medium"
+                    >
+                        <span className="p-1 bg-green-100 rounded-full text-green-500 w-6 h-6 flex items-center justify-center font-semibold">+</span>
+                        <span>Tambah Pemasukan</span>
+                    </Link>
+                    <Link 
+                        href="/tambahPengeluaran" 
+                        className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 rounded-lg text-primary-indigo font-medium"
+                    >
+                        <span className="p-1 bg-red-100 rounded-full text-red-500 w-6 h-6 flex items-center justify-center font-semibold">-</span>
+                        <span>Tambah Pengeluaran</span>
+                    </Link>
+                </div>
             </>
-        ) : null}
+        )}
     </div>
   )
 }
