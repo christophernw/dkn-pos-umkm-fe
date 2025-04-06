@@ -74,6 +74,21 @@ export default function PengeluaranBaruPage() {
     });
   };
 
+  const handleDirectQuantityChange = (productId: number, value: string) => {
+    const numericValue = parseInt(value, 10);
+    const newQuantity =
+      isNaN(numericValue) || numericValue < 1 ? 1 : numericValue;
+
+    setSelectedProducts((currentItems) => {
+      return currentItems.map((item) => {
+        if (item.product.id === productId) {
+          return { ...item, quantity: newQuantity };
+        }
+        return item;
+      });
+    });
+  };
+
   const handleRemoveItem = (productId: number) => {
     setSelectedProducts((currentItems) =>
       currentItems.filter((item) => item.product.id !== productId)
@@ -367,9 +382,18 @@ export default function PengeluaranBaruPage() {
                     >
                       -
                     </button>
-                    <span className="w-8 text-center font-medium">
-                      {item.quantity}
-                    </span>
+                    <input
+                      type="number"
+                      value={item.quantity}
+                      onChange={(e) =>
+                        handleDirectQuantityChange(
+                          item.product.id,
+                          e.target.value
+                        )
+                      }
+                      className="w-12 text-center font-medium mx-1 border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded"
+                      min="1"
+                    />
                     <button
                       onClick={() => handleQuantityChange(item.product.id, 1)}
                       className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center hover:bg-blue-200"

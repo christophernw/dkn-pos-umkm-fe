@@ -89,6 +89,27 @@ export default function PemasukanBaruPage() {
     });
   };
 
+  const handleDirectQuantityChange = (productId: number, value: string) => {
+    const numericValue = parseInt(value, 10);
+
+    setSelectedProducts((currentItems) => {
+      return currentItems.map((item) => {
+        if (item.product.id === productId) {
+          // Ensure quantity is between 1 and available stock
+          let newQuantity = numericValue;
+          if (isNaN(newQuantity) || newQuantity < 1) {
+            newQuantity = 1;
+          } else if (newQuantity > item.product.stok) {
+            newQuantity = item.product.stok;
+          }
+
+          return { ...item, quantity: newQuantity };
+        }
+        return item;
+      });
+    });
+  };
+
   const handleRemoveItem = (productId: number) => {
     setSelectedProducts((currentItems) =>
       currentItems.filter((item) => item.product.id !== productId)
@@ -161,22 +182,26 @@ export default function PemasukanBaruPage() {
     setError(null);
 
     const transactionData = {
-        transaction_type: "pemasukan",
-        category: incomeType,
-        total_amount: effectiveTotalPemasukan,
-        total_modal: incomeType === "Penjualan Barang" ? effectiveTotalModal : 0,
-        amount: incomeType === "Penjualan Barang" ? keuntungan : effectiveTotalPemasukan,
-        
-        items: incomeType === "Penjualan Barang"
-            ? selectedProducts.map((item) => ({
-                product_id: item.product.id,
-                quantity: item.quantity,
-                harga_jual_saat_transaksi: item.product.harga_jual,
-                harga_modal_saat_transaksi: item.product.harga_modal,
+      transaction_type: "pemasukan",
+      category: incomeType,
+      total_amount: effectiveTotalPemasukan,
+      total_modal: incomeType === "Penjualan Barang" ? effectiveTotalModal : 0,
+      amount:
+        incomeType === "Penjualan Barang"
+          ? keuntungan
+          : effectiveTotalPemasukan,
+
+      items:
+        incomeType === "Penjualan Barang"
+          ? selectedProducts.map((item) => ({
+              product_id: item.product.id,
+              quantity: item.quantity,
+              harga_jual_saat_transaksi: item.product.harga_jual,
+              harga_modal_saat_transaksi: item.product.harga_modal,
             }))
-            : [],
-            
-        status: status,
+          : [],
+
+      status: status,
     };
 
     try {
@@ -398,9 +423,19 @@ export default function PemasukanBaruPage() {
                     >
                       -
                     </button>
-                    <span className="w-8 text-center font-medium">
-                      {item.quantity}
-                    </span>
+                    <input
+                      type="number"
+                      value={item.quantity}
+                      onChange={(e) =>
+                        handleDirectQuantityChange(
+                          item.product.id,
+                          e.target.value
+                        )
+                      }
+                      className="w-12 text-center font-medium mx-1 border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded"
+                      min="1"
+                      max={item.product.stok}
+                    />
                     <button
                       onClick={() => handleQuantityChange(item.product.id, 1)}
                       className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center hover:bg-blue-200 disabled:opacity-50"
@@ -502,7 +537,10 @@ export default function PemasukanBaruPage() {
       {/* Save Button */}
       <button
         onClick={handleSave}
-        disabled={isLoading || selectedProducts.length === 0 && incomeType === "Penjualan Barang"}
+        disabled={
+          isLoading ||
+          (selectedProducts.length === 0 && incomeType === "Penjualan Barang")
+        }
         className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-[calc(100%-2rem)] max-w-[calc(theme(maxWidth.md)-2rem)] bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center z-20"
       >
         {isLoading ? (
