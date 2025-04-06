@@ -48,7 +48,7 @@ export default function AddUserPage() {
       const response = await sendInvitation(payload);
       const result: InvitationResponse = await response.json();
       
-      if (response.ok && result.success) {
+      if (response.ok && result.message === "Invitation sent") {
         const token = result.token!;
         const inviteLink = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/auth/invite?token=${encodeURIComponent(token)}`;
   

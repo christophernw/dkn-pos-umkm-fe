@@ -37,5 +37,11 @@ const config: Config = {
 };
   
   
-export default config[process.env.NODE_ENV || "development"];
-  
+const envConfig = config[process.env.NODE_ENV || "development"];
+
+const exportedConfig = {
+  ...envConfig,
+  apiUrl: process.env.NEXT_PUBLIC_API_URL || envConfig.apiUrl,
+};
+
+export default exportedConfig;

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import config from "@/src/config";
 
 interface User {
   id: number;
@@ -19,10 +20,18 @@ const UserList = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/get-users`, {
+        setLoading(true); // Set loading to true before fetching
+        setError(null); // Reset error state
+
+        // Check for token after loading has started
+        if(!accessToken) {
+          throw new Error("You are not authenticated");
+        }
+
+        const response = await fetch(`${config.apiUrl}/auth/get-users`, {
           method: "GET",
           headers: {
-            "Content-Type": "appl ication/json",
+            "Content-Type": "application/json",
             "Authorization": `Bearer ${accessToken}`,
           },
         });
@@ -47,10 +56,8 @@ const UserList = () => {
     <div className="bg-white p-4 rounded-2xl shadow-md">
       <h2 className="text-lg font-semibold pb-3 border-b">Informasi Pengguna</h2>
       <div>
-        {!user ? (
-          <p className="text-red-500">You are not authenticated</p>
-        ) : loading ? (
-          <p>Loading...</p>
+        {loading ? (
+          <p className="py-3 text-gray-500">Loading...</p>
         ) : error ? (
           <p className="text-red-500">{error}</p> 
         ) : (
