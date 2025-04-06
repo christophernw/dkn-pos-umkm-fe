@@ -23,6 +23,7 @@ interface ProductItem {
     satuan: string;
   };
   product_name: string; // Added for direct access
+  product_image_url: string; // Added for direct image access
 }
 
 interface Transaction {
@@ -331,13 +332,12 @@ export default function TransaksiDetailPage() {
                   className="bg-white rounded-xl flex items-center p-3 shadow-sm"
                 >
                   <div className="w-16 h-16 relative rounded-lg overflow-hidden mr-3 flex-shrink-0 bg-gray-100">
-                    {config?.apiUrl && item.product?.foto ? (
+                    {item.product_image_url ? (
                       <Image
-                        src={`${config.apiUrl}${item.product.foto.slice(4)}`}
+                        src={`${config.apiUrl}${item.product_image_url.slice(4)}`}
                         alt={item.product_name}
                         fill
                         className="object-cover"
-                        sizes="64px"
                         onError={(e) =>
                           (e.currentTarget.src = "/images/placeholder.svg")
                         }
@@ -348,7 +348,6 @@ export default function TransaksiDetailPage() {
                         alt={item.product_name || "Produk"}
                         fill
                         className="object-cover"
-                        sizes="64px"
                       />
                     )}
                   </div>
