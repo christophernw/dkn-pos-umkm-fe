@@ -127,6 +127,73 @@ export default function TransactionMainPage() {
     return amount.toLocaleString("id-ID");
   };
 
+  const renderPaginationButtons = () => {
+    const buttons = [];
+    const maxButtonsToShow = 5;
+    let startPage = Math.max(1, page - Math.floor(maxButtonsToShow / 2));
+    const endPage = Math.min(totalPages, startPage + maxButtonsToShow - 1);
+
+    if (endPage - startPage + 1 < maxButtonsToShow) {
+      startPage = Math.max(1, endPage - maxButtonsToShow + 1);
+    }
+
+    if (startPage > 1) {
+      buttons.push(
+        <button
+          key="1"
+          className="min-w-9 rounded-md border border-slate-300 py-1 px-2 text-xs hover:bg-blue-100 ml-1"
+          onClick={() => setPage(1)}
+        >
+          1
+        </button>
+      );
+      if (startPage > 2) {
+        buttons.push(
+          <span key="start-ellipsis" className="px-1">
+            ...
+          </span>
+        );
+      }
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      buttons.push(
+        <button
+          key={i}
+          className={`min-w-9 rounded-md ${
+            page === i
+              ? "bg-primary-indigo text-white border border-primary-indigo"
+              : "border border-slate-300 hover:bg-blue-100"
+          } py-1 px-2 text-xs ml-1`}
+          onClick={() => setPage(i)}
+        >
+          {i}
+        </button>
+      );
+    }
+
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        buttons.push(
+          <span key="end-ellipsis" className="px-1">
+            ...
+          </span>
+        );
+      }
+      buttons.push(
+        <button
+          key={totalPages}
+          className="min-w-9 rounded-md border border-slate-300 py-1 px-2 text-xs hover:bg-blue-100 ml-1"
+          onClick={() => setPage(totalPages)}
+        >
+          {totalPages}
+        </button>
+      );
+    }
+
+    return buttons;
+  };
+
   return (
     <div className="mt-8 flex flex-col gap-4">
       <TransactionHeader />
@@ -231,25 +298,23 @@ export default function TransactionMainPage() {
         )}
       </div>
 
-      {/* Pagination Controls */}
+      {/* Updated Pagination Controls */}
       {!loading && transactions.length > 0 && (
-        <div className="flex justify-between items-center mt-4 mb-24">
+        <div className="flex justify-center items-center mt-4 mb-24 gap-2">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-4 py-2 bg-gray-200 rounded-lg disabled:opacity-50"
+            className="rounded-md border border-slate-300 py-1 px-2 text-xs hover:bg-blue-100 disabled:opacity-50"
           >
-            Previous
+            Prev
           </button>
 
-          <div className="text-sm">
-            Page {page} of {totalPages}
-          </div>
+          {renderPaginationButtons()}
 
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="px-4 py-2 bg-gray-200 rounded-lg disabled:opacity-50"
+            className="rounded-md border border-slate-300 py-1 px-2 text-xs hover:bg-blue-100 disabled:opacity-50"
           >
             Next
           </button>
