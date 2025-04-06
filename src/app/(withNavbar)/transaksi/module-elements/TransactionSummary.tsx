@@ -93,23 +93,31 @@ export const TransactionSummary = () => {
 			</div>
 
 			{/* Large Summary Card for Profit/Loss */}
-      <div 
-        className={`p-4 rounded-xl ${summaryData.status === "untung" ? "bg-primary-green bg-opacity-10" : "bg-red-100"}`}
-      >
-        <div className="flex items-center gap-4">
-          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary-green bg-opacity-20">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 6V18M12 6L7 11M12 6L17 11" stroke="#16A34A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          <div className="flex flex-col">
-            <p className="text-sm text-gray-500 font-medium">
-              {summaryData.status === "untung" ? "Keuntungan" : "Kerugian"}
-            </p>
-            <p className="font-bold text-2xl text-gray-900">Rp{formatCurrency(summaryData.amount)}</p>
-          </div>
-        </div>
-      </div>
+			<div 
+			className={`p-4 rounded-xl ${summaryData.status === "untung" ? "bg-primary-green bg-opacity-10" : "bg-red-100"}`}
+			>
+			<div className="flex items-center gap-4">
+				<div className={`flex items-center justify-center w-12 h-12 rounded-full ${
+				summaryData.status === "untung" ? "bg-primary-green bg-opacity-20" : "bg-red-500 bg-opacity-20"
+				}`}>
+				{summaryData.status === "untung" ? (
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<path d="M12 6V18M12 6L7 11M12 6L17 11" stroke="#16A34A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+					</svg>
+				) : (
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<path d="M12 18V6M12 18L7 13M12 18L17 13" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+					</svg>
+				)}
+				</div>
+				<div className="flex flex-col">
+				<p className="text-sm text-gray-500 font-medium">
+					{summaryData.status === "untung" ? "Keuntungan" : "Kerugian"}
+				</p>
+				<p className="font-bold text-2xl text-gray-900">Rp{formatCurrency(summaryData.amount)}</p>
+				</div>
+			</div>
+			</div>
 	</div>
 	)
 }
