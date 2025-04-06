@@ -40,6 +40,10 @@ export default function TransactionMainPage() {
     "all"
   );
   const { accessToken } = useAuth();
+  const [viewMode, setViewMode] = useState<"transaksi" | "pembatalan">(
+    "transaksi"
+  );
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const fetchTransactions = async (pageNum: number, status?: string) => {
     if (!accessToken) {
@@ -55,6 +59,10 @@ export default function TransactionMainPage() {
       let url = `${config.apiUrl}/transaksi?page=${pageNum}&per_page=10`;
       if (status) {
         url += `&status=${status}`;
+      }
+
+      if (viewMode === "pembatalan") {
+        url += `&show_deleted=true`;
       }
 
       const response = await fetch(url, {
@@ -89,11 +97,17 @@ export default function TransactionMainPage() {
         ? "Lunas"
         : "Belum Lunas";
     fetchTransactions(page, status);
-  }, [page, accessToken, activeFilter]);
+  }, [page, accessToken, activeFilter, viewMode]);
 
   const handleFilterChange = (filter: "all" | "paid" | "unpaid") => {
     setActiveFilter(filter);
     setPage(1); // Reset to first page when changing filters
+  };
+
+  const handleViewModeChange = (mode: "transaksi" | "pembatalan") => {
+    setViewMode(mode);
+    setPage(1); // Reset to first page when changing view mode
+    setDropdownOpen(false);
   };
 
   const formatDate = (dateString: string) => {
@@ -192,14 +206,63 @@ export default function TransactionMainPage() {
   return (
     <div className="mt-8 flex flex-col gap-4">
       <div className="justify-between flex">
-              <div className="flex p-1 bg-white rounded-full items-center gap-2 w-fit">
-                  <div className="bg-primary-indigo rounded-full p-2">
-                      <NotesIcon />
-                  </div>
-                  <p className="pr-3">Transaksi</p>
-              </div>
+        <div className="relative">
+          <div
+            className="flex p-1 bg-white rounded-full items-center gap-2 w-fit cursor-pointer"
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+          >
+            <div className="bg-primary-indigo rounded-full p-2">
+              <NotesIcon />
+            </div>
+            <p className="pr-1">
+              {viewMode === "transaksi" ? "Transaksi" : "Pembatalan Transaksi"}
+            </p>
+            <div className="pr-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </div>
           </div>
-      <TransactionSummary />
+
+          {dropdownOpen && (
+            <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg z-10 w-[220px]">
+              <div
+                className={`p-3 cursor-pointer hover:bg-gray-100 ${
+                  viewMode === "transaksi"
+                    ? "font-semibold text-primary-indigo"
+                    : ""
+                }`}
+                onClick={() => handleViewModeChange("transaksi")}
+              >
+                Transaksi
+              </div>
+              <div
+                className={`p-3 cursor-pointer hover:bg-gray-100 ${
+                  viewMode === "pembatalan"
+                    ? "font-semibold text-primary-indigo"
+                    : ""
+                }`}
+                onClick={() => handleViewModeChange("pembatalan")}
+              >
+                Pembatalan Transaksi
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {viewMode === "transaksi" && <TransactionSummary />}
 
       {/* Filter Buttons */}
       <div className="flex gap-2">
