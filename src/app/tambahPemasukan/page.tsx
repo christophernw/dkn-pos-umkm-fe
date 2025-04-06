@@ -578,6 +578,7 @@ export default function PemasukanBaruPage() {
           isOpen={isProductSelectorOpen}
           onClose={handleCloseProductSelector}
           onProductSelect={handleProductSelect}
+          isExpenseContext={false}
         />
       )}
     </div>

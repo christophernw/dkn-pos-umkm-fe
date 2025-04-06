@@ -505,6 +505,7 @@ export default function PengeluaranBaruPage() {
           isOpen={isProductSelectorOpen}
           onClose={handleCloseProductSelector}
           onProductSelect={handleProductSelect}
+          isExpenseContext={true}
         />
       )}
     </div>
