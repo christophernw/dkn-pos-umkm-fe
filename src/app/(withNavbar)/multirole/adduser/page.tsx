@@ -75,7 +75,9 @@ export default function AddUserPage() {
   };
   
 
-  return (
+  // ...existing code...
+
+return (
     <div className="min-h-screen bg-[#EDF1F9] p-4">
       <div className="w-full flex mb-3">
         <button
@@ -90,37 +92,42 @@ export default function AddUserPage() {
       <h1 className="text-xl font-semibold mb-6">Tambah Pengguna</h1>
 
       <form onSubmit={handleSubmit}>
-        <label className="block text-gray-400 text-sm font-semibold mb-2" htmlFor="name">
-          Nama lengkap
+        <label className="block text-gray-500 text-sm font-semibold mb-2" htmlFor="name">
+          Nama Lengkap
         </label>
         <input
           id="name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className={`w-full p-3 mb-2 border ${errors.name ? "border-red-500" : "border-gray-300"} rounded-3xl focus:outline-none font-light text-gray-400`}
+          className={`w-full p-3 mb-2 border ${errors.name ? "border-red-500" : "border-gray-300"} rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-200 font-normal text-gray-700`}
           placeholder="Nama lengkap"
         />
         {errors.name && <p className="text-red-500 text-sm mb-4">{errors.name}</p>}
 
-        <label className="block text-gray-400 text-sm font-semibold mb-2" htmlFor="role">
+        <label className="block text-gray-500 text-sm font-semibold mb-2" htmlFor="role">
           Role
         </label>
-        <div className={`w-full p-3 mb-2 border ${errors.role ? "border-red-500" : "border-gray-300"} rounded-3xl focus-within:border-blue-200 bg-white`}>
+        <div className={`relative w-full mb-2 ${errors.role ? "border-red-500" : "border-gray-300"}`}>
           <select
             id="role"
             value={role}
             onChange={(e) => setRole(e.target.value)}
-            className="w-full outline-none font-light text-gray-400"
+            className="w-full p-3 border border-gray-300 rounded-3xl appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 font-normal text-gray-700 pr-10"
           >
             <option value="" disabled>Pilih Role</option>
             <option value="Pemilik">Pemilik</option>
             <option value="Karyawan">Karyawan</option>
           </select> 
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-700">
+            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+            </svg>
+          </div>
         </div>
         {errors.role && <p className="text-red-500 text-sm mb-4">{errors.role}</p>}
 
-        <label className="block text-gray-400 text-sm font-semibold mb-2" htmlFor="email">
+        <label className="block text-gray-500 text-sm font-semibold mb-2" htmlFor="email">
           Email
         </label>
         <input
@@ -128,7 +135,7 @@ export default function AddUserPage() {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className={`w-full p-3 mb-2 border ${errors.email ? "border-red-500" : "border-gray-300"} rounded-3xl focus:outline-none font-light text-gray-400`}
+          className={`w-full p-3 mb-2 border ${errors.email ? "border-red-500" : "border-gray-300"} rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-200 font-normal text-gray-700`}
           placeholder="Email"
         />
         {errors.email && <p className="text-red-500 text-sm mb-4">{errors.email}</p>}
@@ -138,7 +145,7 @@ export default function AddUserPage() {
         <button
           type="submit"
           className={`mt-10 w-full p-3 rounded-3xl font-semibold ${
-            loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 text-white"
+            loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700"
           }`}
           disabled={loading}
         >
@@ -147,4 +154,5 @@ export default function AddUserPage() {
       </form>
     </div>
   );
+// ...existing code...
 }
