@@ -2,13 +2,13 @@
 
 import { DotIcon } from "@/public/icons/DotIcon";
 import React, { useState, useEffect } from "react";
-import { TransactionHeader } from "./module-elements/TransactionHeader";
 import { TransactionSummary } from "./module-elements/TransactionSummary";
 import { PlusIcon } from "@/public/icons/PlusIcon";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import config from "@/src/config";
 import { useRouter } from "next/navigation";
+import { NotesIcon } from "@/public/icons/notesIcon";
 
 interface TransactionItem {
   id: string;
@@ -191,7 +191,14 @@ export default function TransactionMainPage() {
 
   return (
     <div className="mt-8 flex flex-col gap-4">
-      <TransactionHeader />
+      <div className="justify-between flex">
+              <div className="flex p-1 bg-white rounded-full items-center gap-2 w-fit">
+                  <div className="bg-primary-indigo rounded-full p-2">
+                      <NotesIcon />
+                  </div>
+                  <p className="pr-3">Transaksi</p>
+              </div>
+          </div>
       <TransactionSummary />
 
       {/* Filter Buttons */}
