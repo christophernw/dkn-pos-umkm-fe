@@ -36,7 +36,6 @@ export default function LoginPage() {
                     access: data.access,
                     refresh: data.refresh
                 });
-                
                 router.push('/');
             })
             .catch(error => {
