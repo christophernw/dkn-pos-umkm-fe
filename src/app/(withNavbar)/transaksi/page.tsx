@@ -8,6 +8,7 @@ import { PlusIcon } from "@/public/icons/PlusIcon";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import config from "@/src/config";
+import { useRouter } from "next/navigation";
 
 interface TransactionItem {
   id: string;
@@ -27,6 +28,7 @@ interface PaginatedResponse {
 }
 
 export default function TransactionMainPage() {
+  const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,10 +41,7 @@ export default function TransactionMainPage() {
   );
   const { accessToken } = useAuth();
 
-  const fetchTransactions = async (
-    pageNum: number,
-    status?: string
-  ) => {
+  const fetchTransactions = async (pageNum: number, status?: string) => {
     if (!accessToken) {
       setError("Authentication required");
       setLoading(false);
@@ -186,6 +185,10 @@ export default function TransactionMainPage() {
     return buttons;
   };
 
+  const handleTransactionClick = (transactionId: string) => {
+    router.push(`/transaksi/detail/${transactionId}`);
+  };
+
   return (
     <div className="mt-8 flex flex-col gap-4">
       <TransactionHeader />
@@ -248,7 +251,8 @@ export default function TransactionMainPage() {
           transactions.map((transaction) => (
             <div
               key={transaction.id}
-              className="bg-white py-3 px-5 rounded-xl flex flex-col gap-1"
+              className="bg-white py-3 px-5 rounded-xl flex flex-col gap-1 cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => handleTransactionClick(transaction.id)}
             >
               <div className="flex justify-between items-center">
                 <p className="font-medium text-sm text-primary-indigo">
