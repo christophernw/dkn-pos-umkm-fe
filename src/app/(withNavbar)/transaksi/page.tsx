@@ -287,7 +287,7 @@ export default function TransactionMainPage() {
                   className={`rounded-full px-2 py-1 font-medium w-fit text-xs ${
                     transaction.status === "Lunas"
                       ? "bg-secondary-green text-primary-green"
-                      : "bg-yellow-100 text-yellow-700"
+                      : "bg-red-100 text-red-700"
                   }`}
                 >
                   {transaction.status}
