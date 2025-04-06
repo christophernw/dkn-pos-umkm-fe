@@ -233,7 +233,7 @@ export default function TransactionMainPage() {
 
       {/* Pagination Controls */}
       {!loading && transactions.length > 0 && (
-        <div className="flex justify-between items-center mt-4">
+        <div className="flex justify-between items-center mt-4 mb-24">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
