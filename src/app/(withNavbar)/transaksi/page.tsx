@@ -34,7 +34,6 @@ export default function TransactionMainPage() {
   const [page, setPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<"all" | "paid" | "unpaid">(
     "all"
   );
@@ -42,7 +41,6 @@ export default function TransactionMainPage() {
 
   const fetchTransactions = async (
     pageNum: number,
-    query: string = "",
     status?: string
   ) => {
     if (!accessToken) {
@@ -55,7 +53,7 @@ export default function TransactionMainPage() {
     setError(null);
 
     try {
-      let url = `${config.apiUrl}/transaksi?page=${pageNum}&q=${query}&per_page=10`;
+      let url = `${config.apiUrl}/transaksi?page=${pageNum}&per_page=10`;
       if (status) {
         url += `&status=${status}`;
       }
@@ -91,14 +89,8 @@ export default function TransactionMainPage() {
         : activeFilter === "paid"
         ? "Lunas"
         : "Belum Lunas";
-    fetchTransactions(page, searchQuery, status);
+    fetchTransactions(page, status);
   }, [page, accessToken, activeFilter]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setPage(1); // Reset to first page when searching
-    fetchTransactions(1, searchQuery);
-  };
 
   const handleFilterChange = (filter: "all" | "paid" | "unpaid") => {
     setActiveFilter(filter);
