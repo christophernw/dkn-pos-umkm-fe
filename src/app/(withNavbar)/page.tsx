@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { CoinIcon } from "@/public/icons/CoinIcon";
 import { StockIcon } from "@/public/icons/StockIcon";
 import { NotesIcon } from "@/public/icons/notesIcon";
+import Logo from "@/public/images/logo.png"; // Import the logo image
 
 export default function Home() {
   const { user } = useAuth();
@@ -14,6 +15,11 @@ export default function Home() {
   
   return (
     <div className="p-4 flex flex-col gap-6">
+      {/* Logo Section */}
+      <div className="flex justify-center mb-4">
+        <img src={Logo.src} alt="LANCAR Logo" className="h-32" />
+      </div>
+
       {/* Welcome Section */}
       <div className="bg-white rounded-xl p-4 shadow-sm">
         <h1 className="text-xl font-bold text-gray-800">
