@@ -58,7 +58,7 @@ export default function InvitePage() {
     };
 
     validateInvitation();
-  }, [searchParams, logout]);
+  }, [searchParams, logout, signOut]);
 
   return (
     <div className="min-h-screen bg-[#EDF1F9] flex items-center justify-center p-4">
