@@ -5,7 +5,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 const ReportPage = () => {
     const { user } = useAuth();
 
-    if (user?.role !== "Pemilik") {
+    if (user?.role !== "Pemilik" && user?.role !== "Administrator") {
         return <div>Not allowed</div>;
     }
 
