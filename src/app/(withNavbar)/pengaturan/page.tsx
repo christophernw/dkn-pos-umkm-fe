@@ -15,6 +15,7 @@ export default function SettingsPage() {
 
   const handleSignOut = async () => {
     logout();
+    await signOut({ redirect: false });
     router.push("/");
   };
   
