@@ -27,7 +27,7 @@ export const SummaryCard = ({title, nominal, percentage, logo}: SummaryCardProps
             <p>{title}</p>
         </div>
         <div className="flex flex-col gap-1">
-            <p className="font-bold text-xl">Rp{nominal}</p>
+            <p className="font-bold text-xl">Rp{Number(nominal).toLocaleString("id-ID")}</p>
             <div className="flex gap-1 items-center">
                 <p className="bg-primary-green rounded-full text-white w-fit px-1 text-xs">{percentage}%</p>
                 <p className="text-xs">vs bulan lalu.</p>
