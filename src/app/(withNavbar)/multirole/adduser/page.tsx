@@ -13,7 +13,7 @@ import { InvitationPayload, InvitationResponse } from "./types/types";
 export default function AddUserPage() {
   const router = useRouter();
   const handleBack = () => router.back();
-  const {accessToken} = useAuth(); 
+  const {accessToken, user} = useAuth(); 
   
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
@@ -53,7 +53,12 @@ export default function AddUserPage() {
         const inviteLink = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/auth/invite?token=${encodeURIComponent(token)}`;
   
         try {
-          await sendEmail({ to: email, inviteLink });
+          await sendEmail({ 
+            to: email, 
+            inviteLink,
+            senderName: user?.name || 'LANCAR Admin', 
+            senderEmail: user?.email || 'noreply@lancar.com'
+          });
   
           setMessage("Pengguna berhasil ditambahkan dan undangan dikirim!");
           setName("");
@@ -73,9 +78,6 @@ export default function AddUserPage() {
       setLoading(false);
     }
   };
-  
-
-  // ...existing code...
 
 return (
     <div className="min-h-screen bg-[#EDF1F9] p-4">
