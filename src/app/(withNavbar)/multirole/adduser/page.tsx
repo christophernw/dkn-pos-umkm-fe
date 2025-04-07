@@ -41,7 +41,7 @@ export default function AddUserPage() {
       const payload: InvitationPayload = {
         name: sanitizeInput(name),
         email: sanitizeInput(email),
-        role: role as "Pemilik" | "Karyawan",
+        role: role as "Administrator" | "Karyawan",
         accessToken: accessToken as string,
       };
   
@@ -116,7 +116,7 @@ return (
             className="w-full p-3 border border-gray-300 rounded-3xl appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 font-normal text-gray-700 pr-10"
           >
             <option value="" disabled>Pilih Role</option>
-            <option value="Pemilik">Pemilik</option>
+            <option value="Administrator">Administrator</option>
             <option value="Karyawan">Karyawan</option>
           </select> 
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-700">
