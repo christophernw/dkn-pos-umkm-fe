@@ -21,7 +21,6 @@ export const metadata: Metadata = {
   description: "Aplikasi point of sale (POS) untuk membantu UMKM mengelola produk, transaksi, dan laporan keuangan dengan mudah",
   keywords: ["POS", "UMKM", "point of sale", "manajemen bisnis", "Indonesia"],
   authors: [{ name: "PPL B - Kelompok 6" }],
-  viewport: "width=device-width, initial-scale=1",
 };
 
 export default async function RootLayout({
