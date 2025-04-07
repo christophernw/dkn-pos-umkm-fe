@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import config from "@/src/config";
+import { signOut } from "next-auth/react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function InvitePage() {
   const router = useRouter();
@@ -11,6 +13,7 @@ export default function InvitePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState<'initial' | 'success' | 'error'>('initial');
   const [message, setMessage] = useState("");
+  const { logout } = useAuth();
 
   useEffect(() => {
     const validateInvitation = async () => {
@@ -37,6 +40,10 @@ export default function InvitePage() {
         if (data.valid) {
           setStatus('success');
           setMessage("Pendaftaran berhasil! Anda telah terdaftar dan terhubung dengan toko.");
+          
+          // Log out the user when registration is successful
+          logout();
+          await signOut({ redirect: false });
         } else {
           setStatus('error');
           setMessage(data.error || "Terjadi kesalahan saat memvalidasi undangan.");
@@ -51,7 +58,7 @@ export default function InvitePage() {
     };
 
     validateInvitation();
-  }, [searchParams]);
+  }, [searchParams, logout]);
 
   return (
     <div className="min-h-screen bg-[#EDF1F9] flex items-center justify-center p-4">
