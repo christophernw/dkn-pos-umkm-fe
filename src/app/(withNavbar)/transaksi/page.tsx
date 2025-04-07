@@ -7,7 +7,7 @@ import { PlusIcon } from "@/public/icons/PlusIcon";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import config from "@/src/config";
-import { useRouter } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
 import { NotesIcon } from "@/public/icons/notesIcon";
 
 interface TransactionItem {
@@ -28,6 +28,7 @@ interface PaginatedResponse {
 }
 
 export default function TransactionMainPage() {
+  notFound();
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);

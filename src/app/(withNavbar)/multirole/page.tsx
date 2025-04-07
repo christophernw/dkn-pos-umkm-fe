@@ -11,7 +11,7 @@ const MultiRolePageContent: React.FC = () => {
     <div className="relative min-h-screen pt-4 mt-4">
       <Header />
       <UserList />
-      <AddUserButton />
+      {/* <AddUserButton /> */}
     </div>
   );
 };
