@@ -42,10 +42,10 @@ export default function TotalSummarySection({selectedProducts, status, onStatusC
                     onClick={toggleStatus}
                 >
                     <div className={`rounded-xl flex px-2 items-center  ${status === 'Lunas' ? 'bg-white' : ''}`}>
-                        <p className="text-[9px]">Lunas</p>
+                        <p className="text-xs">Lunas</p>
                     </div>
                     <div className={`rounded-xl flex px-2 items-center ${status === 'Belum Lunas' ? 'bg-white' : ''}`}>
-                        <p className="text-[9px]">Belum Lunas</p>
+                        <p className="text-xs">Belum Lunas</p>
                     </div>
                 </div>
             </div>
