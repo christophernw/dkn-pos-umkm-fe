@@ -15,8 +15,10 @@ export default function LoginPage() {
     const router = useRouter();
     const { setAuthData } = useAuth();
 
+    
     useEffect(() => {
         if (session) {
+            
             setLoading(true);
             fetch(`${config.apiUrl}/auth/process-session`, {
                 method: 'POST',
@@ -32,7 +34,6 @@ export default function LoginPage() {
                     access: data.access,
                     refresh: data.refresh
                 });
-                
                 router.push('/');
             })
             .catch(error => {

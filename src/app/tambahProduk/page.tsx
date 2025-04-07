@@ -3,7 +3,6 @@ import { useState, ChangeEvent } from "react";
 import TextInput from "./components/textInput";
 import { useAuth } from "@/contexts/AuthContext";
 import config from "@/src/config";
-import { useRouter } from 'next/navigation';
 
 export default function AddProductPage() {
   const [productName, setProductName] = useState("");
@@ -11,16 +10,30 @@ export default function AddProductPage() {
   const [priceSell, setPriceSell] = useState("");
   const [priceCost, setPriceCost] = useState("");
   const [currentStock, setCurrentStock] = useState("");
-  const [minimumStock, setMinimumStock] = useState("");
   const [unit, setUnit] = useState("Kg");
   const [previewImg, setPreviewImg] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const { accessToken } = useAuth();
-  const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
     const file = e.target.files[0];
+
+    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+    const maxSizeMB = 3;
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+
+    if (!allowedTypes.includes(file.type)) {
+      alert("Format file tidak didukung! Silakan unggah PNG, JPG, atau JPEG.");
+      return;
+    }
+
+    if (file.size > maxSizeBytes) {
+      alert(`Ukuran file terlalu besar! Maksimal ${maxSizeMB}MB.`);
+      return;
+    }
+
     setImageFile(file);
 
     const reader = new FileReader();
@@ -32,6 +45,9 @@ export default function AddProductPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (loading) return;
+    setLoading(true);
 
     const formData = new FormData();
 
@@ -70,33 +86,22 @@ export default function AddProductPage() {
         );
       }
     } catch (error) {
+      console.log(error);
       console.error("Network error:", error);
       alert("Terjadi kesalahan jaringan. Silakan coba lagi.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto p-4 mt-8">
-      <header className="flex items-center mb-5">
+    <div className="max-w-md mx-auto p-4">
+      <header className="flex items-center mb-4">
         <button
-          onClick={() => router.back()}
-          className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2"
+          onClick={() => window.history.back()}
+          className="mr-2 text-gray-600 hover:text-gray-800"
         >
-          <svg
-            className="w-4 h-4 transform scale-x-[-1]"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 14 10"
-          >
-            <path
-              stroke="black"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M1 5h12m0 0L9 1m4 4L9 9"
-            />
-          </svg>
+          ←
         </button>
         <h1 className="text-xl font-semibold">Tambah Produk Baru</h1>
       </header>
@@ -152,7 +157,7 @@ export default function AddProductPage() {
           id="productName"
           label="Nama Produk"
           value={productName}
-          onChange={setProductName}
+          onChange={(value) => setProductName(value)}
           placeholder="Pie Jeruk"
         />
 
@@ -162,7 +167,7 @@ export default function AddProductPage() {
           id="category"
           label="Kategori"
           value={category}
-          onChange={setCategory}
+          onChange={(value) => setCategory(value)}
           placeholder="Makanan"
         />
 
@@ -170,75 +175,60 @@ export default function AddProductPage() {
           id="priceSell"
           label="Harga Jual"
           value={priceSell}
-          onChange={setPriceSell}
-          placeholder="Rp 13.000"
+          onChange={(_, raw) => setPriceSell(raw)}
+          placeholder="13.000"
           type="number"
+          currency
         />
 
         <TextInput
           id="priceCost"
           label="Harga Modal"
           value={priceCost}
-          onChange={setPriceCost}
-          placeholder="Rp 9.000"
+          onChange={(_, raw) => setPriceCost(raw)}
+          placeholder="9.000"
+          type="number"
+          currency
+        />
+
+        <TextInput
+          id="currentStock"
+          label="Stok"
+          value={currentStock}
+          onChange={setCurrentStock}
+          placeholder="450"
           type="number"
         />
 
-        {/* Satuan (Unit) dan Stok */}
-        <div className="flex items-center justify-between space-x-4">
-          {/* Pilih Satuan */}
-          <div className="w-1/3">
-            <label
-              htmlFor="unit"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Pilih Satuan
-            </label>
-            <select
-              id="unit"
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              <option value="Pcs">Pcs</option>
-              <option value="Kg">Kg</option>
-              <option value="Botol">Botol</option>
-              <option value="Liter">Liter</option>
-            </select>
-          </div>
-
-          {/* Stok Saat Ini */}
-          <div className="w-1/3">
-            <TextInput
-              id="currentStock"
-              label="Stok Saat Ini"
-              value={currentStock}
-              onChange={setCurrentStock}
-              placeholder="450"
-              type="number"
-            />
-          </div>
-
-          {/* Stok Minimum */}
-          <div className="w-1/3">
-            <TextInput
-              id="minimumStock"
-              label="Stok Minimum"
-              value={minimumStock}
-              onChange={setMinimumStock}
-              placeholder="10"
-              type="number"
-            />
-          </div>
+        {/* Pilih Satuan */}
+        <div className="w-1/3">
+          <label
+            htmlFor="unit"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Pilih Satuan
+          </label>
+          <select
+            id="unit"
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+            className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          >
+            <option value="Pcs">Pcs</option>
+            <option value="Kg">Kg</option>
+            <option value="Botol">Botol</option>
+            <option value="Liter">Liter</option>
+          </select>
         </div>
 
         {/* Tombol Submit */}
         <div className="pt-4">
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+            disabled={loading}
           >
-            Lanjut
+            {loading ? "Menambahkan Produk..." : "Lanjut"}
           </button>
         </div>
       </form>

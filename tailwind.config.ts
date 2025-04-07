@@ -50,7 +50,12 @@ export default {
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
   			},
-			'primary-blue': "#EDF1F9"
+			'primary-blue': "#EDF1F9",
+			'primary-indigo': "#3554C1",
+			'primary-green': "#5ABC61",
+			'secondary-green': "#ECF9F7",
+			'primary-gray': "#7C8690",
+
   		},
   		borderRadius: {
   			lg: 'var(--radius)',

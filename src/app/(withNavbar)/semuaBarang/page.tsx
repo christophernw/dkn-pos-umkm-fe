@@ -4,7 +4,6 @@ import HeaderProduk from "@/src/components/HeaderProduk";
 import ProductCard from "@/src/components/ProductCard";
 import React, { Suspense } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-
 const SemuaBarang = () => {
   const { user } = useAuth();
 

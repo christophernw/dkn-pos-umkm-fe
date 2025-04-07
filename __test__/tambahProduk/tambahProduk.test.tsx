@@ -266,6 +266,41 @@ describe("AddProductPage handleSubmit functionality", () => {
     expect(screen.getByText("Upload")).toBeInTheDocument();
   });
 
+  it("should reject non-image files (e.g., PDF) and alert the user", () => {
+    render(<AddProductPage />);
+    const fileInput = screen.getByLabelText("Upload") as HTMLInputElement;
+    const pdfFile = new File(["dummy content"], "test.pdf", { type: "application/pdf" });
+    window.alert = jest.fn();
+    fireEvent.change(fileInput, { target: { files: [pdfFile] } });
+    expect(window.alert).toHaveBeenCalledWith("Format file tidak didukung! Silakan unggah PNG, JPG, atau JPEG.");
+    // Verify that no preview image is shown
+    expect(screen.queryByAltText("Product Preview")).toBeNull();
+  });
+
+  it("should handle error response from server with missing error detail", async () => {
+    // Simulate an error response with status not equal to 201 and no 'detail' property
+    mockFetch.mockResolvedValueOnce({
+      status: 400,
+      json: jest.fn().mockResolvedValueOnce({}),
+    });
+    
+    render(<AddProductPage />);
+    
+    // Fill minimal required data
+    fireEvent.change(screen.getByLabelText(/nama produk/i), { target: { value: "Test Product" } });
+    
+    // Submit the form
+    fireEvent.click(screen.getByRole("button", { name: /lanjut/i }));
+    
+    // Wait for fetch to complete
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+    
+    // Verify that the fallback message "Unknown error" is used
+    expect(window.alert).toHaveBeenCalledWith("Gagal menambahkan produk: Unknown error");
+  });  
+
   it("should handle error response from server", async () => {
     // Mock error fetch response
     const errorMessage = "Invalid product data";
@@ -332,5 +367,48 @@ describe("AddProductPage handleSubmit functionality", () => {
       expect(previewImg).toHaveClass("h-full");
       expect(previewImg).toHaveClass("rounded");
     });
+  });
+
+  it("rejects a file larger than 3MB", async () => {
+    render(<AddProductPage />);
+
+    // Create a mock 4MB file (should be rejected)
+    const largeFile = new File([new Uint8Array(4 * 1024 * 1024)], "large.jpg", {
+      type: "image/jpeg",
+    });
+
+    const fileInput = screen.getByLabelText("Upload") as HTMLInputElement;
+
+    // Try to upload a file
+    fireEvent.change(fileInput, { target: { files: [largeFile] } });
+
+    // Check if alert is triggered
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith(
+        "Ukuran file terlalu besar! Maksimal 3MB."
+      );
+    });
+  });
+  
+  it("accepts a valid image file (<=3MB)", async () => {
+    render(<AddProductPage />);
+
+    // Create a mock valid image file (2MB)
+    const validFile = new File([new Uint8Array(2 * 1024 * 1024)], "image.png", {
+      type: "image/png",
+    });
+
+    const fileInput = screen.getByLabelText("Upload") as HTMLInputElement;
+
+    // Try to upload a file
+    fireEvent.change(fileInput, { target: { files: [validFile] } });
+
+    // Ensure no alert is triggered
+    await waitFor(() => {
+      expect(window.alert).not.toHaveBeenCalled();
+    });
+
+    // Check if image preview is displayed
+    expect(screen.getByAltText("Product Preview")).toBeInTheDocument();
   });
 });

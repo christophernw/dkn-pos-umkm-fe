@@ -22,7 +22,7 @@ const HeaderProduk = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
 
-  const handleSort = (order: "asc" | "desc") => {
+  const handleSort = (order: "-stok" | "stok" | "-id") => {
     const params = new URLSearchParams(searchParams);
     params.set('sort', order);
     
@@ -168,13 +168,19 @@ const HeaderProduk = () => {
             <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
               <button
                 className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                onClick={() => handleSort("asc")}
+                onClick={() => handleSort("-id")}
+              >
+                Tanggal Pembuatan
+              </button>
+              <button
+                className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                onClick={() => handleSort("stok")}
               >
                 Stok Terendah
               </button>
               <button
                 className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                onClick={() => handleSort("desc")}
+                onClick={() => handleSort("-stok")}
               >
                 Stok Tertinggi
               </button>
