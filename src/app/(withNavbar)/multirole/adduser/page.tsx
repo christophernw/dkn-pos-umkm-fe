@@ -101,7 +101,7 @@ return (
           value={name}
           onChange={(e) => setName(e.target.value)}
           className={`w-full p-3 mb-2 border ${errors.name ? "border-red-500" : "border-gray-300"} rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-200 font-normal text-gray-700`}
-          placeholder="Nama lengkap"
+          placeholder="John Doe"
         />
         {errors.name && <p className="text-red-500 text-sm mb-4">{errors.name}</p>}
 
@@ -136,7 +136,7 @@ return (
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className={`w-full p-3 mb-2 border ${errors.email ? "border-red-500" : "border-gray-300"} rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-200 font-normal text-gray-700`}
-          placeholder="Email"
+          placeholder="johndoe@gmail.com"
         />
         {errors.email && <p className="text-red-500 text-sm mb-4">{errors.email}</p>}
 
