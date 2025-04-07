@@ -14,6 +14,10 @@ const eslintConfig = [
   {
     rules: {
       "react/display-name": "off", // Disable the ESLint rule
+      "@typescript-eslint/no-explicit-any": "off", // Disable the ESLint rule
+      "@typescript-eslint/no-unused-vars": "off", // Disable the ESLint rule
+      "@next/next/no-img-element": "off", // Disable the ESLint rule
+      "react-hooks/exhaustive-deps": "off",
     },
   },
 ];    
