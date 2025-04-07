@@ -1,7 +1,7 @@
 export interface InvitationPayload {
     name: string;
     email: string;
-    role: "Pemilik" | "Karyawan";
+    role: "Manajer" | "Karyawan";
     accessToken: string;
   }
   

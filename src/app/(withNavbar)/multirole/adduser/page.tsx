@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AiOutlineArrowLeft } from "react-icons/ai";
-import DOMPurify from "dompurify";
 import { sendEmail } from "@/src/app/lib/sendInvitationEmail";
 import { useAuth } from "@/contexts/AuthContext";
 import { sanitizeInput, validateInputs } from "./utils/inputValidation";
@@ -41,30 +40,31 @@ export default function AddUserPage() {
       const payload: InvitationPayload = {
         name: sanitizeInput(name),
         email: sanitizeInput(email),
-        role: role as "Pemilik" | "Karyawan",
+        role: role as "Manajer" | "Karyawan",
         accessToken: accessToken as string,
       };
   
       const response = await sendInvitation(payload);
-      const result: InvitationResponse = await response.json();
-      
-      if (response.ok && result.success) {
+      const result: InvitationResponse = await response.json(); 
+
+      if (response.ok && result.token) {
         const token = result.token!;
-        const inviteLink = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/auth/invite?token=${encodeURIComponent(token)}`;
-  
+        const inviteLink = `${process.env.NEXT_PUBLIC_EMAILJS_URL}/invitation?token=${encodeURIComponent(token)}`;
+
         try {
           await sendEmail({ to: email, inviteLink });
   
-          setMessage("Pengguna berhasil ditambahkan dan undangan dikirim!");
+          setMessage("Undangan berhasil dikirim!");
           setName("");
-          setRole("Karyawan");
+          setRole("");
           setEmail("");
         } catch (error) {
           console.error("Gagal mengirim email:", error);
           setMessage("Terjadi kesalahan saat mengirim undangan.");
         }
       } else {
-        setMessage(result.error || "Terjadi kesalahan.");
+        console.log("Gagal logic, isi result:", result);
+        setMessage(result.error || "Error Disini");
       }
     } catch (error) {
       console.error("Gagal mengirim data:", error);
@@ -114,7 +114,7 @@ export default function AddUserPage() {
             className="w-full outline-none font-light text-gray-400"
           >
             <option value="" disabled>Pilih Role</option>
-            <option value="Pemilik">Pemilik</option>
+            <option value="Manajer">Manajer</option>
             <option value="Karyawan">Karyawan</option>
           </select> 
         </div>
