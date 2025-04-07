@@ -7,7 +7,7 @@ import { PlusIcon } from "@/public/icons/PlusIcon";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import config from "@/src/config";
-import { notFound, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { NotesIcon } from "@/public/icons/notesIcon";
 
 interface TransactionItem {
@@ -28,7 +28,6 @@ interface PaginatedResponse {
 }
 
 export default function TransactionMainPage() {
-  notFound();
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
@@ -171,7 +170,6 @@ export default function TransactionMainPage() {
               ? "bg-primary-indigo text-white border border-primary-indigo"
               : "border border-slate-300 hover:bg-blue-100"
           } py-1 px-2 text-xs ml-1`}
-          // @ts-expect-error: halo
           onClick={() => setPage(i)}
         >
           {i}
@@ -191,7 +189,6 @@ export default function TransactionMainPage() {
         <button
           key={totalPages}
           className="min-w-9 rounded-md border border-slate-300 py-1 px-2 text-xs hover:bg-blue-100 ml-1"
-          // @ts-expect-error: halo
           onClick={() => setPage(totalPages)}
         >
           {totalPages}

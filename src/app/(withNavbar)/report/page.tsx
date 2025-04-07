@@ -1,10 +1,8 @@
 "use client";
 import React from 'react';
 import { useAuth } from '../../../../contexts/AuthContext';
-import { notFound } from 'next/navigation';
 
 const ReportPage = () => {
-    notFound();
     const { user } = useAuth();
 
     if (user?.role !== "Pemilik" && user?.role !== "Administrator") {
