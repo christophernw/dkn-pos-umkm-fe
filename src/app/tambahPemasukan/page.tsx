@@ -502,7 +502,7 @@ export default function PemasukanBaruPage() {
               onClick={() => handleStatusChange("Belum Lunas")}
               className={`px-4 py-1 rounded-full text-sm ${
                 status === "Belum Lunas"
-                  ? "bg-yellow-500 text-white shadow"
+                  ? "bg-red-500 text-white shadow"
                   : "text-gray-600"
               }`}
             >
