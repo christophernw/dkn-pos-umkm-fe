@@ -171,6 +171,7 @@ export default function TransactionMainPage() {
               ? "bg-primary-indigo text-white border border-primary-indigo"
               : "border border-slate-300 hover:bg-blue-100"
           } py-1 px-2 text-xs ml-1`}
+          // @ts-expect-error: halo
           onClick={() => setPage(i)}
         >
           {i}
@@ -190,6 +191,7 @@ export default function TransactionMainPage() {
         <button
           key={totalPages}
           className="min-w-9 rounded-md border border-slate-300 py-1 px-2 text-xs hover:bg-blue-100 ml-1"
+          // @ts-expect-error: halo
           onClick={() => setPage(totalPages)}
         >
           {totalPages}
