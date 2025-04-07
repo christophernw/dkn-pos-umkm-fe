@@ -6,13 +6,15 @@ import { Modal } from '@/src/components/elements/modal/Modal'
 import { signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function SettingsPage() {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const { logout} = useAuth();
 
   const handleSignOut = async () => {
-    await signOut({ redirect: false });
+    logout();
     router.push("/");
   };
   
