@@ -15,8 +15,8 @@ interface TextInputProps {
 }
 
 function formatHarga(value: string): string {
-  const digits = value.replace(/\D/g, "");
-  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  const digits = value.replace(/\D/g, ""); // Remove all non-numeric characters
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, "."); // Add thousands separators
 }
 
 export default function TextInput({
@@ -27,15 +27,16 @@ export default function TextInput({
   placeholder = "",
   type = "text",
   currency = false,
-}: TextInputProps) {
+}: Readonly<TextInputProps>) {
   const [inputValue, setInputValue] = useState(value);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let newValue = e.target.value;
 
-    if (type === "number" && currency) {
+    if (type === "number" || currency) {
+      // Remove non-numeric characters
       newValue = newValue.replace(/\D/g, "");
-      const formattedValue = formatHarga(newValue);
+      const formattedValue = currency ? formatHarga(newValue) : newValue;
       setInputValue(formattedValue);
       onChange(formattedValue, newValue);
       return;
@@ -43,6 +44,16 @@ export default function TextInput({
 
     setInputValue(newValue);
     onChange(newValue, newValue);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Prevent invalid characters (e.g., letters, special characters)
+    if (type === "number" || currency) {
+      const invalidKeys = ["e", "E", "+", "-", "."];
+      if (invalidKeys.includes(e.key)) {
+        e.preventDefault();
+      }
+    }
   };
 
   return (
@@ -57,24 +68,26 @@ export default function TextInput({
           </span>
           <input
             id={id}
-            type="text"
+            type="text" // Always use text for currency to allow formatting
             inputMode="numeric"
             value={inputValue}
             placeholder={placeholder}
             onChange={handleChange}
+            onKeyDown={handleKeyDown} // Prevent invalid key presses
             className="mt-1 block w-full rounded border-gray-300 shadow-sm pl-10 focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
       ) : (
-      <input
-        id={id}
-        type={type === "number" ? "text" : type}
-        inputMode={type === "number" ? "numeric" : "text"}
-        value={inputValue}
-        placeholder={placeholder}
-        onChange={handleChange}
-        className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-      />
+        <input
+          id={id}
+          type={type === "number" ? "text" : type} // Use text for number to allow custom validation
+          inputMode={type === "number" ? "numeric" : "text"}
+          value={inputValue}
+          placeholder={placeholder}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown} // Prevent invalid key presses
+          className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+        />
       )}
     </div>
   );

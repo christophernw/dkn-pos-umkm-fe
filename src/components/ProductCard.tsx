@@ -253,12 +253,12 @@ export default function ProductCard() {
             >
               Perbarui Produk
             </button>
-            <button 
+            {/* <button 
                 className="text-xs h-8 px-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
                 onClick={() => handleEdit(product.id)}
               >
                 Edit Produk
-            </button>
+            </button> */}
           </div>
         </div>
       </div>

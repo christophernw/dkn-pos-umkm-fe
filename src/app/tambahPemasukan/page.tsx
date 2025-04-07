@@ -11,15 +11,16 @@ import { CreateTransactionRequest } from './types/transaction'
 import { TransactionService } from './service/transactionService'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
+import { BoxIcon } from '@/public/icons/BoxIcon'
 
 
-export default function TambahPemasukkanPage() {
+export default function TambahPemasukanPage() {
   const { accessToken } = useAuth()
   const router = useRouter();
   const [isOpen, setIsOpen] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
   const [transaction, setTransaction] = React.useState<CreateTransactionRequest>({
-    transaction_type: 'Penjualan',
+    transaction_type: 'pemasukan',
     category: 'Penjualan Barang',
     total_amount: 0,
     total_modal: 0,
@@ -85,7 +86,7 @@ export default function TambahPemasukkanPage() {
       
       setSelectedProducts([])
       setTransaction({
-        transaction_type: 'Penjualan',
+        transaction_type: 'pemasukan',
         category: 'Penjualan Barang',
         total_amount: 0,
         total_modal: 0,
@@ -107,7 +108,7 @@ export default function TambahPemasukkanPage() {
       <Header/>
       <div className="flex flex-col gap-2 px-3 -mt-4">
         <div className="flex justify-between gap-3">
-          <div className="bg-white p-3 rounded-full flex flex-col gap-3 w-full">
+          <div className="bg-green-100 text-green-700 p-3 rounded-full flex flex-col gap-3 w-full">
             <div className="flex items-center gap-2">
                 <div className="bg-primary-blue p-3 rounded-full">
                   <CoinIcon />
@@ -118,7 +119,7 @@ export default function TambahPemasukkanPage() {
           <div className="bg-white p-3 rounded-full flex flex-col gap-3 w-full">
             <div className="flex items-center gap-2">
                 <div className="bg-primary-blue p-3 rounded-full">
-                  <CoinIcon />
+                  <BoxIcon />
                 </div>
                 <p>Pengeluaran</p>
             </div>
