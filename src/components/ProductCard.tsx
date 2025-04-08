@@ -32,7 +32,7 @@ export default function ProductCard() {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const sortParam = searchParams.get("sort");
-  const { accessToken } = useAuth();
+  const { accessToken, user } = useAuth();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] =
@@ -207,11 +207,12 @@ export default function ProductCard() {
         <div className="flex-1">
           <div className="flex justify-between items-center">
             <h3 className="font-semibold text-base">{product.nama}</h3>
-            <button
+            {user?.role === "Pemilik" && (
+              <button
               className="text-red-500 hover:text-red-700"
               onClick={() => handleDelete(product.id)}
               aria-label="Delete product"
-            >
+              >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -230,7 +231,8 @@ export default function ProductCard() {
                 <line x1="10" x2="10" y1="11" y2="17" />
                 <line x1="14" x2="14" y1="11" y2="17" />
               </svg>
-            </button>
+              </button>
+            )}
           </div>
           <p className="text-gray-500 text-sm mt-2">Harga Jual</p>
           <p className="font-medium text-sm text-blue-700 mt-1">
@@ -240,12 +242,14 @@ export default function ProductCard() {
             <span className="text-sm text-green-700 bg-green-100 px-2 py-1 rounded-lg">
               Stok : {product.stok}
             </span>
-            <button
+            {user?.role === "Pemilik" && (
+              <button
               className="text-xs h-8 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
               onClick={() => handleOpenStockModal(product)}
-            >
+              >
               Perbarui Produk
-            </button>
+              </button>
+            )}
           </div>
         </div>
       </div>
