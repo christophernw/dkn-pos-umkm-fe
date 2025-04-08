@@ -31,47 +31,49 @@ export default function Home() {
         </p>
       </div>
 
-      {/* Quick Actions */}
-      <div>
-        <h2 className="text-lg font-semibold mb-3">Menu Cepat</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <Link href="/tambahProduk">
-            <div className="bg-white rounded-xl p-4 shadow-sm flex flex-col items-center justify-center gap-2 h-24 hover:bg-blue-50 transition-colors">
-              <div className="bg-blue-100 p-2 rounded-full">
-                <StockIcon />
+      {/* Quick Actions - Only shown if user is logged in */}
+      {user && (
+        <div>
+          <h2 className="text-lg font-semibold mb-3">Menu Cepat</h2>
+          <div className="grid grid-cols-2 gap-3">
+            <Link href="/tambahProduk">
+              <div className="bg-white rounded-xl p-4 shadow-sm flex flex-col items-center justify-center gap-2 h-24 hover:bg-blue-50 transition-colors">
+                <div className="bg-blue-100 p-2 rounded-full">
+                  <StockIcon />
+                </div>
+                <span className="text-sm font-medium text-center">Tambah Produk</span>
               </div>
-              <span className="text-sm font-medium text-center">Tambah Produk</span>
-            </div>
-          </Link>
-          
-          <Link href="/tambahPemasukan">
-            <div className="bg-white rounded-xl p-4 shadow-sm flex flex-col items-center justify-center gap-2 h-24 hover:bg-green-50 transition-colors">
-              <div className="bg-green-100 p-2 rounded-full">
-                <CoinIcon />
+            </Link>
+            
+            <Link href="/tambahPemasukan">
+              <div className="bg-white rounded-xl p-4 shadow-sm flex flex-col items-center justify-center gap-2 h-24 hover:bg-green-50 transition-colors">
+                <div className="bg-green-100 p-2 rounded-full">
+                  <CoinIcon />
+                </div>
+                <span className="text-sm font-medium text-center">Tambah Pemasukan</span>
               </div>
-              <span className="text-sm font-medium text-center">Tambah Pemasukan</span>
-            </div>
-          </Link>
-          
-          <Link href="/tambahPengeluaran">
-            <div className="bg-white rounded-xl p-4 shadow-sm flex flex-col items-center justify-center gap-2 h-24 hover:bg-red-50 transition-colors">
-              <div className="bg-red-100 p-2 rounded-full">
-                <StockIcon />
+            </Link>
+            
+            <Link href="/tambahPengeluaran">
+              <div className="bg-white rounded-xl p-4 shadow-sm flex flex-col items-center justify-center gap-2 h-24 hover:bg-red-50 transition-colors">
+                <div className="bg-red-100 p-2 rounded-full">
+                  <StockIcon />
+                </div>
+                <span className="text-sm font-medium text-center">Tambah Pengeluaran</span>
               </div>
-              <span className="text-sm font-medium text-center">Tambah Pengeluaran</span>
-            </div>
-          </Link>
-          
-          <Link href="/semuaBarang">
-            <div className="bg-white rounded-xl p-4 shadow-sm flex flex-col items-center justify-center gap-2 h-24 hover:bg-indigo-50 transition-colors">
-              <div className="bg-indigo-100 p-2 rounded-full">
-                <NotesIcon />
+            </Link>
+            
+            <Link href="/semuaBarang">
+              <div className="bg-white rounded-xl p-4 shadow-sm flex flex-col items-center justify-center gap-2 h-24 hover:bg-indigo-50 transition-colors">
+                <div className="bg-indigo-100 p-2 rounded-full">
+                  <NotesIcon />
+                </div>
+                <span className="text-sm font-medium text-center">Kelola Produk</span>
               </div>
-              <span className="text-sm font-medium text-center">Kelola Produk</span>
-            </div>
-          </Link>
+            </Link>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* About the App */}
       <div className="bg-white rounded-xl p-4 shadow-sm">
