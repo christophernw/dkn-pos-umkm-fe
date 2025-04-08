@@ -1,5 +1,6 @@
 import GoogleProvider from "next-auth/providers/google";
-import { NextAuthOptions } from "next-auth";
+import { NextAuthOptions, User } from "next-auth";
+import { list } from "postcss";
 
 export const options: NextAuthOptions = {
   providers: [
@@ -14,6 +15,7 @@ export const options: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.email = user.email;
+        token.users = user.users
       }
       return token;
     },

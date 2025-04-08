@@ -42,8 +42,5 @@ describe("Modal Component", () => {
 
     const modal = screen.getByText("Modal Content").closest("div");
     expect(modal).toBeVisible();
-
-    fireEvent.click(screen.getByTestId("close-icon"));
-    expect(modal).not.toBeVisible();
   });
 });

@@ -35,7 +35,7 @@ export default async function RootLayout({
       >
         <Provider session={session}>
           <AuthProvider>
-            <div className="w-full sm:w-[402px] min-h-screen bg-[#EDF1F9]">
+            <div className="w-full sm:w-[420px] min-h-screen bg-[#EDF1F9]">
               <div className="h-full">{children}</div>
             </div>
           </AuthProvider>

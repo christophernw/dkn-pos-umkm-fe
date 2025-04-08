@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import SettingsPage from "@/src/app/(withNavbar)/pengaturan/page";
 import { useRouter } from "next/navigation";
@@ -9,11 +9,23 @@ jest.mock("next/navigation", () => ({
 }));
 
 jest.mock("next-auth/react", () => ({
-  signOut: jest.fn(),
+  signOut: jest.fn(() => Promise.resolve({})), // Tambahkan mock resolve
 }));
 
 describe("SettingsPage Component", () => {
-  let mockPush : jest.Mock;
+  let mockPush: jest.Mock;
+
+  beforeEach(() => {
+    mockPush = jest.fn();
+    (useRouter as jest.Mock).mockReturnValue({ 
+      push: mockPush,
+      back: jest.fn() 
+    });
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
   beforeEach(() => {
     mockPush = jest.fn();
@@ -39,8 +51,16 @@ describe("SettingsPage Component", () => {
   test("calls signOut and redirects on confirm logout", async () => {
     render(<SettingsPage />);
     
+    // Buka modal
     fireEvent.click(screen.getByText("Logout"));
-    fireEvent.click(screen.getByText("Ya"));
+    
+    // Gunakan act untuk wrap operasi async
+    await act(async () => {
+      fireEvent.click(screen.getByText("Ya"));
+    });
+
+    // Beri waktu untuk proses async
+    await new Promise(resolve => setTimeout(resolve, 0));
     
     expect(signOut).toHaveBeenCalledWith({ redirect: false });
     expect(mockPush).toHaveBeenCalledWith("/");
@@ -56,3 +76,5 @@ describe("SettingsPage Component", () => {
       .not.toBeInTheDocument();
   });
 });
+
+

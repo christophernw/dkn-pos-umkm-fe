@@ -11,7 +11,6 @@ export default function AddProductPage() {
   const [priceSell, setPriceSell] = useState("");
   const [priceCost, setPriceCost] = useState("");
   const [currentStock, setCurrentStock] = useState("");
-  const [minimumStock, setMinimumStock] = useState("");
   const [unit, setUnit] = useState("Kg");
   const [previewImg, setPreviewImg] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -39,7 +38,7 @@ export default function AddProductPage() {
       setPopupType("error");
       return;
     }
-  
+
     setImageFile(file);
 
     const reader = new FileReader();
@@ -47,7 +46,7 @@ export default function AddProductPage() {
       setPreviewImg(reader.result as string);
     };
     reader.readAsDataURL(file);
-  };  
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,6 +91,7 @@ export default function AddProductPage() {
         setPopupType("error");
       }
     } catch (error) {
+      console.log(error);
       console.error("Network error:", error);
       setPopupMsg("Terjadi kesalahan jaringan. Silakan coba lagi.");
       setPopupType("error");
@@ -198,58 +198,43 @@ export default function AddProductPage() {
           currency
         />
 
-        {/* Satuan (Unit) dan Stok */}
-        <div className="flex items-center justify-between space-x-4">
-          {/* Pilih Satuan */}
-          <div className="w-1/3">
-            <label
-              htmlFor="unit"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Pilih Satuan
-            </label>
-            <select
-              id="unit"
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              <option value="Pcs">Pcs</option>
-              <option value="Kg">Kg</option>
-              <option value="Botol">Botol</option>
-              <option value="Liter">Liter</option>
-            </select>
-          </div>
+        <TextInput
+          id="currentStock"
+          label="Stok"
+          value={currentStock}
+          onChange={setCurrentStock}
+          placeholder="450"
+          type="number"
+        />
 
-          {/* Stok Saat Ini */}
-          <div className="w-1/3">
-            <TextInput
-              id="currentStock"
-              label="Stok Saat Ini"
-              value={currentStock}
-              onChange={setCurrentStock}
-              placeholder="450"
-              type="number"
-            />
-          </div>
-
-          {/* Stok Minimum */}
-          <div className="w-1/3">
-            <TextInput
-              id="minimumStock"
-              label="Stok Minimum"
-              value={minimumStock}
-              onChange={setMinimumStock}
-              placeholder="10"
-              type="number"
-            />
-          </div>
+        {/* Pilih Satuan */}
+        <div className="w-1/3">
+          <label
+            htmlFor="unit"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Pilih Satuan
+          </label>
+          <select
+            id="unit"
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+            className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          >
+            <option value="Pcs">Pcs</option>
+            <option value="Kg">Kg</option>
+            <option value="Botol">Botol</option>
+            <option value="Liter">Liter</option>
+          </select>
         </div>
 
         {/* Tombol Submit */}
         <div className="pt-4">
-          <button type="submit" 
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400" disabled={loading}>
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+            disabled={loading}
+          >
             {loading ? "Menambahkan Produk..." : "Lanjut"}
           </button>
         </div>

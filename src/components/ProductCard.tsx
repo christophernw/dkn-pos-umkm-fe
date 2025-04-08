@@ -40,7 +40,7 @@ export default function ProductCard() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] =
-    useState<ProductCardProps | null>(null);
+  useState<ProductCardProps | null>(null);
   const [newStockValue, setNewStockValue] = useState(0);
 
   const handleEdit = (id: number) => {
@@ -75,7 +75,7 @@ export default function ProductCard() {
             "Content-Type": "application/json",
           },
         });
-        
+
         const result: PaginatedResponse = await response.json();
         setData(result.items);
         setTotalPages(result.total_pages);
@@ -136,7 +136,6 @@ export default function ProductCard() {
     }
   }
 
-  // Open stock update modal
   const handleOpenStockModal = (product: ProductCardProps) => {
     window.location.href = `/editProduk/${product.id}`;
   };
@@ -204,7 +203,7 @@ export default function ProductCard() {
           <Image
             src={
               product.foto
-                ? `${config.apiUrl}${product.foto}`
+                ? `${config.apiUrl}${product.foto.slice(4)}`
                 : "/images/placeholder.svg"
             }
             alt={product.nama}
@@ -252,14 +251,14 @@ export default function ProductCard() {
               className="text-xs h-8 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
               onClick={() => handleOpenStockModal(product)}
             >
-              Perbarui Stok
+              Perbarui Produk
             </button>
-            <button
+            {/* <button 
                 className="text-xs h-8 px-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
                 onClick={() => handleEdit(product.id)}
               >
                 Edit Produk
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
