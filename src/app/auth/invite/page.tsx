@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import config from "@/src/config";
@@ -14,9 +14,13 @@ export default function InvitePage() {
   const [status, setStatus] = useState<'initial' | 'success' | 'error'>('initial');
   const [message, setMessage] = useState("");
   const { logout } = useAuth();
+  const validationAttempted = useRef(false);
 
   useEffect(() => {
     const validateInvitation = async () => {
+      if (validationAttempted.current) return;
+      validationAttempted.current = true;
+
       try {
         const token = searchParams.get('token');
         
@@ -41,7 +45,6 @@ export default function InvitePage() {
           setStatus('success');
           setMessage("Pendaftaran berhasil! Anda telah terdaftar dan terhubung dengan toko.");
           
-          // Log out the user when registration is successful
           logout();
           await signOut({ redirect: false });
         } else {
@@ -58,7 +61,7 @@ export default function InvitePage() {
     };
 
     validateInvitation();
-  }, [searchParams, logout, signOut]);
+  }, [searchParams, logout]);
 
   return (
     <div className="min-h-screen bg-[#EDF1F9] flex items-center justify-center p-4">
