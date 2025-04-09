@@ -8,7 +8,6 @@ import { sendEmail } from "@/src/app/lib/sendInvitationEmail";
 import { sanitizeInput, validateInputs } from "./utils/inputValidation";
 import { sendInvitation } from "../adduser/services/invitationService";
 import { InvitationPayload, InvitationResponse } from "./types/types";
-import styles from './adduser.module.css';
 import { Modal } from '@/src/components/elements/modal/Modal'
 
 export default function AddUserPage() {
@@ -80,19 +79,6 @@ export default function AddUserPage() {
     }
   };
 
-  useEffect(() => {
-    if (showConfirmModal) {
-      document.body.classList.add(styles["modal-open"]);
-    } else {
-      document.body.classList.remove(styles["modal-open"]);
-    }
-  
-    return () => {
-      document.body.classList.remove(styles["modal-open"]);
-    };
-  }, [showConfirmModal]);
-
-  
   return (
     <div className="min-h-screen bg-[#EDF1F9] p-4">
       {/* Header */}
