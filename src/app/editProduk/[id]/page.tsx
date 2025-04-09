@@ -80,7 +80,7 @@ export default function EditProductPage() {
   const [priceSell, setPriceSell] = useState("");
   const [priceCost, setPriceCost] = useState("");
   const [currentStock, setCurrentStock] = useState("");
-  const [unit, setUnit] = useState("Kg");
+  const [unit, setUnit] = useState("");
   const [previewImg, setPreviewImg] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
