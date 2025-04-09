@@ -84,6 +84,15 @@ export default function EditProductPage() {
   const [previewImg, setPreviewImg] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Add state for field validation errors
+  const [errors, setErrors] = useState({
+    productName: false,
+    category: false,
+    priceSell: false,
+    currentStock: false,
+    unit: false,
+  });
 
   useEffect(() => {
     async function fetchProduct() {
@@ -151,6 +160,22 @@ export default function EditProductPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate fields before submission
+    const newErrors = {
+      productName: !productName.trim(),
+      category: !category.trim(),
+      priceSell: !priceSell.trim(),
+      currentStock: !currentStock.trim(),
+      unit: !unit.trim(),
+    };
+
+    setErrors(newErrors);
+
+    // Check if any errors exist
+    if (Object.values(newErrors).some((error) => error)) {
+      return; // Stop submission if there are errors
+    }
 
     const formData = new FormData();
     const payload: Record<string, any> = {};
@@ -278,14 +303,23 @@ export default function EditProductPage() {
           value={productName}
           onChange={setProductName}
           placeholder="Pie Jeruk"
+          error={errors.productName}
+          errorMessage="Nama produk tidak boleh kosong"
         />
 
-        <Dropdown
-          selected={category}
-          options={categoryOptions}
-          label="Kategori"
-          onSelect={setCategory}
-        />
+        <div>
+          <Dropdown
+            selected={category}
+            options={categoryOptions}
+            label="Kategori"
+            onSelect={setCategory}
+          />
+          {errors.category && (
+            <p className="mt-1 text-sm text-red-600">
+              Kategori tidak boleh kosong
+            </p>
+          )}
+        </div>
 
         <TextInput
           id="priceSell"
@@ -295,6 +329,8 @@ export default function EditProductPage() {
           placeholder="13.000"
           type="number"
           currency
+          error={errors.priceSell}
+          errorMessage="Harga jual tidak boleh kosong"
         />
 
         <TextInput
@@ -315,21 +351,31 @@ export default function EditProductPage() {
           onChange={setCurrentStock}
           placeholder="450"
           type="number"
+          error={errors.currentStock}
+          errorMessage="Stok tidak boleh kosong"
         />
 
-        <Dropdown
-          selected={unit}
-          options={unitOptions}
-          label="Pilih Satuan"
-          onSelect={setUnit}
-        />
+        <div>
+          <Dropdown
+            selected={unit}
+            options={unitOptions}
+            label="Pilih Satuan"
+            onSelect={setUnit}
+          />
+          {errors.unit && (
+            <p className="mt-1 text-sm text-red-600">
+              Satuan tidak boleh kosong
+            </p>
+          )}
+        </div>
 
         <div className="pt-4">
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+            disabled={loading}
           >
-            Simpan Perubahan
+            {loading ? "Menyimpan..." : "Simpan Perubahan"}
           </button>
         </div>
       </form>

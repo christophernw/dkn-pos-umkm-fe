@@ -81,6 +81,16 @@ export default function AddProductPage() {
   const [loading, setLoading] = useState(false);
   const { showModal } = useModal();
 
+  // Add state for field errors
+  const [errors, setErrors] = useState({
+    productName: false,
+    category: false,
+    priceSell: false,
+    priceCost: false,
+    currentStock: false,
+    unit: false,
+  });
+
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
     const file = e.target.files[0];
@@ -119,30 +129,21 @@ export default function AddProductPage() {
 
     if (loading) return;
 
-    // Validation: Check if required fields are empty
-    if (!productName) {
-      showModal("Error", "Nama produk tidak boleh kosong.", "error");
-      return;
-    }
-    if (!category) {
-      showModal("Error", "Kategori tidak boleh kosong.", "error");
-      return;
-    }
-    if (!priceSell) {
-      showModal("Error", "Harga jual tidak boleh kosong.", "error");
-      return;
-    }
-    if (!priceCost) {
-      showModal("Error", "Harga modal tidak boleh kosong.", "error");
-      return;
-    }
-    if (!currentStock) {
-      showModal("Error", "Stok tidak boleh kosong.", "error");
-      return;
-    }
-    if (!unit) {
-      showModal("Error", "Satuan tidak boleh kosong.", "error");
-      return;
+    // Validate fields
+    const newErrors = {
+      productName: !productName.trim(),
+      category: !category.trim(),
+      priceSell: !priceSell.trim(),
+      priceCost: !priceCost.trim(),
+      currentStock: !currentStock.trim(),
+      unit: !unit.trim(), // Add unit validation
+    };
+
+    setErrors(newErrors);
+
+    // Check if any errors exist
+    if (Object.values(newErrors).some((error) => error)) {
+      return; // Stop submission if there are errors
     }
 
     setLoading(true);
@@ -274,14 +275,24 @@ export default function AddProductPage() {
           value={productName}
           onChange={(value) => setProductName(value)}
           placeholder="Pie Jeruk"
+          error={errors.productName}
+          errorMessage="Nama produk tidak boleh kosong"
         />
 
-        <Dropdown
-          selected={category}
-          options={categoryOptions}
-          label="Pilih Kategori"
-          onSelect={setCategory}
-        />
+        {/* Replace TextInput with Dropdown for category */}
+        <div>
+          <Dropdown
+            selected={category}
+            options={categoryOptions}
+            label="Kategori"
+            onSelect={setCategory}
+          />
+          {errors.category && (
+            <p className="mt-1 text-sm text-red-600">
+              Kategori tidak boleh kosong
+            </p>
+          )}
+        </div>
 
         <TextInput
           id="priceSell"
@@ -291,6 +302,8 @@ export default function AddProductPage() {
           placeholder="13.000"
           type="number"
           currency
+          error={errors.priceSell}
+          errorMessage="Harga jual tidak boleh kosong"
         />
 
         <TextInput
@@ -301,6 +314,8 @@ export default function AddProductPage() {
           placeholder="9.000"
           type="number"
           currency
+          error={errors.priceCost}
+          errorMessage="Harga modal tidak boleh kosong"
         />
 
         <TextInput
@@ -310,14 +325,23 @@ export default function AddProductPage() {
           onChange={setCurrentStock}
           placeholder="450"
           type="number"
+          error={errors.currentStock}
+          errorMessage="Stok tidak boleh kosong"
         />
 
-        <Dropdown
-          selected={unit}
-          options={unitOptions}
-          label="Pilih Satuan"
-          onSelect={setUnit}
-        />
+        <div>
+          <Dropdown
+            selected={unit}
+            options={unitOptions}
+            label="Satuan"
+            onSelect={setUnit}
+          />
+          {errors.unit && (
+            <p className="mt-1 text-sm text-red-600">
+              Satuan tidak boleh kosong
+            </p>
+          )}
+        </div>
 
         <div className="pt-4">
           <button
