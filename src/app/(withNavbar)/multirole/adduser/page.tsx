@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { sanitizeInput, validateInputs } from "./utils/inputValidation";
 import { sendInvitation } from "../adduser/services/invitationService";
 import { InvitationPayload, InvitationResponse } from "./types/types";
+import config from "@/src/config";
 
 export default function AddUserPage() {
   const router = useRouter();
@@ -50,7 +51,7 @@ export default function AddUserPage() {
       
       if (response.ok && result.message === "Invitation sent") {
         const token = result.token!;
-        const inviteLink = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/auth/invite?token=${encodeURIComponent(token)}`;
+        const inviteLink = `${config.hostname}/auth/invite?token=${encodeURIComponent(token)}`;
   
         try {
           await sendEmail({ 
