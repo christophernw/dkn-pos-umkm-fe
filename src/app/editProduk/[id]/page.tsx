@@ -5,6 +5,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import config from "@/src/config";
 import TextInput from "../../tambahProduk/components/textInput";
 
+function formatHarga(value: string): string {
+  const digits = value.replace(/\D/g, ""); // Remove all non-numeric characters
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, "."); // Add thousands separators
+}
+
 export default function EditProductPage() {
   const { id } = useParams();
   const [productName, setProductName] = useState("");
@@ -37,8 +42,8 @@ export default function EditProductPage() {
           // Populate form with existing data
           setProductName(product.nama || "");
           setCategory(product.kategori || "");
-          setPriceSell(product.harga_jual?.toString() || "");
-          setPriceCost(product.harga_modal?.toString() || "");
+          setPriceSell(formatHarga(product.harga_jual?.toString()) || "");
+          setPriceCost(formatHarga(product.harga_modal?.toString()) || "");
           setCurrentStock(product.stok?.toString() || "");
           setUnit(product.satuan || "Kg");
 
