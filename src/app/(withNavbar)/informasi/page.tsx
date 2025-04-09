@@ -346,19 +346,22 @@ const SemuaBarangPage: React.FC = () => {
                   <div className="flex-grow min-w-0">
                     <h3 className="text-sm font-medium text-gray-800 truncate">{produk.name}</h3>
                     <div className="flex items-center mt-1">
+                      {/* ----- MODIFIED LINE BELOW ----- */}
                       <div className="flex items-center px-1.5 py-0.5 bg-red-50 text-red-500 rounded-md border border-red-100">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5 mr-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
-                        <span className="text-xs">Stok Rendah</span>
+                        {/* Changed "Stok Rendah" to "Rendah" */}
+                        <span className="text-xs">Rendah</span>
                       </div>
+                      {/* ----- END OF MODIFIED LINE ----- */}
                       <div className="ml-1.5 bg-gray-50 text-gray-600 text-xs py-0.5 px-1.5 rounded-md border border-gray-200">
                         {produk.stock} item
                       </div>
                     </div>
                   </div>
                   <div className="flex-shrink-0">
-                    <button 
+                    <button
                       className="bg-blue-600 text-white text-xs font-medium py-1.5 px-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 whitespace-nowrap"
                       onClick={() => navigateToEditProduct(produk.id)}
                     >
