@@ -116,7 +116,35 @@ export default function AddProductPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (loading) return;
+
+    // Validation: Check if required fields are empty
+    if (!productName) {
+      showModal("Error", "Nama produk tidak boleh kosong.", "error");
+      return;
+    }
+    if (!category) {
+      showModal("Error", "Kategori tidak boleh kosong.", "error");
+      return;
+    }
+    if (!priceSell) {
+      showModal("Error", "Harga jual tidak boleh kosong.", "error");
+      return;
+    }
+    if (!priceCost) {
+      showModal("Error", "Harga modal tidak boleh kosong.", "error");
+      return;
+    }
+    if (!currentStock) {
+      showModal("Error", "Stok tidak boleh kosong.", "error");
+      return;
+    }
+    if (!unit) {
+      showModal("Error", "Satuan tidak boleh kosong.", "error");
+      return;
+    }
+
     setLoading(true);
 
     const formData = new FormData();
