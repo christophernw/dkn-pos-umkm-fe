@@ -9,6 +9,7 @@ import { sanitizeInput, validateInputs } from "./utils/inputValidation";
 import { sendInvitation } from "../adduser/services/invitationService";
 import { InvitationPayload, InvitationResponse } from "./types/types";
 import { Modal } from '@/src/components/elements/modal/Modal'
+import config from "@/src/config";
 
 export default function AddUserPage() {
   const router = useRouter();
@@ -55,7 +56,7 @@ export default function AddUserPage() {
 
       if (response.ok && result.message === "Invitation sent") {
         const token = result.token!;
-        const inviteLink = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/auth/invite?token=${encodeURIComponent(token)}`;
+        const inviteLink = `${config.apiUrl}/auth/invite?token=${encodeURIComponent(token)}`;
 
         await sendEmail({
           to: email,
