@@ -182,11 +182,7 @@ const SemuaBarangPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 pb-20">
-
-      <div className="pt-16">
-        <HeaderProduk />
-      </div>
-
+      <HeaderProduk />
       <main className="container mx-auto px-4 py-6 space-y-6">
         
         <h2 className="text-base font-semibold text-gray-800 mb-3 px-1">Produk Paling Laku per Bulan</h2>
