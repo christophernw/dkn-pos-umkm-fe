@@ -257,7 +257,7 @@ const SemuaBarangPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Section: Produk Paling Laku (Cards) */}
+        {/* Section: Produk Paling Laku (Cards) - Updated styling */}
         <section>
           <h2 className="text-base font-semibold text-gray-800 mb-3 px-1">Produk Paling Laku</h2>
           {loading.popular ? (
@@ -289,9 +289,16 @@ const SemuaBarangPage: React.FC = () => {
                   </div>
                   <div className="p-3">
                     <h3 className="text-sm font-medium text-gray-800 truncate mb-1">{produk.name}</h3>
-                    <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
-                      <span>Terjual</span>
-                      <span className="font-medium text-gray-700">{produk.sold}</span>
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex items-center px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md border border-blue-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        </svg>
+                        <span className="text-xs">Terjual</span>
+                      </div>
+                      <div className="bg-green-50 text-green-600 text-xs py-0.5 px-2 rounded-md border border-green-100">
+                        {produk.sold} item
+                      </div>
                     </div>
                     <button 
                       className="w-full bg-blue-600 text-white text-xs font-medium py-1.5 px-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
@@ -306,7 +313,7 @@ const SemuaBarangPage: React.FC = () => {
           )}
         </section>
 
-        {/* Section: Produk Stok Rendah */}
+        {/* Section: Produk Stok Rendah - Updated styling */}
         <section>
           <h2 className="text-base font-semibold text-gray-800 mb-3 px-1">Produk Stok Rendah</h2>
           {loading.lowStock ? (
@@ -338,7 +345,17 @@ const SemuaBarangPage: React.FC = () => {
                   </div>
                   <div className="flex-grow min-w-0">
                     <h3 className="text-sm font-medium text-gray-800 truncate">{produk.name}</h3>
-                    <p className="text-xs text-red-600">Stok Rendah: {produk.stock}</p>
+                    <div className="flex items-center mt-1">
+                      <div className="flex items-center px-1.5 py-0.5 bg-red-50 text-red-500 rounded-md border border-red-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5 mr-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <span className="text-xs">Stok Rendah</span>
+                      </div>
+                      <div className="ml-1.5 bg-gray-50 text-gray-600 text-xs py-0.5 px-1.5 rounded-md border border-gray-200">
+                        {produk.stock} item
+                      </div>
+                    </div>
                   </div>
                   <div className="flex-shrink-0">
                     <button 
