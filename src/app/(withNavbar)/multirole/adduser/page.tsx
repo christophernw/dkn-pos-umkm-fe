@@ -3,24 +3,25 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AiOutlineArrowLeft } from "react-icons/ai";
-import DOMPurify from "dompurify";
-import { sendEmail } from "@/src/app/lib/sendInvitationEmail";
 import { useAuth } from "@/contexts/AuthContext";
+import { sendEmail } from "@/src/app/lib/sendInvitationEmail";
 import { sanitizeInput, validateInputs } from "./utils/inputValidation";
 import { sendInvitation } from "../adduser/services/invitationService";
 import { InvitationPayload, InvitationResponse } from "./types/types";
+import { Modal } from '@/src/components/elements/modal/Modal'
 import config from "@/src/config";
+import { ConfirmModal } from "./component/confirmmodal";
 
 export default function AddUserPage() {
   const router = useRouter();
-  const handleBack = () => router.back();
-  const {accessToken, user} = useAuth(); 
-  
+  const { accessToken, user } = useAuth();
+
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const [errors, setErrors] = useState({
     name: "",
@@ -28,16 +29,22 @@ export default function AddUserPage() {
     email: "",
   });
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+  const handleBack = () => router.back();
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-  
     const { valid, errors } = validateInputs({ name, role, email });
     setErrors(errors);
-  
     if (!valid) return;
+    setShowConfirmModal(true);
+  };
+
+  const submitConfirmed = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    e.preventDefault();
+    setShowConfirmModal(false);
     setLoading(true);
     setMessage("");
-  
+
     try {
       const payload: InvitationPayload = {
         name: sanitizeInput(name),
@@ -45,10 +52,11 @@ export default function AddUserPage() {
         role: role as "Administrator" | "Karyawan",
         accessToken: accessToken as string,
       };
-  
+
       const response = await sendInvitation(payload);
       const result: InvitationResponse = await response.json();
-      
+
+      console.log("Response from server:", result);
       if (response.ok && result.message === "Invitation sent") {
         const token = result.token!;
         const inviteLink = `${config.hostname}/auth/invite?token=${encodeURIComponent(token)}`;
@@ -80,7 +88,7 @@ export default function AddUserPage() {
     }
   };
 
-return (
+  return (
     <div className="min-h-screen bg-[#EDF1F9] p-4">
       <div className="w-full flex mb-3">
         <button
@@ -155,6 +163,17 @@ return (
           {loading ? "Mengirim..." : "Lanjutkan"}
         </button>
       </form>
+      {showConfirmModal && (
+        <Modal onClose={() => setShowConfirmModal(false)}>
+          <ConfirmModal
+            name={name}
+            role={role}
+            email={email}
+            onClose={() => setShowConfirmModal(false)}
+            onConfirm={submitConfirmed}
+          />
+        </Modal>
+      )}
     </div>
   );
 }
