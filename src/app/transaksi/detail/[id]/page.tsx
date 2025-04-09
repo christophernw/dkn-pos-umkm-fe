@@ -49,7 +49,7 @@ export default function TransaksiDetailPage() {
   const params = useParams();
   const transactionId = params.id as string;
   const { accessToken } = useAuth();
-  const { showModal } = useModal();
+  const { showModal, hideModal } = useModal();
 
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -138,7 +138,9 @@ export default function TransaksiDetailPage() {
       },
       {
         label: "Batal",
-        onClick: () => {},
+        onClick: () => {
+          hideModal();
+        },
       }
     );
   };
@@ -197,7 +199,9 @@ export default function TransaksiDetailPage() {
       },
       {
         label: "Batal",
-        onClick: () => {},
+        onClick: () => {
+          hideModal();
+        },
       }
     );
   };

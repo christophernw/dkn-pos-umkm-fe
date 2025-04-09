@@ -38,7 +38,7 @@ export default function ProductCard() {
   const [isLoading, setIsLoading] = useState(false);
   const sortParam = searchParams.get("sort");
   const { accessToken } = useAuth();
-  const { showModal } = useModal(); // Add showModal from context
+  const { showModal, hideModal } = useModal(); // Add showModal from context
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] =
@@ -162,7 +162,9 @@ export default function ProductCard() {
       },
       {
         label: "Batal",
-        onClick: () => {},
+        onClick: () => {
+          hideModal();
+        },
       }
     );
   }

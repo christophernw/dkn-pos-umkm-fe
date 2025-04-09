@@ -15,7 +15,7 @@ interface User {
 
 const UserList = () => {
   const { user, accessToken } = useAuth();
-  const { showModal } = useModal(); // Add showModal from context
+  const { showModal, hideModal } = useModal(); // Add showModal from context
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,7 +104,9 @@ const UserList = () => {
       },
       {
         label: "Batal",
-        onClick: () => {},
+        onClick: () => {
+          hideModal();
+        },
       }
     );
   };
