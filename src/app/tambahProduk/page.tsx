@@ -5,6 +5,7 @@ import TextInput from "./components/textInput";
 import { useAuth } from "@/contexts/AuthContext";
 import config from "@/src/config";
 import { useModal } from "@/contexts/ModalContext";
+import Dropdown from "@/src/components/Dropdown";
 
 // Dropdown Options
 const unitOptions = ["Pcs", "Kg", "Botol", "Liter"];
@@ -16,57 +17,6 @@ const categoryOptions = [
   "Makanan & Minuman",
   "Lainnya",
 ];
-
-function Dropdown({
-  selected,
-  options,
-  label,
-  onSelect,
-}: {
-  selected: string;
-  options: string[];
-  label: string;
-  onSelect: (val: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div className="relative w-full">
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label}
-      </label>
-
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="flex justify-between items-center w-full rounded-md border border-gray-300 px-4 py-2 bg-white hover:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-      >
-        {selected || `${label}`}
-        <ChevronDown className="w-4 h-4" />
-      </button>
-
-      {open && (
-        <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg">
-          {options.map((option) => (
-            <li
-              key={option}
-              onClick={() => {
-                onSelect(option);
-                setOpen(false);
-              }}
-              className={`flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-gray-100 ${
-                selected === option ? "bg-gray-100 font-semibold" : ""
-              }`}
-            >
-              {option}
-              {selected === option && <Check className="w-4 h-4" />}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
 
 export default function AddProductPage() {
   const [productName, setProductName] = useState("");
@@ -284,7 +234,7 @@ export default function AddProductPage() {
           <Dropdown
             selected={category}
             options={categoryOptions}
-            label="Kategori"
+            label="Pilih Kategori"
             onSelect={setCategory}
           />
           {errors.category && (
@@ -333,7 +283,7 @@ export default function AddProductPage() {
           <Dropdown
             selected={unit}
             options={unitOptions}
-            label="Satuan"
+            label="Pilih Satuan"
             onSelect={setUnit}
           />
           {errors.unit && (

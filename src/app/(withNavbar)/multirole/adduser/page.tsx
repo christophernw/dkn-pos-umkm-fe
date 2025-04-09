@@ -10,6 +10,10 @@ import { sanitizeInput, validateInputs } from "./utils/inputValidation";
 import { sendInvitation } from "../adduser/services/invitationService";
 import { InvitationPayload, InvitationResponse } from "./types/types";
 import config from "@/src/config";
+import Dropdown from "@/src/components/Dropdown";
+
+// Role options for dropdown
+const roleOptions = ["Pengelola", "Karyawan"];
 
 export default function AddUserPage() {
   const router = useRouter();
@@ -125,36 +129,35 @@ export default function AddUserPage() {
         >
           Role
         </label>
-        <div
-          className={`relative w-full mb-2 ${
-            errors.role ? "border-red-500" : "border-gray-300"
-          }`}
-        >
-          <select
-            id="role"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-3xl appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 font-normal text-gray-700 pr-10"
-          >
-            <option value="" disabled>
-              Pilih Role
-            </option>
-            <option value="Pengelola">Pengelola</option>
-            <option value="Karyawan">Karyawan</option>
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-700">
-            <svg
-              className="fill-current h-4 w-4"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-            >
-              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-            </svg>
+        <div className="mb-2">
+          {/* Custom styled Dropdown */}
+          <div className="relative">
+            <Dropdown
+              selected={role}
+              options={roleOptions}
+              label="Pilih Role"
+              onSelect={setRole}
+              showLabel={false} // Hide the label for dropdown
+            />
+            <style jsx global>{`
+              /* Override Dropdown button styling to match your design */
+              .relative button {
+                border-radius: 1.5rem !important; /* rounded-3xl */
+                padding: 0.75rem 1rem !important; /* p-3 */
+                font-weight: normal !important;
+              }
+              
+              /* Override dropdown list styling */
+              .relative ul {
+                border-radius: 1rem !important;
+                margin-top: 0.25rem !important;
+              }
+            `}</style>
           </div>
+          {errors.role && (
+            <p className="text-red-500 text-sm mb-4">{errors.role}</p>
+          )}
         </div>
-        {errors.role && (
-          <p className="text-red-500 text-sm mb-4">{errors.role}</p>
-        )}
 
         <label
           className="block text-gray-500 text-sm font-semibold mb-2"
