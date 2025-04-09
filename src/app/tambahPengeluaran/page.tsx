@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useModal } from "@/contexts/ModalContext";
 import ProductSelectorModal from "@/src/components/ProductSelectorModal";
 import config from "@/src/config";
 import { CoinIcon } from "@/public/icons/CoinIcon";
@@ -33,6 +34,7 @@ function formatHarga(num: number): string {
 export default function PengeluaranBaruPage() {
   const router = useRouter();
   const { accessToken } = useAuth();
+  const { showModal } = useModal();
   const [selectedProducts, setSelectedProducts] = useState<
     SelectedProductItem[]
   >([]);
@@ -193,8 +195,15 @@ export default function PengeluaranBaruPage() {
         );
       }
 
-      alert("Pengeluaran berhasil disimpan!");
-      router.push("/transaksi");
+      showModal(
+        "Berhasil",
+        "Pengeluaran berhasil disimpan!",
+        "success",
+        {
+          label: "Lihat Semua Transaksi",
+          onClick: () => window.location.href = "/transaksi",
+        }
+      );
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message || "Terjadi kesalahan saat menyimpan.");

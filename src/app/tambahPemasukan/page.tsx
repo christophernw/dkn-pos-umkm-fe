@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useModal } from "@/contexts/ModalContext";
 import ProductSelectorModal from "@/src/components/ProductSelectorModal";
 import config from "@/src/config";
 import { CoinIcon } from "@/public/icons/CoinIcon";
@@ -33,6 +34,7 @@ function formatHarga(num: number): string {
 export default function PemasukanBaruPage() {
   const router = useRouter();
   const { accessToken } = useAuth();
+  const { showModal } = useModal();
   const [selectedProducts, setSelectedProducts] = useState<
     SelectedProductItem[]
   >([]);
@@ -95,7 +97,6 @@ export default function PemasukanBaruPage() {
     setSelectedProducts((currentItems) => {
       return currentItems.map((item) => {
         if (item.product.id === productId) {
-          // Ensure quantity is between 1 and available stock
           let newQuantity = numericValue;
           if (isNaN(newQuantity) || newQuantity < 1) {
             newQuantity = 1;
@@ -143,7 +144,11 @@ export default function PemasukanBaruPage() {
         ]);
       } else {
         console.warn(`${productToAdd.nama} is out of stock.`);
-        alert(`${productToAdd.nama} sedang habis stok.`);
+        showModal(
+          "Stok Habis",
+          `${productToAdd.nama} sedang habis stok.`,
+          "error"
+        );
       }
     }
   };
@@ -223,8 +228,10 @@ export default function PemasukanBaruPage() {
         );
       }
 
-      alert("Transaksi berhasil disimpan!");
-      router.push("/transaksi");
+      showModal("Berhasil", "Transaksi berhasil disimpan!", "success", {
+        label: "Lihat Semua Transaksi",
+        onClick: () => window.location.href = "/transaksi",
+      });
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message || "Terjadi kesalahan saat menyimpan.");
@@ -238,7 +245,6 @@ export default function PemasukanBaruPage() {
 
   return (
     <div className="p-4 max-w-md mx-auto bg-gray-50 min-h-screen pb-24">
-      {/* Header */}
       <div className="flex items-center mb-4">
         <button onClick={() => router.back()} className="mr-4 p-1">
           <svg
@@ -259,10 +265,9 @@ export default function PemasukanBaruPage() {
         <h1 className="text-xl font-semibold text-center flex-grow">
           Pemasukan Baru
         </h1>
-        <div className="w-6"></div> {/* Spacer */}
+        <div className="w-6"></div>
       </div>
 
-      {/* Tabs */}
       <div className="grid grid-cols-2 gap-3 mb-4">
         <button className="bg-green-50 shadow-sm rounded-3xl py-3 px-4 text-sm font-medium text-center flex items-center justify-center bg-green-100 text-green-700">
           <div className="bg-primary-blue p-1.5 rounded-full mr-2">
@@ -278,7 +283,6 @@ export default function PemasukanBaruPage() {
         </button>
       </div>
 
-      {/* Type Selector */}
       <div className="relative mb-6">
         <select
           id="incomeType"
@@ -296,13 +300,11 @@ export default function PemasukanBaruPage() {
           <option>Terima Pinjaman</option>
           <option>Penagihan Utang/Cicilan</option>
         </select>
-        {/* Bell Icon (left) */}
         <div className="absolute left-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
           <div className="bg-gray-200 p-1.5 rounded-full">
             <BellIcon />
           </div>
         </div>
-        {/* Dropdown V indicator (right) */}
         <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -321,10 +323,8 @@ export default function PemasukanBaruPage() {
         </div>
       </div>
 
-      {/* Barang Section - Only show for Penjualan Barang */}
       {incomeType === "Penjualan Barang" && (
         <>
-          {/* Barang Section Header */}
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-lg font-semibold">Barang</h2>
             <button
@@ -349,7 +349,6 @@ export default function PemasukanBaruPage() {
             </button>
           </div>
 
-          {/* Selected Barang List */}
           <div className="space-y-3 mb-6">
             {selectedProducts.length === 0 ? (
               <p className="text-center text-gray-500 py-4 bg-white rounded-lg shadow-sm">
@@ -361,7 +360,6 @@ export default function PemasukanBaruPage() {
                   key={item.product.id}
                   className="bg-white rounded-xl flex items-center p-3 shadow-sm relative"
                 >
-                  {/* Remove Button */}
                   <button
                     onClick={() => handleRemoveItem(item.product.id)}
                     className="absolute top-1 right-1 text-red-400 hover:text-red-600 p-1 z-10"
@@ -382,9 +380,8 @@ export default function PemasukanBaruPage() {
                       />
                     </svg>
                   </button>
-                  {/* Image */}
                   <div className="w-16 h-16 relative rounded-lg overflow-hidden mr-3 flex-shrink-0 bg-gray-100">
-                    {config?.apiUrl && item.product.foto ? ( // Check config.apiUrl exists before using
+                    {config?.apiUrl && item.product.foto ? (
                       <Image
                         src={`${config.apiUrl}${item.product.foto.slice(4)}`}
                         alt={item.product.nama}
@@ -393,11 +390,11 @@ export default function PemasukanBaruPage() {
                         sizes="64px"
                         onError={(e) =>
                           (e.currentTarget.src = "/images/placeholder.svg")
-                        } // Fallback image
+                        }
                       />
                     ) : (
                       <Image
-                        src={"/images/placeholder.svg"} // Fallback if no image or no apiUrl
+                        src={"/images/placeholder.svg"}
                         alt={item.product.nama}
                         fill
                         className="object-cover"
@@ -405,7 +402,6 @@ export default function PemasukanBaruPage() {
                       />
                     )}
                   </div>
-                  {/* Details */}
                   <div className="flex-1 mr-2">
                     <h3 className="font-semibold text-sm">
                       {item.product.nama}
@@ -414,7 +410,6 @@ export default function PemasukanBaruPage() {
                       Rp {formatHarga(item.product.harga_jual)}
                     </p>
                   </div>
-                  {/* Quantity Control */}
                   <div className="flex items-center">
                     <button
                       onClick={() => handleQuantityChange(item.product.id, -1)}
@@ -451,7 +446,6 @@ export default function PemasukanBaruPage() {
         </>
       )}
 
-      {/* Summary Section */}
       <div className="bg-white rounded-xl p-4 space-y-3 shadow-sm mb-6">
         <div className="flex justify-between items-center">
           <span className="text-gray-600">Total Pemasukan</span>
@@ -524,7 +518,6 @@ export default function PemasukanBaruPage() {
         )}
       </div>
 
-      {/* Error Message */}
       {error && (
         <div
           className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
@@ -534,7 +527,6 @@ export default function PemasukanBaruPage() {
         </div>
       )}
 
-      {/* Save Button */}
       <button
         onClick={handleSave}
         disabled={
@@ -572,7 +564,6 @@ export default function PemasukanBaruPage() {
         )}
       </button>
 
-      {/* Product Selector Modal - Only render when needed */}
       {incomeType === "Penjualan Barang" && (
         <ProductSelectorModal
           isOpen={isProductSelectorOpen}

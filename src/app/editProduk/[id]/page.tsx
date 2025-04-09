@@ -2,6 +2,7 @@
 import { useState, useEffect, ChangeEvent } from "react";
 import { useParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useModal } from "@/contexts/ModalContext";
 import config from "@/src/config";
 import TextInput from "../../tambahProduk/components/textInput";
 
@@ -12,6 +13,7 @@ function formatHarga(value: string): string {
 
 export default function EditProductPage() {
   const { id } = useParams();
+  const { showModal } = useModal();
   const [productName, setProductName] = useState("");
   const [category, setCategory] = useState("");
   const [priceSell, setPriceSell] = useState("");
@@ -52,9 +54,19 @@ export default function EditProductPage() {
             setPreviewImg(`${config.apiUrl}${product.foto.slice(4)}`);
           }
         } else {
+          showModal(
+            "Error",
+            "Gagal mengambil data produk",
+            "error"
+          );
           console.error("Failed to fetch product");
         }
       } catch (error) {
+        showModal(
+          "Error",
+          "Terjadi kesalahan saat mengambil data produk",
+          "error"
+        );
         console.error("Error fetching product:", error);
       } finally {
         setLoading(false);
@@ -62,7 +74,7 @@ export default function EditProductPage() {
     }
 
     fetchProduct();
-  }, [id, accessToken]);
+  }, [id, accessToken, showModal]);
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
@@ -73,12 +85,20 @@ export default function EditProductPage() {
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
     if (!allowedTypes.includes(file.type)) {
-      alert("Format file tidak didukung! Silakan unggah PNG, JPG, atau JPEG.");
+      showModal(
+        "Format Tidak Didukung", 
+        "Silakan unggah PNG, JPG, atau JPEG.",
+        "error"
+      );
       return;
     }
 
     if (file.size > maxSizeBytes) {
-      alert(`Ukuran file terlalu besar! Maksimal ${maxSizeMB}MB.`);
+      showModal(
+        "File Terlalu Besar", 
+        `Ukuran file terlalu besar! Maksimal ${maxSizeMB}MB.`,
+        "error"
+      );
       return;
     }
 
@@ -100,8 +120,8 @@ export default function EditProductPage() {
     const payload: Record<string, any> = {};
     if (productName) payload.nama = productName;
     if (category) payload.kategori = category;
-    if (priceSell) payload.harga_jual = parseFloat(priceSell);
-    if (priceCost) payload.harga_modal = parseFloat(priceCost);
+    if (priceSell) payload.harga_jual = parseFloat(priceSell.replace(/\./g, ""));
+    if (priceCost) payload.harga_modal = parseFloat(priceCost.replace(/\./g, ""));
     if (currentStock) payload.stok = parseFloat(currentStock);
     if (unit) payload.satuan = unit;
   
@@ -123,18 +143,31 @@ export default function EditProductPage() {
       });
   
       if (response.ok) {
-        alert("Produk berhasil diperbarui!");
-        window.location.href = "/semuaBarang";
+        showModal(
+          "Berhasil", 
+          "Produk berhasil diperbarui!",
+          "success",
+          {
+            label: "Lihat Semua Produk",
+            onClick: () => { window.location.href = "/semuaBarang"; }
+          }
+        );
       } else {
         const errorData = await response.json();
         console.error("Error updating product:", errorData);
-        alert(
-          `Gagal memperbarui produk: ${errorData.message || "Unknown error"}`
+        showModal(
+          "Gagal", 
+          `Gagal memperbarui produk: ${errorData.message || "Unknown error"}`,
+          "error"
         );
       }
     } catch (error) {
       console.error("Network error:", error);
-      alert("Terjadi kesalahan jaringan. Silakan coba lagi.");
+      showModal(
+        "Kesalahan Jaringan", 
+        "Terjadi kesalahan jaringan. Silakan coba lagi.",
+        "error"
+      );
     }
   };
 

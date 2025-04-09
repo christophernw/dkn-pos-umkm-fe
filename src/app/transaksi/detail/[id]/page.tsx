@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useModal } from "@/contexts/ModalContext";
 import config from "@/src/config";
 import { CoinIcon } from "@/public/icons/CoinIcon";
 import { StockIcon } from "@/public/icons/StockIcon";
@@ -48,11 +49,12 @@ export default function TransaksiDetailPage() {
   const params = useParams();
   const transactionId = params.id as string;
   const { accessToken } = useAuth();
+  const { showModal } = useModal();
 
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isMarkingAsPaid, setIsMarkingAsPaid] = useState(false); // New state for tracking marking as paid
+  const [isMarkingAsPaid, setIsMarkingAsPaid] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -92,79 +94,112 @@ export default function TransaksiDetailPage() {
   }, [transactionId, accessToken]);
 
   const handleDelete = async () => {
-    if (!confirm("Apakah Anda yakin ingin menghapus transaksi ini?")) {
-      return;
-    }
+    showModal(
+      "Konfirmasi Hapus",
+      "Apakah Anda yakin ingin menghapus transaksi ini?",
+      "info",
+      {
+        label: "Hapus",
+        onClick: async () => {
+          setIsDeleting(true);
+          setError(null);
 
-    setIsDeleting(true);
-    setError(null);
+          try {
+            const response = await fetch(
+              `${config.apiUrl}/transaksi/${transactionId}`,
+              {
+                method: "DELETE",
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                },
+              }
+            );
 
-    try {
-      const response = await fetch(
-        `${config.apiUrl}/transaksi/${transactionId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+            if (!response.ok) {
+              throw new Error(`Failed to delete transaction: ${response.status}`);
+            }
 
-      if (!response.ok) {
-        throw new Error(`Failed to delete transaction: ${response.status}`);
+            showModal(
+              "Berhasil",
+              "Transaksi berhasil dihapus!",
+              "success",
+              {
+                label: "Kembali ke Daftar Transaksi",
+                onClick: () => window.location.href = "/transaksi",
+              }
+            );
+          } catch (err) {
+            setError("Gagal menghapus transaksi");
+            console.error(err);
+          } finally {
+            setIsDeleting(false);
+          }
+        },
+      },
+      {
+        label: "Batal",
+        onClick: () => {},
       }
-
-      alert("Transaksi berhasil dihapus!");
-      router.push("/transaksi");
-    } catch (err) {
-      setError("Gagal menghapus transaksi");
-      console.error(err);
-    } finally {
-      setIsDeleting(false);
-    }
+    );
   };
 
   const handleMarkAsPaid = async () => {
-    if (!confirm("Tandai transaksi ini sebagai Lunas?")) {
-      return;
-    }
+    showModal(
+      "Konfirmasi Status",
+      "Tandai transaksi ini sebagai Lunas?",
+      "info",
+      {
+        label: "Ya, Tandai Lunas",
+        onClick: async () => {
+          setIsMarkingAsPaid(true);
+          setError(null);
 
-    setIsMarkingAsPaid(true);
-    setError(null);
+          try {
+            const response = await fetch(
+              `${config.apiUrl}/transaksi/${transactionId}/toggle-payment-status`,
+              {
+                method: "PATCH",
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                },
+              }
+            );
 
-    try {
-      const response = await fetch(
-        `${config.apiUrl}/transaksi/${transactionId}/toggle-payment-status`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+            if (!response.ok) {
+              throw new Error(`Failed to update payment status: ${response.status}`);
+            }
 
-      if (!response.ok) {
-        throw new Error(`Failed to update payment status: ${response.status}`);
+            await response.json();
+
+            if (transaction) {
+              setTransaction({
+                ...transaction,
+                status: "Lunas",
+              });
+            }
+
+            showModal(
+              "Berhasil",
+              "Status transaksi berhasil diubah menjadi Lunas!",
+              "success",
+              {
+                label: "Kembali ke Daftar Transaksi",
+                onClick: () => window.location.href = "/transaksi",
+              }
+            );
+          } catch (err) {
+            setError("Gagal mengubah status transaksi");
+            console.error(err);
+          } finally {
+            setIsMarkingAsPaid(false);
+          }
+        },
+      },
+      {
+        label: "Batal",
+        onClick: () => {},
       }
-
-      const data = await response.json();
-
-      // Update the local transaction state
-      if (transaction) {
-        setTransaction({
-          ...transaction,
-          status: "Lunas",
-        });
-      }
-
-      alert("Status transaksi berhasil diubah menjadi Lunas!");
-      router.push("/transaksi");
-    } catch (err) {
-      setError("Gagal mengubah status transaksi");
-      console.error(err);
-    } finally {
-      setIsMarkingAsPaid(false);
-    }
+    );
   };
 
   if (isLoading) {
@@ -271,7 +306,6 @@ export default function TransaksiDetailPage() {
         <h1 className="text-xl font-semibold text-center flex-grow">
           Detail Transaksi
         </h1>
-        {/* Only show delete button if transaction is not deleted */}
         {!transaction.is_deleted ? (
           <button
             onClick={handleDelete}
@@ -294,7 +328,7 @@ export default function TransaksiDetailPage() {
             </svg>
           </button>
         ) : (
-          <div className="w-6"></div> // Empty placeholder to maintain layout
+          <div className="w-6"></div>
         )}
       </div>
 
@@ -560,7 +594,7 @@ export default function TransaksiDetailPage() {
                 className="opacity-75"
                 fill="currentColor"
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
+                ></path>
             </svg>
             Menghapus...
           </>
