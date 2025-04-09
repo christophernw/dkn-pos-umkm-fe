@@ -3,7 +3,7 @@ import { useState, ChangeEvent } from "react";
 import TextInput from "./components/textInput";
 import { useAuth } from "@/contexts/AuthContext";
 import config from "@/src/config";
-import { useRouter } from 'next/navigation';
+import { useModal } from "@/contexts/ModalContext";
 
 export default function AddProductPage() {
   const [productName, setProductName] = useState("");
@@ -11,16 +11,41 @@ export default function AddProductPage() {
   const [priceSell, setPriceSell] = useState("");
   const [priceCost, setPriceCost] = useState("");
   const [currentStock, setCurrentStock] = useState("");
-  const [minimumStock, setMinimumStock] = useState("");
   const [unit, setUnit] = useState("Kg");
   const [previewImg, setPreviewImg] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const { accessToken } = useAuth();
-  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const { showModal } = useModal();
+
+  // All your existing handlers remain the same
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
     const file = e.target.files[0];
+
+    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+    const maxSizeMB = 3;
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+
+    if (!allowedTypes.includes(file.type)) {
+      showModal(
+        "Format Tidak Didukung", 
+        "Silakan unggah PNG, JPG, atau JPEG.",
+        "error"
+      );
+      return;
+    }
+
+    if (file.size > maxSizeBytes) {
+      showModal(
+        "File Terlalu Besar", 
+        `Ukuran file terlalu besar! Maksimal ${maxSizeMB}MB.`,
+        "error"
+      );
+      return;
+    }
+
     setImageFile(file);
 
     const reader = new FileReader();
@@ -32,6 +57,9 @@ export default function AddProductPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (loading) return;
+    setLoading(true);
 
     const formData = new FormData();
 
@@ -60,26 +88,43 @@ export default function AddProductPage() {
       });
 
       if (response.status === 201) {
-        alert("Produk berhasil ditambahkan!");
-        window.location.href = "/semuaBarang";
+        showModal(
+          "Berhasil", 
+          "Produk berhasil ditambahkan!",
+          "success",
+          {
+            label: "Lihat Semua Produk",
+            onClick: () => { window.location.href = "/semuaBarang"; }
+          }
+        );
       } else {
         const errorData = await response.json();
         console.error("Error creating product:", errorData);
-        alert(
-          `Gagal menambahkan produk: ${errorData.detail || "Unknown error"}`
+        showModal(
+          "Gagal", 
+          `Gagal menambahkan produk: ${errorData.detail || "Unknown error"}`,
+          "error"
         );
       }
     } catch (error) {
+      console.log(error);
       console.error("Network error:", error);
-      alert("Terjadi kesalahan jaringan. Silakan coba lagi.");
+      showModal(
+        "Kesalahan Jaringan", 
+        "Terjadi kesalahan jaringan. Silakan coba lagi.",
+        "error"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Here's the return statement with the UI
   return (
-    <div className="max-w-md mx-auto p-4 mt-8">
-      <header className="flex items-center mb-5">
+    <div className="max-w-md mx-auto p-4">
+      <header className="flex items-center mb-4">
         <button
-          onClick={() => router.back()}
+          onClick={() => window.history.back()}
           className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2"
         >
           <svg
@@ -147,22 +192,20 @@ export default function AddProductPage() {
           />
         </div>
 
-        {/* Rest of the form remains the same */}
+        {/* Form inputs */}
         <TextInput
           id="productName"
           label="Nama Produk"
           value={productName}
-          onChange={setProductName}
+          onChange={(value) => setProductName(value)}
           placeholder="Pie Jeruk"
         />
-
-        {/* Other fields remain the same... */}
 
         <TextInput
           id="category"
           label="Kategori"
           value={category}
-          onChange={setCategory}
+          onChange={(value) => setCategory(value)}
           placeholder="Makanan"
         />
 
@@ -170,75 +213,60 @@ export default function AddProductPage() {
           id="priceSell"
           label="Harga Jual"
           value={priceSell}
-          onChange={setPriceSell}
-          placeholder="Rp 13.000"
+          onChange={(_, raw) => setPriceSell(raw)}
+          placeholder="13.000"
           type="number"
+          currency
         />
 
         <TextInput
           id="priceCost"
           label="Harga Modal"
           value={priceCost}
-          onChange={setPriceCost}
-          placeholder="Rp 9.000"
+          onChange={(_, raw) => setPriceCost(raw)}
+          placeholder="9.000"
+          type="number"
+          currency
+        />
+
+        <TextInput
+          id="currentStock"
+          label="Stok"
+          value={currentStock}
+          onChange={setCurrentStock}
+          placeholder="450"
           type="number"
         />
 
-        {/* Satuan (Unit) dan Stok */}
-        <div className="flex items-center justify-between space-x-4">
-          {/* Pilih Satuan */}
-          <div className="w-1/3">
-            <label
-              htmlFor="unit"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Pilih Satuan
-            </label>
-            <select
-              id="unit"
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              <option value="Pcs">Pcs</option>
-              <option value="Kg">Kg</option>
-              <option value="Botol">Botol</option>
-              <option value="Liter">Liter</option>
-            </select>
-          </div>
-
-          {/* Stok Saat Ini */}
-          <div className="w-1/3">
-            <TextInput
-              id="currentStock"
-              label="Stok Saat Ini"
-              value={currentStock}
-              onChange={setCurrentStock}
-              placeholder="450"
-              type="number"
-            />
-          </div>
-
-          {/* Stok Minimum */}
-          <div className="w-1/3">
-            <TextInput
-              id="minimumStock"
-              label="Stok Minimum"
-              value={minimumStock}
-              onChange={setMinimumStock}
-              placeholder="10"
-              type="number"
-            />
-          </div>
+        {/* Pilih Satuan */}
+        <div className="w-1/3">
+          <label
+            htmlFor="unit"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Pilih Satuan
+          </label>
+          <select
+            id="unit"
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+            className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          >
+            <option value="Pcs">Pcs</option>
+            <option value="Kg">Kg</option>
+            <option value="Botol">Botol</option>
+            <option value="Liter">Liter</option>
+          </select>
         </div>
 
         {/* Tombol Submit */}
         <div className="pt-4">
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+            disabled={loading}
           >
-            Lanjut
+            {loading ? "Menambahkan Produk..." : "Lanjut"}
           </button>
         </div>
       </form>

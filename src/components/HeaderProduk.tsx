@@ -22,7 +22,7 @@ const HeaderProduk = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
 
-  const handleSort = (order: "asc" | "desc") => {
+  const handleSort = (order: "-stok" | "stok" | "-id") => {
     const params = new URLSearchParams(searchParams);
     params.set('sort', order);
     
@@ -71,10 +71,10 @@ const HeaderProduk = () => {
             </button>
           </Link>
           <Link
-            href="/daftarProduk"
-            className={pathname === "/daftarProduk" ? "font-bold" : "font-medium"}
+            href="/informasi"
+            className={pathname === "/informasi" ? "font-bold" : "font-medium"}
           >
-            Informasi Stok
+            Informasi
           </Link>
           <Link
             href="/semuaBarang"
@@ -101,38 +101,39 @@ const HeaderProduk = () => {
           </div>
         </div>
       </header>
-      <form onSubmit={handleSearch} className="flex items-center max-w-md mx-auto">
-        <div className="relative flex w-full items-center bg-white rounded-full shadow-sm">
-          <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-            <svg
-              className="w-4 h-4"
-              aria-hidden="true"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 20 20"
-            >
-              <path
-                stroke="#0D0D12"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
-              />
-            </svg>
-            <span className="sr-only">Search</span>
-          </div>
-          <input
-            type="search"
-            name="search"
-            id="simple-search"
-            className="bg-white border border-[#EFF2F6] text-black rounded-full w-full py-3 pl-12 pr-14 focus:ring-1 focus:outline-none focus:ring-blue-600"
-            placeholder="Cari Produk..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            required={false}
-          />
-          {/* Only show filter button on /semuaBarang page */}
-          {isSemuaBarangPage ? (
+      
+      {/* Only show search form on semuaBarang page */}
+      {isSemuaBarangPage && (
+        <form onSubmit={handleSearch} className="flex items-center max-w-md mx-auto">
+          <div className="relative flex w-full items-center bg-white rounded-full shadow-sm">
+            <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+              <svg
+                className="w-4 h-4"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  stroke="#0D0D12"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
+                />
+              </svg>
+              <span className="sr-only">Search</span>
+            </div>
+            <input
+              type="search"
+              name="search"
+              id="simple-search"
+              className="bg-white border border-[#EFF2F6] text-black rounded-full w-full py-3 pl-12 pr-14 focus:ring-1 focus:outline-none focus:ring-blue-600"
+              placeholder="Cari Produk..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              required={false}
+            />
             <button
               type="button"
               className="absolute right-1.5 inline-flex items-center justify-center w-10 h-10 text-white bg-blue-600 rounded-full hover:bg-blue-700 focus:outline-none"
@@ -161,27 +162,32 @@ const HeaderProduk = () => {
                 <line x1="17" y1="16" x2="23" y2="16"></line>
               </svg>
             </button>
-          ) : null}
-          
-          {/* Only show dropdown on /semuaBarang page */}
-          {isSemuaBarangPage && isDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
-              <button
-                className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                onClick={() => handleSort("asc")}
-              >
-                Stok Terendah
-              </button>
-              <button
-                className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                onClick={() => handleSort("desc")}
-              >
-                Stok Tertinggi
-              </button>
-            </div>
-          )}
-        </div>
-      </form>
+            
+            {isDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
+                <button
+                  className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                  onClick={() => handleSort("-id")}
+                >
+                  Tanggal Pembuatan
+                </button>
+                <button
+                  className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                  onClick={() => handleSort("stok")}
+                >
+                  Stok Terendah
+                </button>
+                <button
+                  className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                  onClick={() => handleSort("-stok")}
+                >
+                  Stok Tertinggi
+                </button>
+              </div>
+            )}
+          </div>
+        </form>
+      )}
     </div>
   );
 };

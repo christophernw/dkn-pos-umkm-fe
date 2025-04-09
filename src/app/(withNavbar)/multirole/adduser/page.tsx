@@ -11,8 +11,9 @@ import { InvitationPayload, InvitationResponse } from "./types/types";
 
 export default function AddUserPage() {
   const router = useRouter();
-  const { accessToken } = useAuth();
-
+  const handleBack = () => router.back();
+  const {accessToken, user} = useAuth(); 
+  
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [email, setEmail] = useState("");
@@ -21,8 +22,6 @@ export default function AddUserPage() {
 
   const [showModal, setShowModal] = useState(false);
   const [errors, setErrors] = useState({ name: "", role: "", email: "" });
-
-  const handleBack = () => router.back();
 
   const handleOpenModal = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -42,23 +41,33 @@ export default function AddUserPage() {
       const payload: InvitationPayload = {
         name: sanitizeInput(name),
         email: sanitizeInput(email),
-        role: role as "Manajer" | "Karyawan",
+        role: role as "Administrator" | "Karyawan",
         accessToken: accessToken as string,
       };
 
       const response = await sendInvitation(payload);
       const result: InvitationResponse = await response.json();
-
-      if (response.ok && result.token) {
+      
+      if (response.ok && result.message === "Invitation sent") {
         const token = result.token!;
-        const inviteLink = `${process.env.NEXT_PUBLIC_EMAILJS_URL}/invitation?token=${encodeURIComponent(token)}`;
-
-        await sendEmail({ to: email, inviteLink });
-
-        setMessage("Undangan berhasil dikirim!");
-        setName("");
-        setRole("");
-        setEmail("");
+        const inviteLink = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/auth/invite?token=${encodeURIComponent(token)}`;
+  
+        try {
+          await sendEmail({ 
+            to: email, 
+            inviteLink,
+            senderName: user?.name || 'LANCAR Admin', 
+            senderEmail: user?.email || 'noreply@lancar.com'
+          });
+  
+          setMessage("Pengguna berhasil ditambahkan dan undangan dikirim!");
+          setName("");
+          setRole("Karyawan");
+          setEmail("");
+        } catch (error) {
+          console.error("Gagal mengirim email:", error);
+          setMessage("Terjadi kesalahan saat mengirim undangan.");
+        }
       } else {
         setMessage(result.error || "Error Disini");
       }
@@ -70,7 +79,7 @@ export default function AddUserPage() {
     }
   };
 
-  return (
+return (
     <div className="min-h-screen bg-[#EDF1F9] p-4">
       <div className="w-full flex mb-3">
         <button
@@ -91,8 +100,8 @@ export default function AddUserPage() {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className={`w-full p-3 mb-2 border ${errors.name ? "border-red-500" : "border-gray-300"} rounded-3xl focus:outline-none font-light text-gray-400`}
-          placeholder="Nama lengkap"
+          className={`w-full p-3 mb-2 border ${errors.name ? "border-red-500" : "border-gray-300"} rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-200 font-normal text-gray-700`}
+          placeholder="John Doe"
         />
         {errors.name && <p className="text-red-500 text-sm mb-4">{errors.name}</p>}
 
@@ -102,23 +111,30 @@ export default function AddUserPage() {
             id="role"
             value={role}
             onChange={(e) => setRole(e.target.value)}
-            className="w-full outline-none font-light text-gray-400"
+            className="w-full p-3 border border-gray-300 rounded-3xl appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 font-normal text-gray-700 pr-10"
           >
             <option value="" disabled>Pilih Role</option>
-            <option value="Manajer">Manajer</option>
+            <option value="Administrator">Administrator</option>
             <option value="Karyawan">Karyawan</option>
-          </select>
+          </select> 
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-700">
+            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+            </svg>
+          </div>
         </div>
         {errors.role && <p className="text-red-500 text-sm mb-4">{errors.role}</p>}
 
-        <label className="block text-gray-400 text-sm font-semibold mb-2" htmlFor="email">Email</label>
+        <label className="block text-gray-500 text-sm font-semibold mb-2" htmlFor="email">
+          Email
+        </label>
         <input
           id="email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className={`w-full p-3 mb-2 border ${errors.email ? "border-red-500" : "border-gray-300"} rounded-3xl focus:outline-none font-light text-gray-400`}
-          placeholder="Email"
+          className={`w-full p-3 mb-2 border ${errors.email ? "border-red-500" : "border-gray-300"} rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-200 font-normal text-gray-700`}
+          placeholder="johndoe@gmail.com"
         />
         {errors.email && <p className="text-red-500 text-sm mb-4">{errors.email}</p>}
 
@@ -126,7 +142,9 @@ export default function AddUserPage() {
 
         <button
           type="submit"
-          className={`mt-10 w-full p-3 rounded-3xl font-semibold ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 text-white"}`}
+          className={`mt-10 w-full p-3 rounded-3xl font-semibold ${
+            loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
           disabled={loading}
         >
           {loading ? "Mengirim..." : "Lanjutkan"}

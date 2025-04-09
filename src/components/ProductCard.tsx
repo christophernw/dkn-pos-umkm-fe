@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useModal } from "@/contexts/ModalContext"; // Import useModal hook
 import config from "../config";
 
 interface ProductCardProps {
@@ -25,6 +26,10 @@ interface PaginatedResponse {
   total_pages: number;
 }
 
+function formatHarga(num: number): string {
+  return String(num).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
 export default function ProductCard() {
   const searchParams = useSearchParams();
   const [data, setData] = useState<ProductCardProps[]>([]);
@@ -32,12 +37,17 @@ export default function ProductCard() {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const sortParam = searchParams.get("sort");
-  const { accessToken, user } = useAuth();
+  const { accessToken } = useAuth();
+  const { showModal, hideModal } = useModal(); // Add showModal from context
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] =
-    useState<ProductCardProps | null>(null);
+  useState<ProductCardProps | null>(null);
   const [newStockValue, setNewStockValue] = useState(0);
+
+  const handleEdit = (id: number) => {
+    window.location.href = `/editProduk/${id}`
+  }
 
   useEffect(() => {
     async function fetchData() {
@@ -46,7 +56,7 @@ export default function ProductCard() {
         setIsLoading(true);
 
         const queryParam = searchParams.get("q") || "";
-        let url = `${process.env.NEXT_PUBLIC_API_URL}/produk/page/${currentPage}`;
+        let url = `${config.apiUrl}/produk/page/${currentPage}`;
         const params = new URLSearchParams();
 
         if (sortParam) {
@@ -105,31 +115,61 @@ export default function ProductCard() {
   };
 
   async function handleDelete(id: number) {
-    const isConfirmed = window.confirm(
-      "Are you sure you want to delete this product?"
-    );
+    // Replace window.confirm with showModal
+    showModal(
+      "Konfirmasi",
+      "Apakah Anda yakin ingin menghapus produk ini?",
+      "info",
+      {
+        label: "Hapus",
+        onClick: async () => {
+          try {
+            const response = await fetch(`${config.apiUrl}/produk/delete/${id}`, {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+              method: "DELETE",
+            });
 
-    if (!isConfirmed) return;
-    try {
-      const response = await fetch(`${config.apiUrl}/produk/delete/${id}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
+            if (response.ok) {
+              setData((prevData) => prevData.filter((product) => product.id !== id));
+              
+              // Show success message
+              showModal(
+                "Berhasil",
+                "Produk berhasil dihapus!",
+                "success"
+              );
+            } else {
+              // Show error message
+              showModal(
+                "Gagal",
+                "Gagal menghapus produk. Silakan coba lagi.",
+                "error"
+              );
+              console.error("Failed deleting produk");
+            }
+          } catch (error) {
+            // Show error message
+            showModal(
+              "Kesalahan",
+              "Terjadi kesalahan saat menghapus produk. Silakan coba lagi.",
+              "error"
+            );
+            console.error("Error deleting produk:", error);
+          }
         },
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        setData((prevData) => prevData.filter((product) => product.id !== id));
-      } else {
-        console.error("Failed deleting produk");
+      },
+      {
+        label: "Batal",
+        onClick: () => {
+          hideModal();
+        },
       }
-    } catch (error) {
-      console.error("Error deleting produk:", error);
-    }
+    );
   }
 
   const handleOpenStockModal = (product: ProductCardProps) => {
-    // Redirect to edit page with product ID
     window.location.href = `/editProduk/${product.id}`;
   };
 
@@ -207,12 +247,11 @@ export default function ProductCard() {
         <div className="flex-1">
           <div className="flex justify-between items-center">
             <h3 className="font-semibold text-base">{product.nama}</h3>
-            {user?.role === "Pemilik" && (
-              <button
+            <button
               className="text-red-500 hover:text-red-700"
               onClick={() => handleDelete(product.id)}
               aria-label="Delete product"
-              >
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -231,25 +270,28 @@ export default function ProductCard() {
                 <line x1="10" x2="10" y1="11" y2="17" />
                 <line x1="14" x2="14" y1="11" y2="17" />
               </svg>
-              </button>
-            )}
+            </button>
           </div>
           <p className="text-gray-500 text-sm mt-2">Harga Jual</p>
           <p className="font-medium text-sm text-blue-700 mt-1">
-            Rp {product.harga_jual} / {product.satuan}
+            Rp {formatHarga(product.harga_jual)} / {product.satuan}
           </p>
           <div className="flex justify-between items-center mt-2">
             <span className="text-sm text-green-700 bg-green-100 px-2 py-1 rounded-lg">
               Stok : {product.stok}
             </span>
-            {user?.role === "Pemilik" && (
-              <button
+            <button
               className="text-xs h-8 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
               onClick={() => handleOpenStockModal(product)}
-              >
+            >
               Perbarui Produk
-              </button>
-            )}
+            </button>
+            {/* <button 
+                className="text-xs h-8 px-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
+                onClick={() => handleEdit(product.id)}
+              >
+                Edit Produk
+            </button> */}
           </div>
         </div>
       </div>
@@ -293,6 +335,8 @@ export default function ProductCard() {
           </div>
         </section>
       )}
+
+      <div className="pb-16"></div>
 
       {/* Stock Update Modal */}
       {isModalOpen && selectedProduct && (

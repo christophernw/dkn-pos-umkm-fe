@@ -2,55 +2,121 @@
 
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useModal } from "@/contexts/ModalContext"; // Import useModal hook
+import config from "@/src/config";
+import { Trash } from "lucide-react";
 
 interface User {
   id: number;
   email: string;
   name: string;
-  role: "Pemilik" | "Karyawan";
+  role: "Pemilik" | "Administrator" | "Karyawan";
 }
 
 const UserList = () => {
-  const { user, accessToken } = useAuth(); // Access the accessToken from context
-  const [users, setUsers] = useState<User[]>([]); // State to hold fetched users
-  const [loading, setLoading] = useState<boolean>(true); // Loading state
-  const [error, setError] = useState<string | null>(null); // Error state
+  const { user, accessToken } = useAuth();
+  const { showModal, hideModal } = useModal(); // Add showModal from context
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      if(!accessToken) {
+        throw new Error("You are not authenticated");
+      }
+
+      const response = await fetch(`${config.apiUrl}/auth/get-users`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch users");
+      }
+
+      const data = await response.json();
+      setUsers(data); 
+    } catch (error: any) {
+      setError(error.message); 
+    } finally {
+      setLoading(false); 
+    }
+  };
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/get-users`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "appl ication/json",
-            "Authorization": `Bearer ${accessToken}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch users");
-        }
-
-        const data = await response.json();
-        setUsers(data); 
-      } catch (error: any) {
-        setError(error.message); 
-      } finally {
-        setLoading(false); 
-      }
-    };
-
     fetchUsers();
   }, [accessToken]); 
+
+  const handleDeleteUser = async (userId: number) => {
+    showModal(
+      "Konfirmasi",
+      "Apakah Anda yakin ingin menghapus pengguna ini?",
+      "info",
+      {
+        label: "Hapus",
+        onClick: async () => {
+          try {
+            setIsDeleting(true);
+            setError(null);
+
+            const response = await fetch(`${config.apiUrl}/auth/remove-user-from-toko`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${accessToken}`,
+              },
+              body: JSON.stringify({ user_id: userId }),
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || "Failed to remove user");
+            }
+
+            // Refresh the user list after successful deletion
+            await fetchUsers();
+            
+            // Show success message
+            showModal(
+              "Berhasil",
+              "Pengguna berhasil dihapus!",
+              "success"
+            );
+          } catch (error: any) {
+            setError(error.message);
+            showModal(
+              "Gagal",
+              `Gagal menghapus pengguna: ${error.message}`,
+              "error"
+            );
+          } finally {
+            setIsDeleting(false);
+          }
+        },
+      },
+      {
+        label: "Batal",
+        onClick: () => {
+          hideModal();
+        },
+      }
+    );
+  };
 
   return (
     <div className="bg-white p-4 rounded-2xl shadow-md">
       <h2 className="text-lg font-semibold pb-3 border-b">Informasi Pengguna</h2>
       <div>
-        {!user ? (
-          <p className="text-red-500">You are not authenticated</p>
-        ) : loading ? (
-          <p>Loading...</p>
+        {loading ? (
+          <p className="py-3 text-gray-500">Loading...</p>
         ) : error ? (
           <p className="text-red-500">{error}</p> 
         ) : (
@@ -59,19 +125,36 @@ const UserList = () => {
               <p>No users found.</p> 
             ) : (
               <ul>
-                {users.map((user) => (
-                  <li key={user.id} className="flex items-center justify-between pt-3">
+                {users.map((userItem) => (
+                  <li key={userItem.id} className="flex items-center justify-between pt-3 pb-3 border-b border-gray-100">
                     <div>
-                      <p className="font-medium">{user.name}</p>
-                      <p className="text-sm text-gray-500 font-extralight">{user.email}</p>
+                      <p className="font-medium">{userItem.name}</p>
+                      <p className="text-sm text-gray-500 font-extralight">{userItem.email}</p>
                     </div>
-                    <span
+                    <div className="flex items-center gap-2">
+                      <span
                         className="text-xs px-3 py-1 rounded-full"
                         style={{
-                          backgroundColor: user.role === "Pemilik" ? "#5ABC61" : "#3554C1", // Badge color based on role
-                          color: "#fff",
+                          backgroundColor: 
+                            userItem.role === "Pemilik" ? "#4CAF50" : 
+                            userItem.role === "Administrator" ? "#FFC107" : 
+                            "#3B82F6",
+                          color: userItem.role === "Administrator" ? "#000" : "#fff",
                         }}
-                      >{user.role}</span>
+                      >{userItem.role}</span>
+                      
+                      {/* Show delete button only if current user is Pemilik and not trying to delete themselves */}
+                      {user && user.role === "Pemilik" && user.id !== userItem.id && (
+                        <button
+                          onClick={() => handleDeleteUser(userItem.id)}
+                          disabled={isDeleting}
+                          className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
+                          title="Remove user"
+                        >
+                          <Trash size={16} />
+                        </button>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>

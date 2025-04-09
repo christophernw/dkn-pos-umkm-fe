@@ -2,11 +2,18 @@
 import { useState, useEffect, ChangeEvent } from "react";
 import { useParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useModal } from "@/contexts/ModalContext";
 import config from "@/src/config";
 import TextInput from "../../tambahProduk/components/textInput";
 
+function formatHarga(value: string): string {
+  const digits = value.replace(/\D/g, ""); // Remove all non-numeric characters
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, "."); // Add thousands separators
+}
+
 export default function EditProductPage() {
   const { id } = useParams();
+  const { showModal } = useModal();
   const [productName, setProductName] = useState("");
   const [category, setCategory] = useState("");
   const [priceSell, setPriceSell] = useState("");
@@ -22,7 +29,7 @@ export default function EditProductPage() {
   useEffect(() => {
     async function fetchProduct() {
       if (!accessToken || !id) return;
-      
+
       try {
         const response = await fetch(`${config.apiUrl}/produk/${id}`, {
           headers: {
@@ -30,38 +37,71 @@ export default function EditProductPage() {
             "Content-Type": "application/json",
           },
         });
-        
+
         if (response.ok) {
           const product = await response.json();
-          
+
           // Populate form with existing data
           setProductName(product.nama || "");
           setCategory(product.kategori || "");
-          setPriceSell(product.harga_jual?.toString() || "");
-          setPriceCost(product.harga_modal?.toString() || "");
+          setPriceSell(formatHarga(product.harga_jual?.toString()) || "");
+          setPriceCost(formatHarga(product.harga_modal?.toString()) || "");
           setCurrentStock(product.stok?.toString() || "");
           setUnit(product.satuan || "Kg");
-          
+
           // If product has an image, set the preview
           if (product.foto) {
             setPreviewImg(`${config.apiUrl}${product.foto.slice(4)}`);
           }
         } else {
+          showModal(
+            "Error",
+            "Gagal mengambil data produk",
+            "error"
+          );
           console.error("Failed to fetch product");
         }
       } catch (error) {
+        showModal(
+          "Error",
+          "Terjadi kesalahan saat mengambil data produk",
+          "error"
+        );
         console.error("Error fetching product:", error);
       } finally {
         setLoading(false);
       }
     }
-    
+
     fetchProduct();
-  }, [id, accessToken]);
+  }, [id, accessToken, showModal]);
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
     const file = e.target.files[0];
+
+    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+    const maxSizeMB = 3;
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+
+    if (!allowedTypes.includes(file.type)) {
+      showModal(
+        "Format Tidak Didukung", 
+        "Silakan unggah PNG, JPG, atau JPEG.",
+        "error"
+      );
+      return;
+    }
+
+    if (file.size > maxSizeBytes) {
+      showModal(
+        "File Terlalu Besar", 
+        `Ukuran file terlalu besar! Maksimal ${maxSizeMB}MB.`,
+        "error"
+      );
+      return;
+    }
+
     setImageFile(file);
 
     const reader = new FileReader();
@@ -73,24 +113,26 @@ export default function EditProductPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     const formData = new FormData();
-
-    const payload = {
-      nama: productName,
-      kategori: category,
-      harga_jual: parseFloat(priceSell),
-      harga_modal: parseFloat(priceCost),
-      stok: parseFloat(currentStock),
-      satuan: unit,
-    };
-
+  
+    // Build the payload dynamically, only including fields with values
+    const payload: Record<string, any> = {};
+    if (productName) payload.nama = productName;
+    if (category) payload.kategori = category;
+    if (priceSell) payload.harga_jual = parseFloat(priceSell.replace(/\./g, ""));
+    if (priceCost) payload.harga_modal = parseFloat(priceCost.replace(/\./g, ""));
+    if (currentStock) payload.stok = parseFloat(currentStock);
+    if (unit) payload.satuan = unit;
+  
+    // Append the payload as a JSON string
     formData.append("payload", JSON.stringify(payload));
-
+  
+    // Append the image file if it exists
     if (imageFile) {
       formData.append("foto", imageFile);
     }
-
+  
     try {
       const response = await fetch(`${config.apiUrl}/produk/update/${id}`, {
         method: "POST",
@@ -99,20 +141,33 @@ export default function EditProductPage() {
           Authorization: `Bearer ${accessToken}`,
         },
       });
-
+  
       if (response.ok) {
-        alert("Produk berhasil diperbarui!");
-        window.location.href = "/semuaBarang";
+        showModal(
+          "Berhasil", 
+          "Produk berhasil diperbarui!",
+          "success",
+          {
+            label: "Lihat Semua Produk",
+            onClick: () => { window.location.href = "/semuaBarang"; }
+          }
+        );
       } else {
         const errorData = await response.json();
         console.error("Error updating product:", errorData);
-        alert(
-          `Gagal memperbarui produk: ${errorData.detail || "Unknown error"}`
+        showModal(
+          "Gagal", 
+          `Gagal memperbarui produk: ${errorData.message || "Unknown error"}`,
+          "error"
         );
       }
     } catch (error) {
       console.error("Network error:", error);
-      alert("Terjadi kesalahan jaringan. Silakan coba lagi.");
+      showModal(
+        "Kesalahan Jaringan", 
+        "Terjadi kesalahan jaringan. Silakan coba lagi.",
+        "error"
+      );
     }
   };
 
@@ -127,11 +182,25 @@ export default function EditProductPage() {
   return (
     <div className="max-w-md mx-auto p-4">
       <header className="flex items-center mb-4">
-        <button
+      <button
           onClick={() => window.history.back()}
-          className="mr-2 text-gray-600 hover:text-gray-800"
+          className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2"
         >
-          ←
+          <svg
+            className="w-4 h-4 transform scale-x-[-1]"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 14 10"
+          >
+            <path
+              stroke="black"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M1 5h12m0 0L9 1m4 4L9 9"
+            />
+          </svg>
         </button>
         <h1 className="text-xl font-semibold">Edit Produk</h1>
       </header>
@@ -186,7 +255,7 @@ export default function EditProductPage() {
           id="productName"
           label="Nama Produk"
           value={productName}
-          onChange={setProductName}
+          onChange={(value) => setProductName(value)}
           placeholder="Pie Jeruk"
         />
 
@@ -194,7 +263,7 @@ export default function EditProductPage() {
           id="category"
           label="Kategori"
           value={category}
-          onChange={setCategory}
+          onChange={(value) => setCategory(value)}
           placeholder="Makanan"
         />
 
@@ -202,51 +271,49 @@ export default function EditProductPage() {
           id="priceSell"
           label="Harga Jual"
           value={priceSell}
-          onChange={setPriceSell}
-          placeholder="Rp 13.000"
+          onChange={(_, raw) => setPriceSell(raw)}
+          placeholder="13.000"
           type="number"
+          currency
         />
 
         <TextInput
           id="priceCost"
           label="Harga Modal"
           value={priceCost}
-          onChange={setPriceCost}
-          placeholder="Rp 9.000"
+          onChange={(_, raw) => setPriceCost(raw)}
+          placeholder="9.000"
+          type="number"
+          currency
+        />
+
+        <TextInput
+          id="currentStock"
+          label="Stok"
+          value={currentStock}
+          onChange={(value) => setCurrentStock(value)}
+          placeholder="450"
           type="number"
         />
 
-        <div className="flex items-center justify-between space-x-4">
-          <div className="w-1/3">
-            <label
-              htmlFor="unit"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Pilih Satuan
-            </label>
-            <select
-              id="unit"
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              <option value="Pcs">Pcs</option>
-              <option value="Kg">Kg</option>
-              <option value="Botol">Botol</option>
-              <option value="Liter">Liter</option>
-            </select>
-          </div>
-
-          <div className="w-2/3">
-            <TextInput
-              id="currentStock"
-              label="Stok Saat Ini"
-              value={currentStock}
-              onChange={setCurrentStock}
-              placeholder="450"
-              type="number"
-            />
-          </div>
+        <div className="w-1/3">
+          <label
+            htmlFor="unit"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Pilih Satuan
+          </label>
+          <select
+            id="unit"
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+            className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          >
+            <option value="Pcs">Pcs</option>
+            <option value="Kg">Kg</option>
+            <option value="Botol">Botol</option>
+            <option value="Liter">Liter</option>
+          </select>
         </div>
 
         <div className="pt-4">

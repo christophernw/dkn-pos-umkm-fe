@@ -15,10 +15,12 @@ export default function LoginPage() {
     const router = useRouter();
     const { setAuthData } = useAuth();
 
+    
     useEffect(() => {
         if (session) {
+            
             setLoading(true);
-            fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/process-session`, {
+            fetch(`${config.apiUrl}/auth/process-session`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
