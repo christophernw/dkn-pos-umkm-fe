@@ -38,7 +38,8 @@ export default function AddUserPage() {
     setShowConfirmModal(true);
   };
 
-  const submitConfirmed = async () => {
+  const submitConfirmed = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    e.preventDefault();
     setShowConfirmModal(false);
     setLoading(true);
     setMessage("");
@@ -54,9 +55,10 @@ export default function AddUserPage() {
       const response = await sendInvitation(payload);
       const result: InvitationResponse = await response.json();
 
+      console.log("Response from server:", result);
       if (response.ok && result.message === "Invitation sent") {
         const token = result.token!;
-        const inviteLink = `${config.apiUrl}/auth/invite?token=${encodeURIComponent(token)}`;
+        const inviteLink = `http://localhost:3000/auth/invite?token=${encodeURIComponent(token)}`;
 
         await sendEmail({
           to: email,
@@ -82,7 +84,6 @@ export default function AddUserPage() {
 
   return (
     <div className="min-h-screen bg-[#EDF1F9] p-4">
-      {/* Header */}
       <div className="w-full flex mb-3">
         <button
           onClick={handleBack}
@@ -95,10 +96,8 @@ export default function AddUserPage() {
 
       <h1 className="text-xl font-semibold mb-6">Tambah Pengguna</h1>
 
-      {/* Form */}
       <form onSubmit={handleSubmit}>
-        {/* Nama */}
-        <label htmlFor="name" className="block text-gray-500 text-sm font-semibold mb-2">
+        <label className="block text-gray-500 text-sm font-semibold mb-2" htmlFor="name">
           Nama Lengkap
         </label>
         <input
@@ -106,42 +105,34 @@ export default function AddUserPage() {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className={`w-full p-3 mb-2 border ${
-            errors.name ? "border-red-500" : "border-gray-300"
-          } rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-200 font-normal text-gray-700`}
+          className={`w-full p-3 mb-2 border ${errors.name ? "border-red-500" : "border-gray-300"} rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-200 font-normal text-gray-700`}
           placeholder="John Doe"
         />
         {errors.name && <p className="text-red-500 text-sm mb-4">{errors.name}</p>}
 
-        {/* Role */}
-        <label htmlFor="role" className="block text-gray-500 text-sm font-semibold mb-2">
+        <label className="block text-gray-500 text-sm font-semibold mb-2" htmlFor="role">
           Role
         </label>
-        <div className={`relative w-full mb-2`}>
+        <div className={`relative w-full mb-2 ${errors.role ? "border-red-500" : "border-gray-300"}`}>
           <select
             id="role"
             value={role}
             onChange={(e) => setRole(e.target.value)}
-            className={`w-full p-3 border ${
-              errors.role ? "border-red-500" : "border-gray-300"
-            } rounded-3xl appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 font-normal text-gray-700 pr-10`}
+            className="w-full p-3 border border-gray-300 rounded-3xl appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 font-normal text-gray-700 pr-10"
           >
-            <option value="" disabled>
-              Pilih Role
-            </option>
+            <option value="" disabled>Pilih Role</option>
             <option value="Administrator">Administrator</option>
             <option value="Karyawan">Karyawan</option>
-          </select>
+          </select> 
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-700">
-            <svg className="fill-current h-4 w-4" viewBox="0 0 20 20">
-              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
             </svg>
           </div>
         </div>
         {errors.role && <p className="text-red-500 text-sm mb-4">{errors.role}</p>}
 
-        {/* Email */}
-        <label htmlFor="email" className="block text-gray-500 text-sm font-semibold mb-2">
+        <label className="block text-gray-500 text-sm font-semibold mb-2" htmlFor="email">
           Email
         </label>
         <input
@@ -149,21 +140,13 @@ export default function AddUserPage() {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className={`w-full p-3 mb-2 border ${
-            errors.email ? "border-red-500" : "border-gray-300"
-          } rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-200 font-normal text-gray-700`}
+          className={`w-full p-3 mb-2 border ${errors.email ? "border-red-500" : "border-gray-300"} rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-200 font-normal text-gray-700`}
           placeholder="johndoe@gmail.com"
         />
         {errors.email && <p className="text-red-500 text-sm mb-4">{errors.email}</p>}
 
-        {/* Status Message */}
-        {message && (
-          <p className={`text-sm mt-2 ${message.includes("berhasil") ? "text-green-500" : "text-red-500"}`}>
-            {message}
-          </p>
-        )}
+        {message && <p className={`text-sm mt-2 ${message.includes("berhasil") ? "text-green-500" : "text-red-500"}`}>{message}</p>}
 
-        {/* Submit Button */}
         <button
           type="submit"
           className={`mt-10 w-full p-3 rounded-3xl font-semibold ${
@@ -174,11 +157,18 @@ export default function AddUserPage() {
           {loading ? "Mengirim..." : "Lanjutkan"}
         </button>
       </form>
-
       {showConfirmModal && (
-        <Modal onClose={() => setShowConfirmModal(false)}>
+      <Modal onClose={() => setShowConfirmModal(false)}>
+          <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            submitConfirmed(e);
+          }}
+          className="w-full max-w-md"
+          >
           <div role="dialog">
             <h2 className="text-base font-semibold text-center">Ringkasan Pengguna Baru</h2>
+
             <div className="space-y-3 w-full text-left text-sm">
               <div>
                 <p className="text-gray-500">Nama</p>
@@ -193,7 +183,8 @@ export default function AddUserPage() {
                 <p className="font-semibold break-words">{email}</p>
               </div>
             </div>
-            <div className="flex justify-between gap-4 w-full">
+
+            <div className="flex justify-between gap-4 w-full mt-6">
               <button
                 type="button"
                 onClick={() => setShowConfirmModal(false)}
@@ -202,16 +193,16 @@ export default function AddUserPage() {
                 Batal
               </button>
               <button
-                type="button"
-                onClick={submitConfirmed}
+                type="submit"
                 className="flex-1 px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
               >
                 Ya, kirim
               </button>
             </div>
           </div>
-        </Modal>
-      )}
+        </form>
+      </Modal>
+    )}
 
     </div>
   );
