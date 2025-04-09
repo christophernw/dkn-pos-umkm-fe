@@ -70,7 +70,11 @@ const SemuaBarangPage: React.FC = () => {
     popular: false, 
     lowStock: false
   });
-  const [errors, setErrors] = useState({
+  const [errors, setErrors] = useState<{
+    topSelling: string | null; 
+    popular: string | null; 
+    lowStock: string | null;
+  }>({
     topSelling: null, 
     popular: null, 
     lowStock: null
@@ -265,7 +269,7 @@ const SemuaBarangPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               {popularProducts.map((produk) => (
                 <div key={produk.id} className="bg-white rounded-xl shadow overflow-hidden">
-                  <div className="relative w-full h-28 p-2">
+                  <div className="relative w-full aspect-square p-2">
                     <div className="relative w-full h-full overflow-hidden rounded-xl">
                       <Image
                         src={produk.imageUrl ? `${config.apiUrl}${produk.imageUrl.slice(4)}` : `/images/placeholder.svg`}

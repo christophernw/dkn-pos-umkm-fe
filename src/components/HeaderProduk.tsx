@@ -71,10 +71,10 @@ const HeaderProduk = () => {
             </button>
           </Link>
           <Link
-            href="/daftarProduk"
-            className={pathname === "/daftarProduk" ? "font-bold" : "font-medium"}
+            href="/informasi"
+            className={pathname === "/informasi" ? "font-bold" : "font-medium"}
           >
-            Informasi Stok
+            Informasi
           </Link>
           <Link
             href="/semuaBarang"
