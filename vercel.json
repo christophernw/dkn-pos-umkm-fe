@@ -1,12 +1,12 @@
 {
-    "rewrites": [
-      {
-        "source": "/backend-api-staging/:path*",
-        "destination": "http://103.177.95.190:8001/api/:path*"
-      },
-      {
-        "source": "/backend-api-prod/:path*",
-        "destination": "http://103.177.95.190:8000/api/:path*"
-      }
-    ]
-  }
+  "rewrites": [
+    {
+      "source": "/backend-api-staging/:path*",
+      "destination": "http://103.177.95.190:8001/api/:path*"
+    },
+    {
+      "source": "/backend-api-prod/:path*",
+      "destination": "http://103.177.95.190:8000/api/:path*"
+    }
+  ]
+}

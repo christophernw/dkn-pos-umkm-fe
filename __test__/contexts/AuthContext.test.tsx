@@ -11,7 +11,7 @@ const TestComponent = () => {
             <div data-testid="refreshToken">{refreshToken || "null"}</div>
             <div data-testid="isAuthenticated">{isAuthenticated ? "true" : "false"}</div>
             <button onClick={() => setAuthData({
-                    user: { id: 1, name: "TestUser", email: "test@example.com" },
+                    user: { id: 1, name: "TestUser", email: "test@example.com", role: "Pemilik" },
                     access: "access123",
                     refresh: "refresh123"
             })}>Set Auth</button>

@@ -54,4 +54,32 @@ describe('Modal Component', () => {
     // Check if onClose was called
     expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
+
+  it('applies custom className to the modal container', () => {
+    render(
+      <Modal className="custom-class">
+        <p>Custom modal</p>
+      </Modal>
+    );
+  
+    // Ambil elemen div terdekat dari <p> yang memiliki className "custom-class"
+    const modalBox = screen.getByText('Custom modal').closest('div.custom-class');
+    expect(modalBox).toBeInTheDocument();
+  });
+  
+  
+  it('does not render modal after close button clicked (hides from DOM)', () => {
+    render(
+      <Modal>
+        <p>Gone modal</p>
+      </Modal>
+    );
+  
+    const closeButton = screen.getByRole('button');
+    fireEvent.click(closeButton);
+  
+    // Setelah klik, modal container tetap ada (karena state internal), tapi harus punya class 'hidden'
+    const modalContainer = screen.queryByText('Gone modal')?.closest('div[class*="fixed"]');
+    expect(modalContainer).toHaveClass('hidden');
+  });
 });

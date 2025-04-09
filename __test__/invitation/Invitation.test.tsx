@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import InvitePage from "@/src/app/(auth)/invitation/page";
+import InvitePage from "@/src/app/auth/invite/page";
 import { useRouter, useSearchParams } from "next/navigation";
 
 jest.mock("next/navigation", () => ({
