@@ -535,7 +535,8 @@ export default function PemasukanBaruPage() {
         onClick={handleSave}
         disabled={
           isLoading ||
-          (selectedProducts.length === 0 && incomeType === "Penjualan Barang")
+          (selectedProducts.length === 0 && incomeType === "Penjualan Barang") ||
+          effectiveTotalPemasukan === 0
         }
         className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-[calc(100%-2rem)] max-w-[calc(theme(maxWidth.md)-2rem)] bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center z-20"
       >

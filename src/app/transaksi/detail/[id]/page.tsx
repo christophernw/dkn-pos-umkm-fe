@@ -55,14 +55,12 @@ export default function TransaksiDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isMarkingAsPaid, setIsMarkingAsPaid] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!accessToken) return;
 
     const fetchTransactionDetail = async () => {
       setIsLoading(true);
-      setError(null);
 
       try {
         const response = await fetch(
@@ -83,7 +81,11 @@ export default function TransaksiDetailPage() {
         const data = await response.json();
         setTransaction(data);
       } catch (err) {
-        setError("Gagal memuat detail transaksi");
+        showModal(
+          "Gagal Memuat Data",
+          "Gagal memuat detail transaksi",
+          "error"
+        );
         console.error(err);
       } finally {
         setIsLoading(false);
@@ -91,7 +93,7 @@ export default function TransaksiDetailPage() {
     };
 
     fetchTransactionDetail();
-  }, [transactionId, accessToken]);
+  }, [transactionId, accessToken, showModal]);
 
   const handleDelete = async () => {
     showModal(
@@ -102,7 +104,6 @@ export default function TransaksiDetailPage() {
         label: "Hapus",
         onClick: async () => {
           setIsDeleting(true);
-          setError(null);
 
           try {
             const response = await fetch(
@@ -116,20 +117,17 @@ export default function TransaksiDetailPage() {
             );
 
             if (!response.ok) {
-              throw new Error(`Failed to delete transaction: ${response.status}`);
+              throw new Error(
+                `Failed to delete transaction: ${response.status}`
+              );
             }
 
-            showModal(
-              "Berhasil",
-              "Transaksi berhasil dihapus!",
-              "success",
-              {
-                label: "Kembali ke Daftar Transaksi",
-                onClick: () => window.location.href = "/transaksi",
-              }
-            );
+            showModal("Berhasil", "Transaksi berhasil dihapus!", "success", {
+              label: "Kembali ke Daftar Transaksi",
+              onClick: () => (window.location.href = "/transaksi"),
+            });
           } catch (err) {
-            setError("Gagal menghapus transaksi");
+            showModal("Gagal Menghapus", "Transaksi tidak dapat dihapus", "error");
             console.error(err);
           } finally {
             setIsDeleting(false);
@@ -154,7 +152,6 @@ export default function TransaksiDetailPage() {
         label: "Ya, Tandai Lunas",
         onClick: async () => {
           setIsMarkingAsPaid(true);
-          setError(null);
 
           try {
             const response = await fetch(
@@ -168,7 +165,9 @@ export default function TransaksiDetailPage() {
             );
 
             if (!response.ok) {
-              throw new Error(`Failed to update payment status: ${response.status}`);
+              throw new Error(
+                `Failed to update payment status: ${response.status}`
+              );
             }
 
             await response.json();
@@ -186,11 +185,15 @@ export default function TransaksiDetailPage() {
               "success",
               {
                 label: "Kembali ke Daftar Transaksi",
-                onClick: () => window.location.href = "/transaksi",
+                onClick: () => (window.location.href = "/transaksi"),
               }
             );
           } catch (err) {
-            setError("Gagal mengubah status transaksi");
+            showModal(
+              "Gagal Mengubah Status",
+              "Gagal mengubah status transaksi",
+              "error"
+            );
             console.error(err);
           } finally {
             setIsMarkingAsPaid(false);
@@ -236,30 +239,30 @@ export default function TransaksiDetailPage() {
     );
   }
 
-  if (error || !transaction) {
+  if (!transaction) {
     return (
       <div className="p-4 max-w-md mx-auto bg-gray-50 min-h-screen">
         <div className="flex items-center mb-4">
-        <button
-          onClick={() => window.history.back()}
-          className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2"
-        >
-          <svg
-            className="w-4 h-4 transform scale-x-[-1]"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 14 10"
+          <button
+            onClick={() => window.history.back()}
+            className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2"
           >
-            <path
-              stroke="black"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M1 5h12m0 0L9 1m4 4L9 9"
-            />
-          </svg>
-        </button>
+            <svg
+              className="w-4 h-4 transform scale-x-[-1]"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 14 10"
+            >
+              <path
+                stroke="black"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M1 5h12m0 0L9 1m4 4L9 9"
+              />
+            </svg>
+          </button>
           <h1 className="text-xl font-semibold text-center flex-grow">
             Detail Transaksi
           </h1>
@@ -271,7 +274,7 @@ export default function TransaksiDetailPage() {
           role="alert"
         >
           <span className="block sm:inline">
-            {error || "Tidak dapat memuat data transaksi"}
+            {"Tidak dapat memuat data transaksi"}
           </span>
         </div>
 
@@ -295,7 +298,7 @@ export default function TransaksiDetailPage() {
     <div className="p-4 max-w-md mx-auto bg-gray-50 min-h-screen pb-24">
       {/* Header */}
       <div className="flex items-center mb-4">
-      <button
+        <button
           onClick={() => window.history.back()}
           className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2"
         >
@@ -570,16 +573,6 @@ export default function TransaksiDetailPage() {
         </button>
       )}
 
-      {/* Error Message */}
-      {error && (
-        <div
-          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
-          role="alert"
-        >
-          <span className="block sm:inline">{error}</span>
-        </div>
-      )}
-
       {/* Back Button */}
       <button
         onClick={() => router.back()}
@@ -606,7 +599,7 @@ export default function TransaksiDetailPage() {
                 className="opacity-75"
                 fill="currentColor"
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
+              ></path>
             </svg>
             Menghapus...
           </>
