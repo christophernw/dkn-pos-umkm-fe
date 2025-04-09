@@ -31,43 +31,83 @@ function formatHarga(num: number): string {
   return String(num).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
-export default function PengeluaranBaruPage() {
+export default function TambahTransaksiPage() {
   const router = useRouter();
   const { accessToken } = useAuth();
   const { showModal } = useModal();
-  const [selectedProducts, setSelectedProducts] = useState<
-    SelectedProductItem[]
-  >([]);
+  const [selectedProducts, setSelectedProducts] = useState<SelectedProductItem[]>([]);
   const [status, setStatus] = useState<"Lunas" | "Belum Lunas">("Lunas");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [manualTotalPengeluaran, setManualTotalPengeluaran] =
-    useState<string>("");
-  const [expenseType, setExpenseType] = useState<string>("Pembelian Stok");
-
+  
+  // Transaction mode state
+  const [transactionMode, setTransactionMode] = useState<"pemasukan" | "pengeluaran">("pemasukan");
+  const [manualTotalAmount, setManualTotalAmount] = useState<string>("");
+  const [manualTotalModal, setManualTotalModal] = useState<string>("");
+  const [categoryType, setCategoryType] = useState<string>(
+    transactionMode === "pemasukan" ? "Penjualan Barang" : "Pembelian Stok"
+  );
+  
   const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
 
-  const calculatedTotalPengeluaran = useMemo(() => {
-    if (expenseType !== "Pembelian Stok") {
-      return 0;
-    }
-    return selectedProducts.reduce((sum, item) => {
-      return sum + item.product.harga_modal * item.quantity;
-    }, 0);
-  }, [selectedProducts, expenseType]);
+  // Recalculate default category when transaction mode changes
+  useMemo(() => {
+    setCategoryType(transactionMode === "pemasukan" ? "Penjualan Barang" : "Pembelian Stok");
+  }, [transactionMode]);
 
-  const effectiveTotalPengeluaran = manualTotalPengeluaran
-    ? parseInt(manualTotalPengeluaran.replace(/\./g, ""), 10) || 0
-    : calculatedTotalPengeluaran;
+  const calculatedTotalAmount = useMemo(() => {
+    if (transactionMode === "pemasukan") {
+      return selectedProducts.reduce((sum, item) => {
+        return sum + item.product.harga_jual * item.quantity;
+      }, 0);
+    } else {
+      if (categoryType !== "Pembelian Stok") {
+        return 0;
+      }
+      return selectedProducts.reduce((sum, item) => {
+        return sum + item.product.harga_modal * item.quantity;
+      }, 0);
+    }
+  }, [selectedProducts, transactionMode, categoryType]);
+
+  const calculatedTotalModal = useMemo(() => {
+    if (transactionMode === "pemasukan") {
+      return selectedProducts.reduce((sum, item) => {
+        return sum + item.product.harga_modal * item.quantity;
+      }, 0);
+    }
+    return 0;
+  }, [selectedProducts, transactionMode]);
+
+  const effectiveTotalAmount = manualTotalAmount
+    ? parseInt(manualTotalAmount.replace(/\./g, ""), 10) || 0
+    : calculatedTotalAmount;
+
+  const effectiveTotalModal = manualTotalModal
+    ? parseInt(manualTotalModal.replace(/\./g, ""), 10) || 0
+    : calculatedTotalModal;
+
+  const keuntungan = useMemo(() => {
+    if (transactionMode === "pemasukan") {
+      return effectiveTotalAmount - effectiveTotalModal;
+    }
+    return 0;
+  }, [effectiveTotalAmount, effectiveTotalModal, transactionMode]);
 
   const handleQuantityChange = (productId: number, change: number) => {
     setSelectedProducts((currentItems) => {
       const updatedItems = currentItems.map((item) => {
         if (item.product.id === productId) {
-          let newQuantity = item.quantity + change;
+          const productStock = item.product.stok;
+          const currentQuantity = item.quantity;
+          let newQuantity = currentQuantity + change;
+
           if (newQuantity < 1) {
             newQuantity = 1;
+          } else if (transactionMode === "pemasukan" && change > 0 && newQuantity > productStock) {
+            newQuantity = productStock;
           }
+
           return { ...item, quantity: newQuantity };
         }
         return item;
@@ -78,12 +118,17 @@ export default function PengeluaranBaruPage() {
 
   const handleDirectQuantityChange = (productId: number, value: string) => {
     const numericValue = parseInt(value, 10);
-    const newQuantity =
-      isNaN(numericValue) || numericValue < 1 ? 1 : numericValue;
 
     setSelectedProducts((currentItems) => {
       return currentItems.map((item) => {
         if (item.product.id === productId) {
+          let newQuantity = numericValue;
+          if (isNaN(newQuantity) || newQuantity < 1) {
+            newQuantity = 1;
+          } else if (transactionMode === "pemasukan" && newQuantity > item.product.stok) {
+            newQuantity = item.product.stok;
+          }
+
           return { ...item, quantity: newQuantity };
         }
         return item;
@@ -117,6 +162,15 @@ export default function PengeluaranBaruPage() {
     if (existingItem) {
       handleQuantityChange(productToAdd.id, 1);
     } else {
+      if (transactionMode === "pemasukan" && productToAdd.stok <= 0) {
+        showModal(
+          "Stok Habis",
+          `${productToAdd.nama} sedang habis stok.`,
+          "error"
+        );
+        return;
+      }
+      
       setSelectedProducts((prevItems) => [
         ...prevItems,
         { product: productToAdd, quantity: 1 },
@@ -124,32 +178,52 @@ export default function PengeluaranBaruPage() {
     }
   };
 
-  const handleTotalPengeluaranChange = (value: string) => {
+  const handleTotalAmountChange = (value: string) => {
     const numericValue = value.replace(/[^\d]/g, "");
     const formattedValue = numericValue
       ? formatHarga(parseInt(numericValue, 10))
       : "";
-    setManualTotalPengeluaran(formattedValue);
+    setManualTotalAmount(formattedValue);
   };
 
-  const handleExpenseTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newType = e.target.value;
-    setExpenseType(newType);
-    if (newType !== "Pembelian Stok") {
+  const handleTotalModalChange = (value: string) => {
+    const numericValue = value.replace(/[^\d]/g, "");
+    const formattedValue = numericValue
+      ? formatHarga(parseInt(numericValue, 10))
+      : "";
+    setManualTotalModal(formattedValue);
+  };
+
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setCategoryType(e.target.value);
+    if ((transactionMode === "pengeluaran" && e.target.value !== "Pembelian Stok") || 
+        (transactionMode === "pemasukan" && e.target.value !== "Penjualan Barang")) {
       setSelectedProducts([]);
-      setManualTotalPengeluaran("");
+    }
+  };
+
+  const handleTransactionModeChange = (mode: "pemasukan" | "pengeluaran") => {
+    if (mode !== transactionMode) {
+      setTransactionMode(mode);
+      setSelectedProducts([]);
+      setManualTotalAmount("");
+      setManualTotalModal("");
+      setCategoryType(mode === "pemasukan" ? "Penjualan Barang" : "Pembelian Stok");
     }
   };
 
   const handleSave = async () => {
-    if (expenseType === "Pembelian Stok" && selectedProducts.length === 0) {
-      setError("Tambahkan setidaknya satu barang untuk pembelian stok.");
+    if ((transactionMode === "pemasukan" && categoryType === "Penjualan Barang" && selectedProducts.length === 0) || 
+        (transactionMode === "pengeluaran" && categoryType === "Pembelian Stok" && selectedProducts.length === 0)) {
+      setError("Tambahkan setidaknya satu barang.");
       return;
     }
-    if (expenseType !== "Pembelian Stok" && effectiveTotalPengeluaran <= 0) {
-      setError("Masukkan jumlah total pengeluaran yang valid.");
+    
+    if (effectiveTotalAmount <= 0) {
+      setError("Masukkan jumlah total yang valid.");
       return;
     }
+    
     if (!accessToken) {
       setError("Autentikasi diperlukan.");
       return;
@@ -159,13 +233,17 @@ export default function PengeluaranBaruPage() {
     setError(null);
 
     const transactionData = {
-      transaction_type: "pengeluaran",
-      category: expenseType,
-      total_amount: effectiveTotalPengeluaran,
-      total_modal: 0,
-      amount: effectiveTotalPengeluaran,
+      transaction_type: transactionMode,
+      category: categoryType,
+      total_amount: effectiveTotalAmount,
+      total_modal: transactionMode === "pemasukan" ? effectiveTotalModal : 0,
+      amount:
+        transactionMode === "pemasukan" && categoryType === "Penjualan Barang"
+          ? keuntungan
+          : effectiveTotalAmount,
       items:
-        expenseType === "Pembelian Stok"
+        (transactionMode === "pemasukan" && categoryType === "Penjualan Barang") || 
+        (transactionMode === "pengeluaran" && categoryType === "Pembelian Stok")
           ? selectedProducts.map((item) => ({
               product_id: item.product.id,
               quantity: item.quantity,
@@ -189,7 +267,7 @@ export default function PengeluaranBaruPage() {
       if (!response.ok) {
         const errorData = await response
           .json()
-          .catch(() => ({ message: "Gagal menyimpan pengeluaran." }));
+          .catch(() => ({ message: "Gagal menyimpan transaksi." }));
         throw new Error(
           errorData.message || `HTTP error! status: ${response.status}`
         );
@@ -197,7 +275,7 @@ export default function PengeluaranBaruPage() {
 
       showModal(
         "Berhasil",
-        "Pengeluaran berhasil disimpan!",
+        "Transaksi berhasil disimpan!",
         "success",
         {
           label: "Lihat Semua Transaksi",
@@ -218,7 +296,7 @@ export default function PengeluaranBaruPage() {
   return (
     <div className="p-4 max-w-md mx-auto bg-gray-50 min-h-screen pb-24">
       <div className="flex items-center mb-4">
-      <button
+        <button
           onClick={() => window.history.back()}
           className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2"
         >
@@ -239,20 +317,34 @@ export default function PengeluaranBaruPage() {
           </svg>
         </button>
         <h1 className="text-xl font-semibold text-center flex-grow">
-          Pengeluaran Baru
+          {transactionMode === "pemasukan" ? "Pemasukan Baru" : "Pengeluaran Baru"}
         </h1>
         <div className="w-6"></div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <button className="bg-white shadow-sm rounded-3xl py-3 px-4 text-sm font-medium text-center flex items-center justify-center text-gray-500 hover:bg-gray-50">
-          <div className="bg-gray-200 p-1.5 rounded-full mr-2">
+        <button 
+          className={`shadow-sm rounded-3xl py-3 px-4 text-sm font-medium text-center flex items-center justify-center ${
+            transactionMode === "pemasukan" 
+              ? "bg-green-100 text-green-700" 
+              : "bg-white text-gray-500 hover:bg-gray-50"
+          }`}
+          onClick={() => handleTransactionModeChange("pemasukan")}
+        >
+          <div className={`${transactionMode === "pemasukan" ? "bg-primary-blue" : "bg-gray-200"} p-1.5 rounded-full mr-2`}>
             <CoinIcon />
           </div>
           Pemasukan
         </button>
-        <button className="bg-red-50 shadow-sm rounded-3xl py-3 px-4 text-sm font-medium text-center flex items-center justify-center bg-red-100 text-red-700">
-          <div className="bg-primary-red p-1.5 rounded-full mr-2">
+        <button 
+          className={`shadow-sm rounded-3xl py-3 px-4 text-sm font-medium text-center flex items-center justify-center ${
+            transactionMode === "pengeluaran" 
+              ? "bg-red-100 text-red-700" 
+              : "bg-white text-gray-500 hover:bg-gray-50"
+          }`}
+          onClick={() => handleTransactionModeChange("pengeluaran")}
+        >
+          <div className={`${transactionMode === "pengeluaran" ? "bg-primary-red" : "bg-gray-200"} p-1.5 rounded-full mr-2`}>
             <StockIcon />
           </div>
           Pengeluaran
@@ -261,21 +353,35 @@ export default function PengeluaranBaruPage() {
 
       <div className="relative mb-6">
         <select
-          id="expenseType"
-          name="expenseType"
+          id="categoryType"
+          name="categoryType"
           className="w-full bg-white shadow-sm rounded-3xl py-3 px-4 text-sm font-medium text-gray-500 appearance-none flex items-center justify-center"
-          value={expenseType}
-          onChange={handleExpenseTypeChange}
+          value={categoryType}
+          onChange={handleCategoryChange}
           style={{ paddingLeft: "56px", paddingRight: "40px" }}
         >
-          <option>Pembelian Stok</option>
-          <option>Pembelian bahan baku</option>
-          <option>Biaya operasional</option>
-          <option>Gaji/Bonus Karyawan</option>
-          <option>Pemberian utang</option>
-          <option>Pembayaran Utang/Cicilan</option>
-          <option>Pengeluaran Di Luar Usaha</option>
-          <option>Pengeluaran lain-lain</option>
+          {transactionMode === "pemasukan" ? (
+            <>
+              <option>Penjualan Barang</option>
+              <option>Penambahan Modal</option>
+              <option>Pendapatan Di Luar Usaha</option>
+              <option>Pendapatan Lain-Lain</option>
+              <option>Pendapatan Jasa/Komisi</option>
+              <option>Terima Pinjaman</option>
+              <option>Penagihan Utang/Cicilan</option>
+            </>
+          ) : (
+            <>
+              <option>Pembelian Stok</option>
+              <option>Pembelian bahan baku</option>
+              <option>Biaya operasional</option>
+              <option>Gaji/Bonus Karyawan</option>
+              <option>Pemberian utang</option>
+              <option>Pembayaran Utang/Cicilan</option>
+              <option>Pengeluaran Di Luar Usaha</option>
+              <option>Pengeluaran lain-lain</option>
+            </>
+          )}
         </select>
         <div className="absolute left-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
           <div className="bg-gray-200 p-1.5 rounded-full">
@@ -300,7 +406,8 @@ export default function PengeluaranBaruPage() {
         </div>
       </div>
 
-      {expenseType === "Pembelian Stok" && (
+      {((transactionMode === "pemasukan" && categoryType === "Penjualan Barang") || 
+        (transactionMode === "pengeluaran" && categoryType === "Pembelian Stok")) && (
         <>
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-lg font-semibold">Barang</h2>
@@ -383,8 +490,8 @@ export default function PengeluaranBaruPage() {
                     <h3 className="font-semibold text-sm">
                       {item.product.nama}
                     </h3>
-                    <p className="font-medium text-sm text-red-700 mt-1">
-                      Rp {formatHarga(item.product.harga_modal)}
+                    <p className={`font-medium text-sm ${transactionMode === "pemasukan" ? "text-blue-700" : "text-red-700"} mt-1`}>
+                      Rp {formatHarga(transactionMode === "pemasukan" ? item.product.harga_jual : item.product.harga_modal)}
                     </p>
                   </div>
                   <div className="flex items-center">
@@ -406,10 +513,12 @@ export default function PengeluaranBaruPage() {
                       }
                       className="w-12 text-center font-medium mx-1 border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded"
                       min="1"
+                      max={transactionMode === "pemasukan" ? item.product.stok : undefined}
                     />
                     <button
                       onClick={() => handleQuantityChange(item.product.id, 1)}
-                      className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center hover:bg-blue-200"
+                      className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center hover:bg-blue-200 disabled:opacity-50"
+                      disabled={transactionMode === "pemasukan" && item.quantity >= item.product.stok}
                     >
                       +
                     </button>
@@ -423,21 +532,36 @@ export default function PengeluaranBaruPage() {
 
       <div className="bg-white rounded-xl p-4 space-y-3 shadow-sm mb-6">
         <div className="flex justify-between items-center">
-          <span className="text-gray-600">Total Pengeluaran</span>
+          <span className="text-gray-600">
+            Total {transactionMode === "pemasukan" ? "Pemasukan" : "Pengeluaran"}
+          </span>
           <div className="flex items-center border rounded px-2 focus-within:border-blue-500">
             <span className="text-gray-500 text-sm mr-1">Rp</span>
             <input
               type="text"
-              value={
-                manualTotalPengeluaran ||
-                formatHarga(calculatedTotalPengeluaran)
-              }
-              onChange={(e) => handleTotalPengeluaranChange(e.target.value)}
+              value={manualTotalAmount || formatHarga(calculatedTotalAmount)}
+              onChange={(e) => handleTotalAmountChange(e.target.value)}
               className="font-semibold text-right w-24 py-1 focus:outline-none"
-              placeholder={formatHarga(calculatedTotalPengeluaran)}
+              placeholder={formatHarga(calculatedTotalAmount)}
             />
           </div>
         </div>
+
+        {transactionMode === "pemasukan" && categoryType === "Penjualan Barang" && (
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-gray-500">Modal</span>
+            <div className="flex items-center border rounded px-2 focus-within:border-blue-500">
+              <span className="text-gray-500 text-sm mr-1">Rp</span>
+              <input
+                type="text"
+                value={manualTotalModal || formatHarga(calculatedTotalModal)}
+                onChange={(e) => handleTotalModalChange(e.target.value)}
+                className="text-gray-500 text-right w-24 py-1 focus:outline-none"
+                placeholder={formatHarga(calculatedTotalModal)}
+              />
+            </div>
+          </div>
+        )}
 
         <div className="flex justify-between items-center">
           <span className="text-gray-600">Status</span>
@@ -464,6 +588,18 @@ export default function PengeluaranBaruPage() {
             </button>
           </div>
         </div>
+
+        {transactionMode === "pemasukan" && categoryType === "Penjualan Barang" && (
+          <>
+            <hr className="my-2" />
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600 font-semibold">Keuntungan</span>
+              <span className="font-bold text-lg text-green-600">
+                Rp{formatHarga(keuntungan)}
+              </span>
+            </div>
+          </>
+        )}
       </div>
 
       {error && (
@@ -479,8 +615,9 @@ export default function PengeluaranBaruPage() {
         onClick={handleSave}
         disabled={
           isLoading ||
-          (expenseType === "Pembelian Stok" && selectedProducts.length === 0) ||
-          (expenseType !== "Pembelian Stok" && effectiveTotalPengeluaran <= 0)
+          ((transactionMode === "pemasukan" && categoryType === "Penjualan Barang" && selectedProducts.length === 0) ||
+           (transactionMode === "pengeluaran" && categoryType === "Pembelian Stok" && selectedProducts.length === 0)) ||
+          effectiveTotalAmount === 0
         }
         className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-[calc(100%-2rem)] max-w-[calc(theme(maxWidth.md)-2rem)] bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center z-20"
       >
@@ -513,12 +650,13 @@ export default function PengeluaranBaruPage() {
         )}
       </button>
 
-      {expenseType === "Pembelian Stok" && (
+      {((transactionMode === "pemasukan" && categoryType === "Penjualan Barang") || 
+        (transactionMode === "pengeluaran" && categoryType === "Pembelian Stok")) && (
         <ProductSelectorModal
           isOpen={isProductSelectorOpen}
           onClose={handleCloseProductSelector}
           onProductSelect={handleProductSelect}
-          isExpenseContext={true}
+          isExpenseContext={transactionMode === "pengeluaran"}
         />
       )}
     </div>
