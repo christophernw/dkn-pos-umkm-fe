@@ -64,36 +64,24 @@ const SemuaBarangPage: React.FC = () => {
     setErrors(prev => ({ ...prev, topSelling: null }));
 
     try {
-      if (false) {
-         const mockData: TopSellingProduct[] = [
-            { id: 1, name: 'Kue Cucur Bahagia', sold: 200, imageUrl: '/images/kue_cucur.jpg' },
-            { id: 2, name: 'Donat Senyum', sold: 170, imageUrl: '/images/donat.jpg' },
-            { id: 3, name: 'Kue Apem', sold: 95, imageUrl: '/images/kue_apem.jpg' }
-         ];
-         await new Promise(resolve => setTimeout(resolve, 500));
-         setTopSellingProducts(mockData);
+      const response = await fetch(`${config.apiUrl}/produk/top-selling/${selectedYear}/${selectedMonth}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          setTopSellingProducts([]);
+        } else {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
       } else {
-         const response = await fetch(`${config.apiUrl}/produk/top-selling/${selectedYear}/${selectedMonth}`, {
-           method: 'GET',
-           headers: {
-             'Authorization': `Bearer ${accessToken}`,
-             'Content-Type': 'application/json'
-           }
-         });
-
-         if (!response.ok) {
-           if (response.status === 404) {
-                setTopSellingProducts([]);
-           } else {
-               throw new Error(`HTTP error! Status: ${response.status}`);
-           }
-         } else {
-             const data: TopSellingProduct[] = await response.json();
-             setTopSellingProducts(data);
-         }
+        const data: TopSellingProduct[] = await response.json();
+        setTopSellingProducts(data);
       }
-
-
     } catch (error) {
       console.error('Error fetching top selling products:', error);
       setErrors(prev => ({ ...prev, topSelling: 'Failed to load top selling products' }));
@@ -102,7 +90,6 @@ const SemuaBarangPage: React.FC = () => {
       setLoading(prev => ({ ...prev, topSelling: false }));
     }
   };
-
 
   const fetchPopularProducts = async () => {
     setLoading(prev => ({ ...prev, popular: true }));
