@@ -37,6 +37,7 @@ const config: Config = {
 };
   
   
-const envConfig = config[process.env.NODE_ENV || "development"];
+const envKey = (process.env.NEXT_PUBLIC_ENV || "development") as keyof Config;
+const envConfig = config[envKey];
 
 export default envConfig;
