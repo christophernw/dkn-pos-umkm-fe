@@ -182,7 +182,10 @@ const SemuaBarangPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 pb-20">
-      <HeaderProduk />
+
+      <div className="pt-16">
+        <HeaderProduk />
+      </div>
 
       <main className="container mx-auto px-4 py-6 space-y-6">
         

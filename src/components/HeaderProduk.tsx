@@ -49,12 +49,9 @@ const HeaderProduk = () => {
   // Close dropdown if clicking outside (optional but good UX)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      // Check if the click is outside the dropdown toggle button and the dropdown itself
-      // You might need to add refs to the button and dropdown div for more precise detection
       if (isDropdownOpen) {
-         // Basic check, improve with refs if needed
          const targetElement = event.target as Element;
-         if (!targetElement.closest('.relative')) { // Assuming dropdown button is inside the 'relative' div
+         if (!targetElement.closest('.relative')) {
             setIsDropdownOpen(false);
          }
       }
@@ -68,16 +65,13 @@ const HeaderProduk = () => {
 
 
   return (
-    // --- MODIFICATIONS START ---
-    <div className="fixed top-0 left-0 w-full bg-white z-50 shadow-md py-3">
-    {/* Removed mt-8 mb-5, Added fixed, top-0, left-0, w-full, z-50, shadow-md, py-3 */}
-    {/* --- MODIFICATIONS END --- */}
-      <header className="flex flex-row justify-center"> {/* Removed my-5 */}
-        <div className="container mx-auto flex items-center justify-between px-4"> {/* Added px-4 for padding */}
+    <div className="fixed top-0 left-0 right-0 mx-auto bg-white z-50 shadow-md py-3 w-full sm:w-[420px]">
+      <header className="flex flex-row justify-center">
+        <div className="container mx-auto flex items-center justify-between px-4">
           <Link href="/" aria-label="back">
             <button
               type="button"
-              className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2 border border-gray-200" // Added border for visibility
+              className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2 border border-gray-200"
             >
               <svg
                 className="w-4 h-4 transform scale-x-[-1]"
@@ -96,7 +90,6 @@ const HeaderProduk = () => {
               </svg>
             </button>
           </Link>
-          {/* Links - consider adjusting spacing if needed */}
           <div className="flex items-center space-x-4 sm:space-x-6">
               <Link
                 href="/informasi"
@@ -112,10 +105,9 @@ const HeaderProduk = () => {
               </Link>
           </div>
           <div className="relative">
-             {/* This three-dots button seems unused, consider removing or implementing */}
             <button
               type="button"
-              className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center border border-gray-200" // Added border
+              className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center border border-gray-200"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -132,22 +124,19 @@ const HeaderProduk = () => {
         </div>
       </header>
 
-      {/* Only show search form on semuaBarang page */}
       {isSemuaBarangPage && (
-        // Added mt-4 for spacing between header links and search bar
         <form onSubmit={handleSearch} className="flex items-center max-w-md mx-auto mt-4 px-4">
-          {/* --- MODIFICATION: Added relative positioning to the form input container --- */}
           <div className="relative flex w-full items-center bg-white rounded-full shadow-sm border border-gray-300">
             <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
               <svg
-                className="w-4 h-4 text-gray-500" // Adjusted color
+                className="w-4 h-4 text-gray-500"
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 20 20"
               >
                 <path
-                  stroke="currentColor" // Use currentColor
+                  stroke="currentColor"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth="2"
@@ -160,22 +149,19 @@ const HeaderProduk = () => {
               type="search"
               name="search"
               id="simple-search"
-              // Adjusted styling for consistency
               className="bg-transparent border-none text-black rounded-full block w-full py-2.5 pl-10 pr-14 focus:ring-0 focus:outline-none text-sm"
               placeholder="Cari Produk..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              required={false} // Explicitly false if not required
+              required={false}
             />
-            {/* --- Dropdown Trigger Button --- */}
-            {/* Added relative positioning reference for dropdown */}
             <div className="absolute right-1.5 inset-y-0 flex items-center">
               <button
                 type="button"
                 className="inline-flex items-center justify-center w-9 h-9 text-white bg-blue-600 rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
                 onClick={toggleDropdown}
-                aria-haspopup="true" // Accessibility
-                aria-expanded={isDropdownOpen} // Accessibility
+                aria-haspopup="true"
+                aria-expanded={isDropdownOpen}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -203,12 +189,9 @@ const HeaderProduk = () => {
               </button>
             </div>
 
-            {/* --- Dropdown Menu --- */}
-            {/* Adjusted position, use top-full for direct attachment below */}
             {isDropdownOpen && (
               <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-20">
-                 {/* Added z-index just in case */}
-                 <ul className="py-1"> {/* Use list for semantic correctness */}
+                 <ul className="py-1">
                     <li>
                         <button
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
