@@ -1,9 +1,72 @@
 "use client";
 import { useState, ChangeEvent } from "react";
+import { ChevronDown, Check } from "lucide-react";
 import TextInput from "./components/textInput";
 import { useAuth } from "@/contexts/AuthContext";
 import config from "@/src/config";
 import { useModal } from "@/contexts/ModalContext";
+
+// Dropdown Options
+const unitOptions = ["Pcs", "Kg", "Botol", "Liter"];
+const categoryOptions = [
+  "Sembako",
+  "Perawatan Diri",
+  "Pakaian & Aksesori",
+  "Peralatan Rumah Tangga",
+  "Makanan & Minuman",
+  "Lainnya",
+];
+
+function Dropdown({
+  selected,
+  options,
+  label,
+  onSelect,
+}: {
+  selected: string;
+  options: string[];
+  label: string;
+  onSelect: (val: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative w-full">
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label}
+      </label>
+
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex justify-between items-center w-full rounded-md border border-gray-300 px-4 py-2 bg-white hover:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      >
+        {selected || `${label}`}
+        <ChevronDown className="w-4 h-4" />
+      </button>
+
+      {open && (
+        <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg">
+          {options.map((option) => (
+            <li
+              key={option}
+              onClick={() => {
+                onSelect(option);
+                setOpen(false);
+              }}
+              className={`flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-gray-100 ${
+                selected === option ? "bg-gray-100 font-semibold" : ""
+              }`}
+            >
+              {option}
+              {selected === option && <Check className="w-4 h-4" />}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 export default function AddProductPage() {
   const [productName, setProductName] = useState("");
@@ -11,26 +74,23 @@ export default function AddProductPage() {
   const [priceSell, setPriceSell] = useState("");
   const [priceCost, setPriceCost] = useState("");
   const [currentStock, setCurrentStock] = useState("");
-  const [unit, setUnit] = useState("Kg");
+  const [unit, setUnit] = useState("");
   const [previewImg, setPreviewImg] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const { accessToken } = useAuth();
   const [loading, setLoading] = useState(false);
   const { showModal } = useModal();
 
-  // All your existing handlers remain the same
-
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
     const file = e.target.files[0];
-
     const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
     const maxSizeMB = 3;
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
     if (!allowedTypes.includes(file.type)) {
       showModal(
-        "Format Tidak Didukung", 
+        "Format Tidak Didukung",
         "Silakan unggah PNG, JPG, atau JPEG.",
         "error"
       );
@@ -39,7 +99,7 @@ export default function AddProductPage() {
 
     if (file.size > maxSizeBytes) {
       showModal(
-        "File Terlalu Besar", 
+        "File Terlalu Besar",
         `Ukuran file terlalu besar! Maksimal ${maxSizeMB}MB.`,
         "error"
       );
@@ -47,7 +107,6 @@ export default function AddProductPage() {
     }
 
     setImageFile(file);
-
     const reader = new FileReader();
     reader.onload = () => {
       setPreviewImg(reader.result as string);
@@ -57,12 +116,10 @@ export default function AddProductPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (loading) return;
     setLoading(true);
 
     const formData = new FormData();
-
     const payload = {
       nama: productName,
       kategori: category,
@@ -73,10 +130,7 @@ export default function AddProductPage() {
     };
 
     formData.append("payload", JSON.stringify(payload));
-
-    if (imageFile) {
-      formData.append("foto", imageFile);
-    }
+    if (imageFile) formData.append("foto", imageFile);
 
     try {
       const response = await fetch(`${config.apiUrl}/produk/create`, {
@@ -88,29 +142,25 @@ export default function AddProductPage() {
       });
 
       if (response.status === 201) {
-        showModal(
-          "Berhasil", 
-          "Produk berhasil ditambahkan!",
-          "success",
-          {
-            label: "Lihat Semua Produk",
-            onClick: () => { window.location.href = "/semuaBarang"; }
-          }
-        );
+        showModal("Berhasil", "Produk berhasil ditambahkan!", "success", {
+          label: "Lihat Semua Produk",
+          onClick: () => {
+            window.location.href = "/semuaBarang";
+          },
+        });
       } else {
         const errorData = await response.json();
         console.error("Error creating product:", errorData);
         showModal(
-          "Gagal", 
+          "Gagal",
           `Gagal menambahkan produk: ${errorData.detail || "Unknown error"}`,
           "error"
         );
       }
     } catch (error) {
-      console.log(error);
       console.error("Network error:", error);
       showModal(
-        "Kesalahan Jaringan", 
+        "Kesalahan Jaringan",
         "Terjadi kesalahan jaringan. Silakan coba lagi.",
         "error"
       );
@@ -119,7 +169,6 @@ export default function AddProductPage() {
     }
   };
 
-  // Here's the return statement with the UI
   return (
     <div className="max-w-md mx-auto p-4">
       <header className="flex items-center mb-4">
@@ -151,7 +200,6 @@ export default function AddProductPage() {
         className="bg-white rounded-lg p-4 shadow-sm space-y-4"
         encType="multipart/form-data"
       >
-        {/* Placeholder/gambar */}
         <div className="flex justify-center">
           <label
             htmlFor="imageUpload"
@@ -192,7 +240,6 @@ export default function AddProductPage() {
           />
         </div>
 
-        {/* Form inputs */}
         <TextInput
           id="productName"
           label="Nama Produk"
@@ -201,12 +248,11 @@ export default function AddProductPage() {
           placeholder="Pie Jeruk"
         />
 
-        <TextInput
-          id="category"
-          label="Kategori"
-          value={category}
-          onChange={(value) => setCategory(value)}
-          placeholder="Makanan"
+        <Dropdown
+          selected={category}
+          options={categoryOptions}
+          label="Pilih Kategori"
+          onSelect={setCategory}
         />
 
         <TextInput
@@ -238,28 +284,13 @@ export default function AddProductPage() {
           type="number"
         />
 
-        {/* Pilih Satuan */}
-        <div className="w-1/3">
-          <label
-            htmlFor="unit"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Pilih Satuan
-          </label>
-          <select
-            id="unit"
-            value={unit}
-            onChange={(e) => setUnit(e.target.value)}
-            className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          >
-            <option value="Pcs">Pcs</option>
-            <option value="Kg">Kg</option>
-            <option value="Botol">Botol</option>
-            <option value="Liter">Liter</option>
-          </select>
-        </div>
+        <Dropdown
+          selected={unit}
+          options={unitOptions}
+          label="Pilih Satuan"
+          onSelect={setUnit}
+        />
 
-        {/* Tombol Submit */}
         <div className="pt-4">
           <button
             type="submit"

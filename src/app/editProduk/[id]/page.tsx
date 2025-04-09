@@ -4,16 +4,77 @@ import { useParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useModal } from "@/contexts/ModalContext";
 import config from "@/src/config";
+import { ChevronDown, Check } from "lucide-react";
 import TextInput from "../../tambahProduk/components/textInput";
 
+// Dropdown Options
+const unitOptions = ["Pcs", "Kg", "Botol", "Liter"];
+const categoryOptions = [
+  "Sembako",
+  "Perawatan Diri",
+  "Pakaian & Aksesori",
+  "Peralatan Rumah Tangga",
+  "Makanan & Minuman",
+  "Lainnya",
+];
+
 function formatHarga(value: string): string {
-  const digits = value.replace(/\D/g, ""); // Remove all non-numeric characters
-  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, "."); // Add thousands separators
+  const digits = value.replace(/\D/g, "");
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+function Dropdown({
+  selected,
+  options,
+  label,
+  onSelect,
+}: {
+  selected: string;
+  options: string[];
+  label: string;
+  onSelect: (val: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative w-full">
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label}
+      </label>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex justify-between items-center w-full rounded-md border border-gray-300 px-4 py-2 bg-white hover:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      >
+        {selected || `${label}`}
+        <ChevronDown className="w-4 h-4" />
+      </button>
+      {open && (
+        <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg">
+          {options.map((option) => (
+            <li
+              key={option}
+              onClick={() => {
+                onSelect(option);
+                setOpen(false);
+              }}
+              className={`flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-gray-100 ${
+                selected === option ? "bg-gray-100 font-semibold" : ""
+              }`}
+            >
+              {option}
+              {selected === option && <Check className="w-4 h-4" />}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 export default function EditProductPage() {
   const { id } = useParams();
   const { showModal } = useModal();
+  const { accessToken } = useAuth();
   const [productName, setProductName] = useState("");
   const [category, setCategory] = useState("");
   const [priceSell, setPriceSell] = useState("");
@@ -23,13 +84,10 @@ export default function EditProductPage() {
   const [previewImg, setPreviewImg] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
-  const { accessToken } = useAuth();
 
-  // Fetch product data when component mounts
   useEffect(() => {
     async function fetchProduct() {
       if (!accessToken || !id) return;
-
       try {
         const response = await fetch(`${config.apiUrl}/produk/${id}`, {
           headers: {
@@ -40,34 +98,21 @@ export default function EditProductPage() {
 
         if (response.ok) {
           const product = await response.json();
-
-          // Populate form with existing data
           setProductName(product.nama || "");
           setCategory(product.kategori || "");
           setPriceSell(formatHarga(product.harga_jual?.toString()) || "");
           setPriceCost(formatHarga(product.harga_modal?.toString()) || "");
           setCurrentStock(product.stok?.toString() || "");
           setUnit(product.satuan || "Kg");
-
-          // If product has an image, set the preview
           if (product.foto) {
             setPreviewImg(`${config.apiUrl}${product.foto.slice(4)}`);
           }
         } else {
-          showModal(
-            "Error",
-            "Gagal mengambil data produk",
-            "error"
-          );
-          console.error("Failed to fetch product");
+          showModal("Error", "Gagal mengambil data produk", "error");
         }
       } catch (error) {
-        showModal(
-          "Error",
-          "Terjadi kesalahan saat mengambil data produk",
-          "error"
-        );
-        console.error("Error fetching product:", error);
+        showModal("Error", "Terjadi kesalahan saat mengambil data", "error");
+        console.error(error);
       } finally {
         setLoading(false);
       }
@@ -86,53 +131,41 @@ export default function EditProductPage() {
 
     if (!allowedTypes.includes(file.type)) {
       showModal(
-        "Format Tidak Didukung", 
-        "Silakan unggah PNG, JPG, atau JPEG.",
+        "Format Tidak Didukung",
+        "Gunakan PNG, JPG, atau JPEG",
         "error"
       );
       return;
     }
 
     if (file.size > maxSizeBytes) {
-      showModal(
-        "File Terlalu Besar", 
-        `Ukuran file terlalu besar! Maksimal ${maxSizeMB}MB.`,
-        "error"
-      );
+      showModal("File Terlalu Besar", `Maksimal ${maxSizeMB}MB.`, "error");
       return;
     }
 
     setImageFile(file);
-
     const reader = new FileReader();
-    reader.onload = () => {
-      setPreviewImg(reader.result as string);
-    };
+    reader.onload = () => setPreviewImg(reader.result as string);
     reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+
     const formData = new FormData();
-  
-    // Build the payload dynamically, only including fields with values
     const payload: Record<string, any> = {};
     if (productName) payload.nama = productName;
     if (category) payload.kategori = category;
-    if (priceSell) payload.harga_jual = parseFloat(priceSell.replace(/\./g, ""));
-    if (priceCost) payload.harga_modal = parseFloat(priceCost.replace(/\./g, ""));
+    if (priceSell)
+      payload.harga_jual = parseFloat(priceSell.replace(/\./g, ""));
+    if (priceCost)
+      payload.harga_modal = parseFloat(priceCost.replace(/\./g, ""));
     if (currentStock) payload.stok = parseFloat(currentStock);
     if (unit) payload.satuan = unit;
-  
-    // Append the payload as a JSON string
+
     formData.append("payload", JSON.stringify(payload));
-  
-    // Append the image file if it exists
-    if (imageFile) {
-      formData.append("foto", imageFile);
-    }
-  
+    if (imageFile) formData.append("foto", imageFile);
+
     try {
       const response = await fetch(`${config.apiUrl}/produk/update/${id}`, {
         method: "POST",
@@ -141,33 +174,22 @@ export default function EditProductPage() {
           Authorization: `Bearer ${accessToken}`,
         },
       });
-  
+
       if (response.ok) {
-        showModal(
-          "Berhasil", 
-          "Produk berhasil diperbarui!",
-          "success",
-          {
-            label: "Lihat Semua Produk",
-            onClick: () => { window.location.href = "/semuaBarang"; }
-          }
-        );
+        showModal("Berhasil", "Produk berhasil diperbarui!", "success", {
+          label: "Lihat Semua Produk",
+          onClick: () => (window.location.href = "/semuaBarang"),
+        });
       } else {
         const errorData = await response.json();
-        console.error("Error updating product:", errorData);
         showModal(
-          "Gagal", 
+          "Gagal",
           `Gagal memperbarui produk: ${errorData.message || "Unknown error"}`,
           "error"
         );
       }
     } catch (error) {
-      console.error("Network error:", error);
-      showModal(
-        "Kesalahan Jaringan", 
-        "Terjadi kesalahan jaringan. Silakan coba lagi.",
-        "error"
-      );
+      showModal("Kesalahan Jaringan", "Silakan coba lagi.", "error");
     }
   };
 
@@ -182,13 +204,12 @@ export default function EditProductPage() {
   return (
     <div className="max-w-md mx-auto p-4">
       <header className="flex items-center mb-4">
-      <button
+        <button
           onClick={() => window.history.back()}
-          className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2"
+          className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 inline-flex items-center me-2"
         >
           <svg
             className="w-4 h-4 transform scale-x-[-1]"
-            aria-hidden="true"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 14 10"
@@ -210,7 +231,7 @@ export default function EditProductPage() {
         className="bg-white rounded-lg p-4 shadow-sm space-y-4"
         encType="multipart/form-data"
       >
-        {/* Placeholder/gambar */}
+        {/* Gambar */}
         <div className="flex justify-center">
           <label
             htmlFor="imageUpload"
@@ -255,16 +276,15 @@ export default function EditProductPage() {
           id="productName"
           label="Nama Produk"
           value={productName}
-          onChange={(value) => setProductName(value)}
+          onChange={setProductName}
           placeholder="Pie Jeruk"
         />
 
-        <TextInput
-          id="category"
+        <Dropdown
+          selected={category}
+          options={categoryOptions}
           label="Kategori"
-          value={category}
-          onChange={(value) => setCategory(value)}
-          placeholder="Makanan"
+          onSelect={setCategory}
         />
 
         <TextInput
@@ -281,40 +301,28 @@ export default function EditProductPage() {
           id="priceCost"
           label="Harga Modal"
           value={priceCost}
-          onChange={(_, raw) => setPriceCost(raw)}
+          onChange={() => {}}
           placeholder="9.000"
           type="number"
           currency
+          disabled
         />
 
         <TextInput
           id="currentStock"
           label="Stok"
           value={currentStock}
-          onChange={(value) => setCurrentStock(value)}
+          onChange={setCurrentStock}
           placeholder="450"
           type="number"
         />
 
-        <div className="w-1/3">
-          <label
-            htmlFor="unit"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Pilih Satuan
-          </label>
-          <select
-            id="unit"
-            value={unit}
-            onChange={(e) => setUnit(e.target.value)}
-            className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          >
-            <option value="Pcs">Pcs</option>
-            <option value="Kg">Kg</option>
-            <option value="Botol">Botol</option>
-            <option value="Liter">Liter</option>
-          </select>
-        </div>
+        <Dropdown
+          selected={unit}
+          options={unitOptions}
+          label="Pilih Satuan"
+          onSelect={setUnit}
+        />
 
         <div className="pt-4">
           <button
