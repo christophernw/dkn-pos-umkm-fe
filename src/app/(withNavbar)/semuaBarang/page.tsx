@@ -16,15 +16,11 @@ const SemuaBarang = () => {
       <Suspense fallback={<div>Loading...</div>}>
         <HeaderProduk />
       </Suspense>
-      {/* Display username */}
-      {user && (
-        <div className="bg-blue-100 p-4 m-4 rounded-md">
-          <p className="text-blue-800 font-medium">Welcome, {user.name}!</p>
-        </div>
-      )}
+      <div className="pt-32">
       <Suspense fallback={<div>Loading...</div>}>
         <ProductCard />
       </Suspense>
+      </div>
       
       {/* Updated button to match Transaksi page styling */}
       <button
