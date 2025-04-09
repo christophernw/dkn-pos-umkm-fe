@@ -1,7 +1,13 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  /* config options here */
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  images: {
+      domains: [
+          "lancar.s3.amazonaws.com",
+          "localhost",
+          "103.177.95.190",
+          "placehold.co"
+      ],
+  },
 };
 
 export default nextConfig;
