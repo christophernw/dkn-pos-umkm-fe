@@ -303,6 +303,8 @@ export default function ProductCard() {
         </section>
       )}
 
+      <div className="pb-16"></div>
+
       {/* Stock Update Modal */}
       {isModalOpen && selectedProduct && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
