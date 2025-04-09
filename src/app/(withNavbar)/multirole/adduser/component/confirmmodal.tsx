@@ -24,7 +24,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         }}
       >
         <div role="dialog">
-          <h2 className="text-base font-semibold text-center">
+          <h2 className="text-base font-semibold text-center mb-4">
             Ringkasan Pengguna Baru
           </h2>
 
