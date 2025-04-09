@@ -250,29 +250,31 @@ const SemuaBarangPage: React.FC = () => {
         <section>
           <h2 className="text-base font-semibold text-gray-800 mb-3 px-1">Produk Paling Laku</h2>
           {loading.popular ? (
-            <div className="flex justify-center p-4 bg-white rounded-lg shadow">
+            <div className="flex justify-center p-4 bg-white rounded-xl shadow">
               <p className="text-gray-500">Loading...</p>
             </div>
           ) : errors.popular ? (
-            <div className="flex justify-center p-4 bg-white rounded-lg shadow">
+            <div className="flex justify-center p-4 bg-white rounded-xl shadow">
               <p className="text-red-500">{errors.popular}</p>
             </div>
           ) : popularProducts.length === 0 ? (
-            <div className="flex justify-center p-4 bg-white rounded-lg shadow">
+            <div className="flex justify-center p-4 bg-white rounded-xl shadow">
               <p className="text-gray-500">Tidak ada produk populer</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4">
               {popularProducts.map((produk) => (
-                <div key={produk.id} className="bg-white rounded-lg shadow overflow-hidden">
-                  <div className="relative w-full h-28">
-                    <Image
-                      src={produk.imageUrl ? `${config.apiUrl}${produk.imageUrl.slice(4)}` : `/images/placeholder.svg`}
-                      alt={produk.name}
-                      fill
-                      style={{ objectFit: 'cover' }}
-                      sizes="(max-width: 768px) 50vw, 200px"
-                    />
+                <div key={produk.id} className="bg-white rounded-xl shadow overflow-hidden">
+                  <div className="relative w-full h-28 p-2">
+                    <div className="relative w-full h-full overflow-hidden rounded-xl">
+                      <Image
+                        src={produk.imageUrl ? `${config.apiUrl}${produk.imageUrl.slice(4)}` : `/images/placeholder.svg`}
+                        alt={produk.name}
+                        fill
+                        style={{ objectFit: 'cover' }}
+                        sizes="(max-width: 768px) 50vw, 200px"
+                      />
+                    </div>
                   </div>
                   <div className="p-3">
                     <h3 className="text-sm font-medium text-gray-800 truncate mb-1">{produk.name}</h3>
@@ -280,7 +282,7 @@ const SemuaBarangPage: React.FC = () => {
                       <span>Terjual</span>
                       <span className="font-medium text-gray-700">{produk.sold}</span>
                     </div>
-                    <button className="w-full bg-blue-600 text-white text-xs font-medium py-1.5 px-3 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                    <button className="w-full bg-blue-600 text-white text-xs font-medium py-1.5 px-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
                       Perbarui Stok
                     </button>
                   </div>
@@ -294,36 +296,38 @@ const SemuaBarangPage: React.FC = () => {
         <section>
           <h2 className="text-base font-semibold text-gray-800 mb-3 px-1">Produk Stok Rendah</h2>
           {loading.lowStock ? (
-            <div className="flex justify-center p-4 bg-white rounded-lg shadow">
+            <div className="flex justify-center p-4 bg-white rounded-xl shadow">
               <p className="text-gray-500">Loading...</p>
             </div>
           ) : errors.lowStock ? (
-            <div className="flex justify-center p-4 bg-white rounded-lg shadow">
+            <div className="flex justify-center p-4 bg-white rounded-xl shadow">
               <p className="text-red-500">{errors.lowStock}</p>
             </div>
           ) : lowStockProducts.length === 0 ? (
-            <div className="flex justify-center p-4 bg-white rounded-lg shadow">
+            <div className="flex justify-center p-4 bg-white rounded-xl shadow">
               <p className="text-gray-500">Tidak ada produk dengan stok rendah</p>
             </div>
           ) : (
             <div className="space-y-3">
               {lowStockProducts.map((produk) => (
-                <div key={produk.id} className="bg-white p-3 rounded-lg shadow flex items-center space-x-3">
-                  <div className="flex-shrink-0">
-                    <Image
-                      src={produk.imageUrl ? `${config.apiUrl}${produk.imageUrl.slice(4)}` : `/images/placeholder.svg`}
-                      alt={produk.name}
-                      width={50}
-                      height={50}
-                      className="rounded object-cover"
-                    />
+                <div key={produk.id} className="bg-white p-3 rounded-xl shadow flex items-center space-x-3">
+                  <div className="flex-shrink-0 p-1">
+                    <div className="overflow-hidden rounded-xl">
+                      <Image
+                        src={produk.imageUrl ? `${config.apiUrl}${produk.imageUrl.slice(4)}` : `/images/placeholder.svg`}
+                        alt={produk.name}
+                        width={50}
+                        height={50}
+                        className="object-cover"
+                      />
+                    </div>
                   </div>
                   <div className="flex-grow min-w-0">
                     <h3 className="text-sm font-medium text-gray-800 truncate">{produk.name}</h3>
                     <p className="text-xs text-red-600">Stok Rendah: {produk.stock}</p>
                   </div>
                   <div className="flex-shrink-0">
-                    <button className="bg-blue-600 text-white text-xs font-medium py-1.5 px-3 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 whitespace-nowrap">
+                    <button className="bg-blue-600 text-white text-xs font-medium py-1.5 px-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 whitespace-nowrap">
                       Perbarui Stok
                     </button>
                   </div>
