@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useModal } from "@/contexts/ModalContext"; // Import useModal hook
 import config from "../config";
 
 interface ProductCardProps {
@@ -37,6 +38,7 @@ export default function ProductCard() {
   const [isLoading, setIsLoading] = useState(false);
   const sortParam = searchParams.get("sort");
   const { accessToken } = useAuth();
+  const { showModal } = useModal(); // Add showModal from context
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] =
@@ -113,27 +115,56 @@ export default function ProductCard() {
   };
 
   async function handleDelete(id: number) {
-    const isConfirmed = window.confirm(
-      "Are you sure you want to delete this product?"
-    );
+    // Replace window.confirm with showModal
+    showModal(
+      "Konfirmasi",
+      "Apakah Anda yakin ingin menghapus produk ini?",
+      "info",
+      {
+        label: "Hapus",
+        onClick: async () => {
+          try {
+            const response = await fetch(`${config.apiUrl}/produk/delete/${id}`, {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+              method: "DELETE",
+            });
 
-    if (!isConfirmed) return;
-    try {
-      const response = await fetch(`${config.apiUrl}/produk/delete/${id}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
+            if (response.ok) {
+              setData((prevData) => prevData.filter((product) => product.id !== id));
+              
+              // Show success message
+              showModal(
+                "Berhasil",
+                "Produk berhasil dihapus!",
+                "success"
+              );
+            } else {
+              // Show error message
+              showModal(
+                "Gagal",
+                "Gagal menghapus produk. Silakan coba lagi.",
+                "error"
+              );
+              console.error("Failed deleting produk");
+            }
+          } catch (error) {
+            // Show error message
+            showModal(
+              "Kesalahan",
+              "Terjadi kesalahan saat menghapus produk. Silakan coba lagi.",
+              "error"
+            );
+            console.error("Error deleting produk:", error);
+          }
         },
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        setData((prevData) => prevData.filter((product) => product.id !== id));
-      } else {
-        console.error("Failed deleting produk");
+      },
+      {
+        label: "Batal",
+        onClick: () => {},
       }
-    } catch (error) {
-      console.error("Error deleting produk:", error);
-    }
+    );
   }
 
   const handleOpenStockModal = (product: ProductCardProps) => {

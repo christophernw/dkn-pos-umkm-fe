@@ -2,8 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useModal } from "@/contexts/ModalContext"; // Import useModal hook
 import config from "@/src/config";
-import { Trash } from "lucide-react"; // Import trash icon
+import { Trash } from "lucide-react";
 
 interface User {
   id: number;
@@ -13,18 +14,18 @@ interface User {
 }
 
 const UserList = () => {
-  const { user, accessToken } = useAuth(); // Access the accessToken from context
-  const [users, setUsers] = useState<User[]>([]); // State to hold fetched users
-  const [loading, setLoading] = useState<boolean>(true); // Loading state
-  const [error, setError] = useState<string | null>(null); // Error state
-  const [isDeleting, setIsDeleting] = useState<boolean>(false); // Deletion state
+  const { user, accessToken } = useAuth();
+  const { showModal } = useModal(); // Add showModal from context
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   const fetchUsers = async () => {
     try {
-      setLoading(true); // Set loading to true before fetching
-      setError(null); // Reset error state
+      setLoading(true);
+      setError(null);
 
-      // Check for token after loading has started
       if(!accessToken) {
         throw new Error("You are not authenticated");
       }
@@ -55,36 +56,57 @@ const UserList = () => {
   }, [accessToken]); 
 
   const handleDeleteUser = async (userId: number) => {
-    if (!confirm("Are you sure you want to remove this user?")) {
-      return;
-    }
+    showModal(
+      "Konfirmasi",
+      "Apakah Anda yakin ingin menghapus pengguna ini?",
+      "info",
+      {
+        label: "Hapus",
+        onClick: async () => {
+          try {
+            setIsDeleting(true);
+            setError(null);
 
-    try {
-      setIsDeleting(true);
-      setError(null);
+            const response = await fetch(`${config.apiUrl}/auth/remove-user-from-toko`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${accessToken}`,
+              },
+              body: JSON.stringify({ user_id: userId }),
+            });
 
-      const response = await fetch(`${config.apiUrl}/auth/remove-user-from-toko`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`,
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || "Failed to remove user");
+            }
+
+            // Refresh the user list after successful deletion
+            await fetchUsers();
+            
+            // Show success message
+            showModal(
+              "Berhasil",
+              "Pengguna berhasil dihapus!",
+              "success"
+            );
+          } catch (error: any) {
+            setError(error.message);
+            showModal(
+              "Gagal",
+              `Gagal menghapus pengguna: ${error.message}`,
+              "error"
+            );
+          } finally {
+            setIsDeleting(false);
+          }
         },
-        body: JSON.stringify({ user_id: userId }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to remove user");
+      },
+      {
+        label: "Batal",
+        onClick: () => {},
       }
-
-      // Refresh the user list after successful deletion
-      await fetchUsers();
-      
-    } catch (error: any) {
-      setError(error.message);
-    } finally {
-      setIsDeleting(false);
-    }
+    );
   };
 
   return (
