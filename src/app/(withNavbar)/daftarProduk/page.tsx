@@ -267,7 +267,7 @@ const SemuaBarangPage: React.FC = () => {
                 <div key={produk.id} className="bg-white rounded-lg shadow overflow-hidden">
                   <div className="relative w-full h-28">
                     <Image
-                      src={produk.imageUrl || `https://placehold.co/300x200/EEE/31343C?text=${encodeURIComponent(produk.name)}`}
+                      src={produk.imageUrl ? `${config.apiUrl}${produk.imageUrl.slice(4)}` : `/images/placeholder.svg`}
                       alt={produk.name}
                       fill
                       style={{ objectFit: 'cover' }}
@@ -311,7 +311,7 @@ const SemuaBarangPage: React.FC = () => {
                 <div key={produk.id} className="bg-white p-3 rounded-lg shadow flex items-center space-x-3">
                   <div className="flex-shrink-0">
                     <Image
-                      src={produk.imageUrl || `https://placehold.co/100x100/EEE/31343C?text=${encodeURIComponent(produk.name)}`}
+                      src={produk.imageUrl ? `${config.apiUrl}${produk.imageUrl.slice(4)}` : `/images/placeholder.svg`}
                       alt={produk.name}
                       width={50}
                       height={50}
