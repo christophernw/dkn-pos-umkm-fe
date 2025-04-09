@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation'; // Add this import
 import HeaderProduk from '@/src/components/HeaderProduk';
 import config from '@/src/config';
 import { useAuth } from '@/contexts/AuthContext';
@@ -53,6 +54,7 @@ const ProgressBar = ({ value, max, index }: { value: number; max: number; index:
 
 const SemuaBarangPage: React.FC = () => {
   const { accessToken } = useAuth();
+  const router = useRouter(); // Add router
   
   // State for date selection
   const currentDate = new Date();
@@ -191,6 +193,11 @@ const SemuaBarangPage: React.FC = () => {
     return monthNames[monthNumber - 1];
   };
 
+  // Function to handle edit product navigation
+  const navigateToEditProduct = (productId: number) => {
+    router.push(`/editProduk/${productId}`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 pb-20">
       <HeaderProduk />
@@ -286,8 +293,11 @@ const SemuaBarangPage: React.FC = () => {
                       <span>Terjual</span>
                       <span className="font-medium text-gray-700">{produk.sold}</span>
                     </div>
-                    <button className="w-full bg-blue-600 text-white text-xs font-medium py-1.5 px-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-                      Perbarui Stok
+                    <button 
+                      className="w-full bg-blue-600 text-white text-xs font-medium py-1.5 px-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                      onClick={() => navigateToEditProduct(produk.id)}
+                    >
+                      Perbarui Produk
                     </button>
                   </div>
                 </div>
@@ -331,8 +341,11 @@ const SemuaBarangPage: React.FC = () => {
                     <p className="text-xs text-red-600">Stok Rendah: {produk.stock}</p>
                   </div>
                   <div className="flex-shrink-0">
-                    <button className="bg-blue-600 text-white text-xs font-medium py-1.5 px-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 whitespace-nowrap">
-                      Perbarui Stok
+                    <button 
+                      className="bg-blue-600 text-white text-xs font-medium py-1.5 px-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 whitespace-nowrap"
+                      onClick={() => navigateToEditProduct(produk.id)}
+                    >
+                      Perbarui Produk
                     </button>
                   </div>
                 </div>
