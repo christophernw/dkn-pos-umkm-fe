@@ -3,6 +3,7 @@ import { useState, ChangeEvent } from "react";
 import TextInput from "./components/textInput";
 import { useAuth } from "@/contexts/AuthContext";
 import config from "@/src/config";
+import { useModal } from "@/contexts/ModalContext";
 
 export default function AddProductPage() {
   const [productName, setProductName] = useState("");
@@ -15,6 +16,9 @@ export default function AddProductPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const { accessToken } = useAuth();
   const [loading, setLoading] = useState(false);
+  const { showModal } = useModal();
+
+  // All your existing handlers remain the same
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
@@ -25,12 +29,20 @@ export default function AddProductPage() {
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
     if (!allowedTypes.includes(file.type)) {
-      alert("Format file tidak didukung! Silakan unggah PNG, JPG, atau JPEG.");
+      showModal(
+        "Format Tidak Didukung", 
+        "Silakan unggah PNG, JPG, atau JPEG.",
+        "error"
+      );
       return;
     }
 
     if (file.size > maxSizeBytes) {
-      alert(`Ukuran file terlalu besar! Maksimal ${maxSizeMB}MB.`);
+      showModal(
+        "File Terlalu Besar", 
+        `Ukuran file terlalu besar! Maksimal ${maxSizeMB}MB.`,
+        "error"
+      );
       return;
     }
 
@@ -76,24 +88,38 @@ export default function AddProductPage() {
       });
 
       if (response.status === 201) {
-        alert("Produk berhasil ditambahkan!");
-        window.location.href = "/semuaBarang";
+        showModal(
+          "Berhasil", 
+          "Produk berhasil ditambahkan!",
+          "success",
+          {
+            label: "Lihat Semua Produk",
+            onClick: () => { window.location.href = "/semuaBarang"; }
+          }
+        );
       } else {
         const errorData = await response.json();
         console.error("Error creating product:", errorData);
-        alert(
-          `Gagal menambahkan produk: ${errorData.detail || "Unknown error"}`
+        showModal(
+          "Gagal", 
+          `Gagal menambahkan produk: ${errorData.detail || "Unknown error"}`,
+          "error"
         );
       }
     } catch (error) {
       console.log(error);
       console.error("Network error:", error);
-      alert("Terjadi kesalahan jaringan. Silakan coba lagi.");
+      showModal(
+        "Kesalahan Jaringan", 
+        "Terjadi kesalahan jaringan. Silakan coba lagi.",
+        "error"
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  // Here's the return statement with the UI
   return (
     <div className="max-w-md mx-auto p-4">
       <header className="flex items-center mb-4">
@@ -152,7 +178,7 @@ export default function AddProductPage() {
           />
         </div>
 
-        {/* Rest of the form remains the same */}
+        {/* Form inputs */}
         <TextInput
           id="productName"
           label="Nama Produk"
@@ -160,8 +186,6 @@ export default function AddProductPage() {
           onChange={(value) => setProductName(value)}
           placeholder="Pie Jeruk"
         />
-
-        {/* Other fields remain the same... */}
 
         <TextInput
           id="category"

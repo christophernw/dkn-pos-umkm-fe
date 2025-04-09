@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import Provider from "./Provider";
 import { options } from "./lib/authoptions";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ModalProvider } from "@/contexts/ModalContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,9 +38,11 @@ export default async function RootLayout({
       >
         <Provider session={session}>
           <AuthProvider>
-            <div className="w-full sm:w-[420px] min-h-screen bg-[#EDF1F9]">
-              <div className="h-full">{children}</div>
-            </div>
+            <ModalProvider>
+              <div className="w-full sm:w-[420px] min-h-screen bg-[#EDF1F9]">
+                <div className="h-full">{children}</div>
+              </div>
+            </ModalProvider>
           </AuthProvider>
         </Provider>
       </body>
