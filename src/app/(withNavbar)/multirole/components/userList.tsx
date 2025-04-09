@@ -10,7 +10,7 @@ interface User {
   id: number;
   email: string;
   name: string;
-  role: "Pemilik" | "Administrator" | "Karyawan";
+  role: "Pemilik" | "Pengelola" | "Karyawan";
 }
 
 const UserList = () => {
@@ -26,7 +26,7 @@ const UserList = () => {
       setLoading(true);
       setError(null);
 
-      if(!accessToken) {
+      if (!accessToken) {
         throw new Error("You are not authenticated");
       }
 
@@ -34,7 +34,7 @@ const UserList = () => {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
 
@@ -43,17 +43,17 @@ const UserList = () => {
       }
 
       const data = await response.json();
-      setUsers(data); 
+      setUsers(data);
     } catch (error: any) {
-      setError(error.message); 
+      setError(error.message);
     } finally {
-      setLoading(false); 
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchUsers();
-  }, [accessToken]); 
+  }, [accessToken]);
 
   const handleDeleteUser = async (userId: number) => {
     showModal(
@@ -67,14 +67,17 @@ const UserList = () => {
             setIsDeleting(true);
             setError(null);
 
-            const response = await fetch(`${config.apiUrl}/auth/remove-user-from-toko`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${accessToken}`,
-              },
-              body: JSON.stringify({ user_id: userId }),
-            });
+            const response = await fetch(
+              `${config.apiUrl}/auth/remove-user-from-toko`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${accessToken}`,
+                },
+                body: JSON.stringify({ user_id: userId }),
+              }
+            );
 
             if (!response.ok) {
               const errorData = await response.json();
@@ -83,13 +86,9 @@ const UserList = () => {
 
             // Refresh the user list after successful deletion
             await fetchUsers();
-            
+
             // Show success message
-            showModal(
-              "Berhasil",
-              "Pengguna berhasil dihapus!",
-              "success"
-            );
+            showModal("Berhasil", "Pengguna berhasil dihapus!", "success");
           } catch (error: any) {
             setError(error.message);
             showModal(
@@ -113,47 +112,61 @@ const UserList = () => {
 
   return (
     <div className="bg-white p-4 rounded-2xl shadow-md">
-      <h2 className="text-lg font-semibold pb-3 border-b">Informasi Pengguna</h2>
+      <h2 className="text-lg font-semibold pb-3 border-b">
+        Informasi Pengguna
+      </h2>
       <div>
         {loading ? (
           <p className="py-3 text-gray-500">Loading...</p>
         ) : error ? (
-          <p className="text-red-500">{error}</p> 
+          <p className="text-red-500">{error}</p>
         ) : (
           <div>
             {users.length === 0 ? (
-              <p>No users found.</p> 
+              <p>No users found.</p>
             ) : (
               <ul>
                 {users.map((userItem) => (
-                  <li key={userItem.id} className="flex items-center justify-between pt-3 pb-3 border-b border-gray-100">
+                  <li
+                    key={userItem.id}
+                    className="flex items-center justify-between pt-3 pb-3 border-b border-gray-100"
+                  >
                     <div>
                       <p className="font-medium">{userItem.name}</p>
-                      <p className="text-sm text-gray-500 font-extralight">{userItem.email}</p>
+                      <p className="text-sm text-gray-500 font-extralight">
+                        {userItem.email}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2">
                       <span
                         className="text-xs px-3 py-1 rounded-full"
                         style={{
-                          backgroundColor: 
-                            userItem.role === "Pemilik" ? "#4CAF50" : 
-                            userItem.role === "Administrator" ? "#FFC107" : 
-                            "#3B82F6",
-                          color: userItem.role === "Administrator" ? "#000" : "#fff",
+                          backgroundColor:
+                            userItem.role === "Pemilik"
+                              ? "#4CAF50"
+                              : userItem.role === "Pengelola"
+                              ? "#FFC107"
+                              : "#3B82F6",
+                          color:
+                            userItem.role === "Pengelola" ? "#000" : "#fff",
                         }}
-                      >{userItem.role}</span>
-                      
+                      >
+                        {userItem.role}
+                      </span>
+
                       {/* Show delete button only if current user is Pemilik and not trying to delete themselves */}
-                      {user && user.role === "Pemilik" && user.id !== userItem.id && (
-                        <button
-                          onClick={() => handleDeleteUser(userItem.id)}
-                          disabled={isDeleting}
-                          className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
-                          title="Remove user"
-                        >
-                          <Trash size={16} />
-                        </button>
-                      )}
+                      {user &&
+                        user.role === "Pemilik" &&
+                        user.id !== userItem.id && (
+                          <button
+                            onClick={() => handleDeleteUser(userItem.id)}
+                            disabled={isDeleting}
+                            className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
+                            title="Remove user"
+                          >
+                            <Trash size={16} />
+                          </button>
+                        )}
                     </div>
                   </li>
                 ))}
