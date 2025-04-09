@@ -27,10 +27,13 @@ export default function TextInput({
   placeholder = "",
   type = "text",
   currency = false,
+  disabled = false,
 }: Readonly<TextInputProps>) {
   const [inputValue, setInputValue] = useState(value);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (disabled) return; // Prevent changes if the field is disabled
+
     let newValue = e.target.value;
 
     if (type === "number" || currency) {
@@ -47,6 +50,8 @@ export default function TextInput({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (disabled) return; // Prevent key presses if the field is disabled
+
     // Prevent invalid characters (e.g., letters, special characters)
     if (type === "number" || currency) {
       const invalidKeys = ["e", "E", "+", "-", "."];
@@ -74,7 +79,10 @@ export default function TextInput({
             placeholder={placeholder}
             onChange={handleChange}
             onKeyDown={handleKeyDown} // Prevent invalid key presses
-            className="mt-1 block w-full rounded border-gray-300 shadow-sm pl-10 focus:border-blue-500 focus:ring-blue-500"
+            disabled={disabled} // Apply the disabled attribute
+            className={`mt-1 block w-full rounded border-gray-300 shadow-sm pl-10 focus:border-blue-500 focus:ring-blue-500 ${
+              disabled ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""
+            }`}
           />
         </div>
       ) : (
@@ -86,7 +94,10 @@ export default function TextInput({
           placeholder={placeholder}
           onChange={handleChange}
           onKeyDown={handleKeyDown} // Prevent invalid key presses
-          className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          disabled={disabled} // Apply the disabled attribute
+          className={`mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+            disabled ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""
+          }`}
         />
       )}
     </div>
