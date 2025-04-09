@@ -58,19 +58,24 @@ export default function AddUserPage() {
       console.log("Response from server:", result);
       if (response.ok && result.message === "Invitation sent") {
         const token = result.token!;
-        const inviteLink = `http://localhost:3000/auth/invite?token=${encodeURIComponent(token)}`;
-
-        await sendEmail({
-          to: email,
-          inviteLink,
-          senderName: user?.name || "LANCAR Admin",
-          senderEmail: user?.email || "noreply@lancar.com",
-        });
-
-        setMessage("Pengguna berhasil ditambahkan dan undangan dikirim!");
-        setName("");
-        setRole("Karyawan");
-        setEmail("");
+        const inviteLink = `${config.hostname}/auth/invite?token=${encodeURIComponent(token)}`;
+  
+        try {
+          await sendEmail({ 
+            to: email, 
+            inviteLink,
+            senderName: user?.name || 'LANCAR Admin', 
+            senderEmail: user?.email || 'noreply@lancar.com'
+          });
+  
+          setMessage("Pengguna berhasil ditambahkan dan undangan dikirim!");
+          setName("");
+          setRole("Karyawan");
+          setEmail("");
+        } catch (error) {
+          console.error("Gagal mengirim email:", error);
+          setMessage("Terjadi kesalahan saat mengirim undangan.");
+        }
       } else {
         setMessage(result.error || "Terjadi kesalahan.");
       }
