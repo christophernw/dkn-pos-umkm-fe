@@ -125,9 +125,23 @@ export default function AddProductPage() {
       <header className="flex items-center mb-4">
         <button
           onClick={() => window.history.back()}
-          className="mr-2 text-gray-600 hover:text-gray-800"
+          className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2"
         >
-          ←
+          <svg
+            className="w-4 h-4 transform scale-x-[-1]"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 14 10"
+          >
+            <path
+              stroke="black"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M1 5h12m0 0L9 1m4 4L9 9"
+            />
+          </svg>
         </button>
         <h1 className="text-xl font-semibold">Tambah Produk Baru</h1>
       </header>

@@ -218,19 +218,23 @@ export default function PengeluaranBaruPage() {
   return (
     <div className="p-4 max-w-md mx-auto bg-gray-50 min-h-screen pb-24">
       <div className="flex items-center mb-4">
-        <button onClick={() => router.back()} className="mr-4 p-1">
+      <button
+          onClick={() => window.history.back()}
+          className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2"
+        >
           <svg
+            className="w-4 h-4 transform scale-x-[-1]"
+            aria-hidden="true"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-6 h-6"
+            viewBox="0 0 14 10"
           >
             <path
+              stroke="black"
               strokeLinecap="round"
               strokeLinejoin="round"
-              d="M15.75 19.5 8.25 12l7.5-7.5"
+              strokeWidth="2"
+              d="M1 5h12m0 0L9 1m4 4L9 9"
             />
           </svg>
         </button>
