@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AiOutlineArrowLeft } from "react-icons/ai";
-import DOMPurify from "dompurify";
-import { sendEmail } from "@/src/app/lib/sendInvitationEmail";
 import { useAuth } from "@/contexts/AuthContext";
+import { sendEmail } from "@/src/app/lib/sendInvitationEmail";
 import { sanitizeInput, validateInputs } from "./utils/inputValidation";
 import { sendInvitation } from "../adduser/services/invitationService";
 import { InvitationPayload, InvitationResponse } from "./types/types";
+import { Modal } from '@/src/components/elements/modal/Modal'
 import config from "@/src/config";
+import { ConfirmModal } from "./component/confirmmodal";
 import Dropdown from "@/src/components/Dropdown";
 
 // Role options for dropdown
@@ -17,14 +18,15 @@ const roleOptions = ["Pengelola", "Karyawan"];
 
 export default function AddUserPage() {
   const router = useRouter();
-  const handleBack = () => router.back();
   const { accessToken, user } = useAuth();
+  const handleBack = () => router.back();
 
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const [errors, setErrors] = useState({
     name: "",
@@ -32,15 +34,17 @@ export default function AddUserPage() {
     email: "",
   });
 
-  const handleSubmit = async (
-    e: React.FormEvent<HTMLFormElement>
-  ): Promise<void> => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     const { valid, errors } = validateInputs({ name, role, email });
     setErrors(errors);
-
     if (!valid) return;
+    setShowConfirmModal(true);
+  };
+
+  const submitConfirmed = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    e.preventDefault();
+    setShowConfirmModal(false);
     setLoading(true);
     setMessage("");
 
@@ -137,7 +141,7 @@ export default function AddUserPage() {
               options={roleOptions}
               label="Pilih Role"
               onSelect={setRole}
-              showLabel={false} // Hide the label for dropdown
+              showLabel={false}
             />
             <style jsx global>{`
               /* Override Dropdown button styling to match your design */
@@ -201,6 +205,17 @@ export default function AddUserPage() {
           {loading ? "Mengirim..." : "Lanjutkan"}
         </button>
       </form>
+      {showConfirmModal && (
+        <Modal onClose={() => setShowConfirmModal(false)}>
+          <ConfirmModal
+            name={name}
+            role={role}
+            email={email}
+            onClose={() => setShowConfirmModal(false)}
+            onConfirm={submitConfirmed}
+          />
+        </Modal>
+      )}
     </div>
   );
 }

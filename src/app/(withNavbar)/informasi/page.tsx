@@ -264,7 +264,7 @@ const SemuaBarangPage: React.FC = () => {
                             />
                          </div>
                          <span className="text-xs font-medium text-white whitespace-nowrap">
-                           Terjual <span className="font-semibold">&#8226;</span> {produk.sold} Porsi
+                           Terjual <span className="font-semibold">&#8226;</span> {produk.sold} Buah
                          </span>
                       </div>
                     </div>
@@ -315,7 +315,7 @@ const SemuaBarangPage: React.FC = () => {
                          <span className="text-xs">Terjual</span>
                        </div>
                        <div className="bg-green-50 text-green-600 text-xs py-0.5 px-2 rounded-md border border-green-100">
-                         {produk.sold} item
+                         {produk.sold} Buah
                        </div>
                      </div>
                      <button
@@ -370,7 +370,7 @@ const SemuaBarangPage: React.FC = () => {
                          <span className="text-xs">Rendah</span>
                        </div>
                        <div className="bg-gray-50 text-gray-600 text-xs py-0.5 px-1.5 rounded-md border border-gray-200">
-                         {produk.stock} item
+                         {produk.stock} Buah
                        </div>
                      </div>
                    </div>
