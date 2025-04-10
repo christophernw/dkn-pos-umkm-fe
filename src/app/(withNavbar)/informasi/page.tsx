@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import HeaderProduk from '@/src/components/HeaderProduk';
 import config from '@/src/config';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,6 +31,7 @@ interface LowStockProduct {
 const progressBarColors = ['bg-green-400', 'bg-blue-500', 'bg-purple-500'];
 
 const SemuaBarangPage: React.FC = () => {
+  notFound();
   const { accessToken } = useAuth();
   const router = useRouter();
 
