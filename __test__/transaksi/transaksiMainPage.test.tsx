@@ -111,6 +111,6 @@ describe('TransactionMainPage', () => {
     const incomeLink = screen.getByText('Tambah Pemasukan')
     
     expect(expenseLink.closest('a')).toHaveAttribute('href', '/tambahPengeluaran')
-    expect(incomeLink.closest('a')).toHaveAttribute('href', '/tambahPemasukkan')
+    expect(incomeLink.closest('a')).toHaveAttribute('href', '/tambahPemasukan')
   })
 })

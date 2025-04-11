@@ -34,13 +34,12 @@ function formatHarga(num: number): string {
 export default function TambahTransaksiPage() {
   const router = useRouter();
   const { accessToken } = useAuth();
-  const { showModal } = useModal();
+  const { showModal, hideModal } = useModal();
   const [selectedProducts, setSelectedProducts] = useState<SelectedProductItem[]>([]);
   const [status, setStatus] = useState<"Lunas" | "Belum Lunas">("Lunas");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Transaction mode state
   const [transactionMode, setTransactionMode] = useState<"pemasukan" | "pengeluaran">("pemasukan");
   const [manualTotalAmount, setManualTotalAmount] = useState<string>("");
   const [manualTotalModal, setManualTotalModal] = useState<string>("");
@@ -93,6 +92,14 @@ export default function TambahTransaksiPage() {
     }
     return 0;
   }, [effectiveTotalAmount, effectiveTotalModal, transactionMode]);
+
+  const resetForm = () => {
+    setSelectedProducts([]);
+    setStatus("Lunas");
+    setManualTotalAmount("");
+    setManualTotalModal("");
+    setError(null);
+  };
 
   const handleQuantityChange = (productId: number, change: number) => {
     setSelectedProducts((currentItems) => {
@@ -280,6 +287,13 @@ export default function TambahTransaksiPage() {
         {
           label: "Lihat Semua Transaksi",
           onClick: () => window.location.href = "/transaksi",
+        },
+        {
+          label: "Tambah Baru",
+          onClick: () => {
+            resetForm();
+            hideModal();
+          },
         }
       );
     } catch (err: unknown) {
