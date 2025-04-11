@@ -114,7 +114,7 @@ export const TransactionSummary = () => {
 				<p className="text-sm text-gray-500 font-medium">
 					{summaryData.status === "untung" ? "Keuntungan" : "Kerugian"}
 				</p>
-				<p className="font-bold text-2xl text-gray-900">Rp{formatCurrency(summaryData.amount)}</p>
+				<p className="font-bold text-2xl text-gray-900">Rp{formatCurrency(Number(summaryData.amount))}</p>
 				</div>
 			</div>
 			</div>

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useModal } from "@/contexts/ModalContext";
 import config from "@/src/config";
 import { CoinIcon } from "@/public/icons/CoinIcon";
 import { StockIcon } from "@/public/icons/StockIcon";
@@ -48,18 +49,18 @@ export default function TransaksiDetailPage() {
   const params = useParams();
   const transactionId = params.id as string;
   const { accessToken } = useAuth();
+  const { showModal, hideModal } = useModal();
 
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isMarkingAsPaid, setIsMarkingAsPaid] = useState(false);
 
   useEffect(() => {
     if (!accessToken) return;
 
     const fetchTransactionDetail = async () => {
       setIsLoading(true);
-      setError(null);
 
       try {
         const response = await fetch(
@@ -80,7 +81,11 @@ export default function TransaksiDetailPage() {
         const data = await response.json();
         setTransaction(data);
       } catch (err) {
-        setError("Gagal memuat detail transaksi");
+        showModal(
+          "Gagal Memuat Data",
+          "Gagal memuat detail transaksi",
+          "error"
+        );
         console.error(err);
       } finally {
         setIsLoading(false);
@@ -88,39 +93,120 @@ export default function TransaksiDetailPage() {
     };
 
     fetchTransactionDetail();
-  }, [transactionId, accessToken]);
+  }, [transactionId, accessToken, showModal]);
 
   const handleDelete = async () => {
-    if (!confirm("Apakah Anda yakin ingin menghapus transaksi ini?")) {
-      return;
-    }
+    showModal(
+      "Konfirmasi Hapus",
+      "Apakah Anda yakin ingin menghapus transaksi ini?",
+      "info",
+      {
+        label: "Hapus",
+        onClick: async () => {
+          setIsDeleting(true);
 
-    setIsDeleting(true);
-    setError(null);
+          try {
+            const response = await fetch(
+              `${config.apiUrl}/transaksi/${transactionId}`,
+              {
+                method: "DELETE",
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                },
+              }
+            );
 
-    try {
-      const response = await fetch(
-        `${config.apiUrl}/transaksi/${transactionId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+            if (!response.ok) {
+              throw new Error(
+                `Failed to delete transaction: ${response.status}`
+              );
+            }
 
-      if (!response.ok) {
-        throw new Error(`Failed to delete transaction: ${response.status}`);
+            showModal("Berhasil", "Transaksi berhasil dihapus!", "success", {
+              label: "Kembali ke Daftar Transaksi",
+              onClick: () => (window.location.href = "/transaksi"),
+            });
+          } catch (err) {
+            showModal("Gagal Menghapus", "Transaksi tidak dapat dihapus", "error");
+            console.error(err);
+          } finally {
+            setIsDeleting(false);
+          }
+        },
+      },
+      {
+        label: "Batal",
+        onClick: () => {
+          hideModal();
+        },
       }
+    );
+  };
 
-      alert("Transaksi berhasil dihapus!");
-      router.push("/transaksi");
-    } catch (err) {
-      setError("Gagal menghapus transaksi");
-      console.error(err);
-    } finally {
-      setIsDeleting(false);
-    }
+  const handleMarkAsPaid = async () => {
+    showModal(
+      "Konfirmasi Status",
+      "Tandai transaksi ini sebagai Lunas?",
+      "info",
+      {
+        label: "Ya, Tandai Lunas",
+        onClick: async () => {
+          setIsMarkingAsPaid(true);
+
+          try {
+            const response = await fetch(
+              `${config.apiUrl}/transaksi/${transactionId}/toggle-payment-status`,
+              {
+                method: "PATCH",
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                },
+              }
+            );
+
+            if (!response.ok) {
+              throw new Error(
+                `Failed to update payment status: ${response.status}`
+              );
+            }
+
+            await response.json();
+
+            if (transaction) {
+              setTransaction({
+                ...transaction,
+                status: "Lunas",
+              });
+            }
+
+            showModal(
+              "Berhasil",
+              "Status transaksi berhasil diubah menjadi Lunas!",
+              "success",
+              {
+                label: "Kembali ke Daftar Transaksi",
+                onClick: () => (window.location.href = "/transaksi"),
+              }
+            );
+          } catch (err) {
+            showModal(
+              "Gagal Mengubah Status",
+              "Gagal mengubah status transaksi",
+              "error"
+            );
+            console.error(err);
+          } finally {
+            setIsMarkingAsPaid(false);
+          }
+        },
+      },
+      {
+        label: "Batal",
+        onClick: () => {
+          hideModal();
+        },
+      }
+    );
   };
 
   if (isLoading) {
@@ -153,23 +239,27 @@ export default function TransaksiDetailPage() {
     );
   }
 
-  if (error || !transaction) {
+  if (!transaction) {
     return (
       <div className="p-4 max-w-md mx-auto bg-gray-50 min-h-screen">
         <div className="flex items-center mb-4">
-          <button onClick={() => router.back()} className="mr-4 p-1">
+          <button
+            onClick={() => window.history.back()}
+            className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2"
+          >
             <svg
+              className="w-4 h-4 transform scale-x-[-1]"
+              aria-hidden="true"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6"
+              viewBox="0 0 14 10"
             >
               <path
+                stroke="black"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                d="M15.75 19.5 8.25 12l7.5-7.5"
+                strokeWidth="2"
+                d="M1 5h12m0 0L9 1m4 4L9 9"
               />
             </svg>
           </button>
@@ -184,7 +274,7 @@ export default function TransaksiDetailPage() {
           role="alert"
         >
           <span className="block sm:inline">
-            {error || "Tidak dapat memuat data transaksi"}
+            {"Tidak dapat memuat data transaksi"}
           </span>
         </div>
 
@@ -208,26 +298,29 @@ export default function TransaksiDetailPage() {
     <div className="p-4 max-w-md mx-auto bg-gray-50 min-h-screen pb-24">
       {/* Header */}
       <div className="flex items-center mb-4">
-        <button onClick={() => router.back()} className="mr-4 p-1">
+        <button
+          onClick={() => window.history.back()}
+          className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2"
+        >
           <svg
+            className="w-4 h-4 transform scale-x-[-1]"
+            aria-hidden="true"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-6 h-6"
+            viewBox="0 0 14 10"
           >
             <path
+              stroke="black"
               strokeLinecap="round"
               strokeLinejoin="round"
-              d="M15.75 19.5 8.25 12l7.5-7.5"
+              strokeWidth="2"
+              d="M1 5h12m0 0L9 1m4 4L9 9"
             />
           </svg>
         </button>
         <h1 className="text-xl font-semibold text-center flex-grow">
           Detail Transaksi
         </h1>
-        {/* Only show delete button if transaction is not deleted */}
         {!transaction.is_deleted ? (
           <button
             onClick={handleDelete}
@@ -250,7 +343,7 @@ export default function TransaksiDetailPage() {
             </svg>
           </button>
         ) : (
-          <div className="w-6"></div> // Empty placeholder to maintain layout
+          <div className="w-6"></div>
         )}
       </div>
 
@@ -443,20 +536,47 @@ export default function TransaksiDetailPage() {
         )}
       </div>
 
-      {/* Error Message */}
-      {error && (
-        <div
-          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
-          role="alert"
+      {/* Mark as Paid Button - only show for transactions with "Belum Lunas" status */}
+      {transaction.status === "Belum Lunas" && !transaction.is_deleted && (
+        <button
+          onClick={handleMarkAsPaid}
+          disabled={isMarkingAsPaid}
+          className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mb-6 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
         >
-          <span className="block sm:inline">{error}</span>
-        </div>
+          {isMarkingAsPaid ? (
+            <>
+              <svg
+                className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              Memproses...
+            </>
+          ) : (
+            "Tandai Lunas"
+          )}
+        </button>
       )}
 
       {/* Back Button */}
       <button
         onClick={() => router.back()}
-        disabled={isDeleting}
+        disabled={isDeleting || isMarkingAsPaid}
         className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-[calc(100%-2rem)] max-w-[calc(theme(maxWidth.md)-2rem)] bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center z-20"
       >
         {isDeleting ? (

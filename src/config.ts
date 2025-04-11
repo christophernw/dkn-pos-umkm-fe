@@ -23,11 +23,11 @@ const config: Config = {
     hostname: "http://localhost:3000/",
   },
   production: {
-    apiUrl: "/backend-api",
+    apiUrl: "/backend-api-prod",
     hostname: "https://dkn-pos-umkm-fe.vercel.app/",
   },
   staging: {
-    apiUrl: "/backend-api",
+    apiUrl: "/backend-api-staging",
     hostname: "https://dkn-pos-umkm-fe-staging.vercel.app/",
   },
   test: {
@@ -37,11 +37,7 @@ const config: Config = {
 };
   
   
-const envConfig = config[process.env.NODE_ENV || "development"];
+const envKey = (process.env.NEXT_PUBLIC_ENV || "development") as keyof Config;
+const envConfig = config[envKey];
 
-const exportedConfig = {
-  ...envConfig,
-  apiUrl: process.env.NEXT_PUBLIC_API_URL || envConfig.apiUrl,
-};
-
-export default exportedConfig;
+export default envConfig;
