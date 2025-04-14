@@ -1,12 +1,12 @@
 // textInput.tsx
 "use client";
-import React, { useState } from "react";
+import React from "react";
 
 interface TextInputProps {
   id: string;
   label: string;
   value: string;
-  onChange: (formatted: string, raw: string) => void;
+  onChange: (value: string) => void;
   placeholder?: string;
   type?: React.InputHTMLAttributes<HTMLInputElement>["type"];
   currency?: boolean;
@@ -34,8 +34,6 @@ export default function TextInput({
   error = false,
   errorMessage = "This field should not be empty",
 }: Readonly<TextInputProps>) {
-  const [inputValue, setInputValue] = useState(value);
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (disabled) return;
 
@@ -44,13 +42,11 @@ export default function TextInput({
     if (type === "number" || currency) {
       newValue = newValue.replace(/\D/g, "");
       const formattedValue = currency ? formatHarga(newValue) : newValue;
-      setInputValue(formattedValue);
-      onChange(formattedValue, newValue);
+      onChange(formattedValue);
       return;
     }
 
-    setInputValue(newValue);
-    onChange(newValue, newValue);
+    onChange(newValue);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -78,7 +74,7 @@ export default function TextInput({
             id={id}
             type="text"
             inputMode="numeric"
-            value={inputValue}
+            value={value}
             placeholder={placeholder}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
@@ -86,8 +82,8 @@ export default function TextInput({
             className={`mt-1 block w-full rounded pl-10 shadow-sm focus:ring-blue-500 ${
               disabled ? "bg-gray-100 text-gray-500 cursor-not-allowed " : ""
             } ${
-              error 
-                ? "border-red-500 focus:border-red-500" 
+              error
+                ? "border-red-500 focus:border-red-500"
                 : "border-gray-300 focus:border-blue-500"
             }`}
           />
@@ -97,7 +93,7 @@ export default function TextInput({
           id={id}
           type={type === "number" ? "text" : type}
           inputMode={type === "number" ? "numeric" : "text"}
-          value={inputValue}
+          value={value}
           placeholder={placeholder}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
@@ -105,8 +101,8 @@ export default function TextInput({
           className={`mt-1 block w-full rounded shadow-sm focus:ring-blue-500 ${
             disabled ? "bg-gray-100 text-gray-500 cursor-not-allowed " : ""
           } ${
-            error 
-              ? "border-red-500 focus:border-red-500" 
+            error
+              ? "border-red-500 focus:border-red-500"
               : "border-gray-300 focus:border-blue-500"
           }`}
         />
