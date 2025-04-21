@@ -17,6 +17,15 @@ export const SummaryCard = ({title, nominal, percentage, logo}: SummaryCardProps
     if (title === "Pengeluaran") return <StockIcon />;
     return <CoinIcon />;
   };
+  
+  const getPercentageColorClass = () => {
+    if (title === "Pemasukan") {
+      return percentage >= 0 ? "bg-primary-green" : "bg-red-500";
+    } else if (title === "Pengeluaran") {
+      return percentage >= 0 ? "bg-red-500" : "bg-primary-green";
+    }
+    return "bg-primary-green"; // default fallback
+  };
 
   return (
     <div className="bg-white p-3 rounded-xl flex flex-col gap-3">
@@ -29,7 +38,7 @@ export const SummaryCard = ({title, nominal, percentage, logo}: SummaryCardProps
         <div className="flex flex-col gap-1">
             <p className="font-bold text-xl">Rp{Number(nominal).toLocaleString("id-ID")}</p>
             <div className="flex gap-1 items-center">
-                <p className="bg-primary-green rounded-full text-white w-fit px-1 text-xs">{percentage}%</p>
+                <p className={`${getPercentageColorClass()} rounded-full text-white w-fit px-1 text-xs`}>{percentage}%</p>
                 <p className="text-xs">vs bulan lalu.</p>
             </div>
         </div>

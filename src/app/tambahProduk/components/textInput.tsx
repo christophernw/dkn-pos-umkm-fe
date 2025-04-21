@@ -1,3 +1,4 @@
+// textInput.tsx
 "use client";
 import React, { useState } from "react";
 
@@ -12,11 +13,13 @@ interface TextInputProps {
   disabled?: boolean;
   className?: string;
   required?: boolean;
+  error?: boolean;
+  errorMessage?: string;
 }
 
 function formatHarga(value: string): string {
-  const digits = value.replace(/\D/g, ""); // Remove all non-numeric characters
-  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, "."); // Add thousands separators
+  const digits = value.replace(/\D/g, "");
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 export default function TextInput({
@@ -27,14 +30,18 @@ export default function TextInput({
   placeholder = "",
   type = "text",
   currency = false,
+  disabled = false,
+  error = false,
+  errorMessage = "This field should not be empty",
 }: Readonly<TextInputProps>) {
   const [inputValue, setInputValue] = useState(value);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (disabled) return;
+
     let newValue = e.target.value;
 
     if (type === "number" || currency) {
-      // Remove non-numeric characters
       newValue = newValue.replace(/\D/g, "");
       const formattedValue = currency ? formatHarga(newValue) : newValue;
       setInputValue(formattedValue);
@@ -47,7 +54,8 @@ export default function TextInput({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Prevent invalid characters (e.g., letters, special characters)
+    if (disabled) return;
+
     if (type === "number" || currency) {
       const invalidKeys = ["e", "E", "+", "-", "."];
       if (invalidKeys.includes(e.key)) {
@@ -68,26 +76,43 @@ export default function TextInput({
           </span>
           <input
             id={id}
-            type="text" // Always use text for currency to allow formatting
+            type="text"
             inputMode="numeric"
             value={inputValue}
             placeholder={placeholder}
             onChange={handleChange}
-            onKeyDown={handleKeyDown} // Prevent invalid key presses
-            className="mt-1 block w-full rounded border-gray-300 shadow-sm pl-10 focus:border-blue-500 focus:ring-blue-500"
+            onKeyDown={handleKeyDown}
+            disabled={disabled}
+            className={`mt-1 block w-full rounded pl-10 shadow-sm focus:ring-blue-500 ${
+              disabled ? "bg-gray-100 text-gray-500 cursor-not-allowed " : ""
+            } ${
+              error 
+                ? "border-red-500 focus:border-red-500" 
+                : "border-gray-300 focus:border-blue-500"
+            }`}
           />
         </div>
       ) : (
         <input
           id={id}
-          type={type === "number" ? "text" : type} // Use text for number to allow custom validation
+          type={type === "number" ? "text" : type}
           inputMode={type === "number" ? "numeric" : "text"}
           value={inputValue}
           placeholder={placeholder}
           onChange={handleChange}
-          onKeyDown={handleKeyDown} // Prevent invalid key presses
-          className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          onKeyDown={handleKeyDown}
+          disabled={disabled}
+          className={`mt-1 block w-full rounded shadow-sm focus:ring-blue-500 ${
+            disabled ? "bg-gray-100 text-gray-500 cursor-not-allowed " : ""
+          } ${
+            error 
+              ? "border-red-500 focus:border-red-500" 
+              : "border-gray-300 focus:border-blue-500"
+          }`}
         />
+      )}
+      {error && (
+        <p className="mt-1 text-sm text-red-600">{errorMessage}</p>
       )}
     </div>
   );

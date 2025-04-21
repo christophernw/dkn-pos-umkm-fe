@@ -1,9 +1,22 @@
 "use client";
 import { useState, ChangeEvent } from "react";
+import { ChevronDown, Check } from "lucide-react";
 import TextInput from "./components/textInput";
 import { useAuth } from "@/contexts/AuthContext";
 import config from "@/src/config";
 import { useModal } from "@/contexts/ModalContext";
+import Dropdown from "@/src/components/Dropdown";
+
+// Dropdown Options
+const unitOptions = ["Pcs", "Kg", "Botol", "Liter"];
+const categoryOptions = [
+  "Sembako",
+  "Perawatan Diri",
+  "Pakaian & Aksesori",
+  "Peralatan Rumah Tangga",
+  "Makanan & Minuman",
+  "Lainnya",
+];
 
 export default function AddProductPage() {
   const [productName, setProductName] = useState("");
@@ -11,26 +24,33 @@ export default function AddProductPage() {
   const [priceSell, setPriceSell] = useState("");
   const [priceCost, setPriceCost] = useState("");
   const [currentStock, setCurrentStock] = useState("");
-  const [unit, setUnit] = useState("Kg");
+  const [unit, setUnit] = useState("");
   const [previewImg, setPreviewImg] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const { accessToken } = useAuth();
   const [loading, setLoading] = useState(false);
   const { showModal } = useModal();
 
-  // All your existing handlers remain the same
+  // Add state for field errors
+  const [errors, setErrors] = useState({
+    productName: false,
+    category: false,
+    priceSell: false,
+    priceCost: false,
+    currentStock: false,
+    unit: false,
+  });
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
     const file = e.target.files[0];
-
     const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
     const maxSizeMB = 3;
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
     if (!allowedTypes.includes(file.type)) {
       showModal(
-        "Format Tidak Didukung", 
+        "Format Tidak Didukung",
         "Silakan unggah PNG, JPG, atau JPEG.",
         "error"
       );
@@ -39,7 +59,7 @@ export default function AddProductPage() {
 
     if (file.size > maxSizeBytes) {
       showModal(
-        "File Terlalu Besar", 
+        "File Terlalu Besar",
         `Ukuran file terlalu besar! Maksimal ${maxSizeMB}MB.`,
         "error"
       );
@@ -47,7 +67,6 @@ export default function AddProductPage() {
     }
 
     setImageFile(file);
-
     const reader = new FileReader();
     reader.onload = () => {
       setPreviewImg(reader.result as string);
@@ -59,10 +78,27 @@ export default function AddProductPage() {
     e.preventDefault();
 
     if (loading) return;
+
+    // Validate fields
+    const newErrors = {
+      productName: !productName.trim(),
+      category: !category.trim(),
+      priceSell: !priceSell.trim(),
+      priceCost: !priceCost.trim(),
+      currentStock: !currentStock.trim(),
+      unit: !unit.trim(), // Add unit validation
+    };
+
+    setErrors(newErrors);
+
+    // Check if any errors exist
+    if (Object.values(newErrors).some((error) => error)) {
+      return; // Stop submission if there are errors
+    }
+
     setLoading(true);
 
     const formData = new FormData();
-
     const payload = {
       nama: productName,
       kategori: category,
@@ -73,10 +109,7 @@ export default function AddProductPage() {
     };
 
     formData.append("payload", JSON.stringify(payload));
-
-    if (imageFile) {
-      formData.append("foto", imageFile);
-    }
+    if (imageFile) formData.append("foto", imageFile);
 
     try {
       const response = await fetch(`${config.apiUrl}/produk/create`, {
@@ -88,29 +121,25 @@ export default function AddProductPage() {
       });
 
       if (response.status === 201) {
-        showModal(
-          "Berhasil", 
-          "Produk berhasil ditambahkan!",
-          "success",
-          {
-            label: "Lihat Semua Produk",
-            onClick: () => { window.location.href = "/semuaBarang"; }
-          }
-        );
+        showModal("Berhasil", "Produk berhasil ditambahkan!", "success", {
+          label: "Lihat Semua Produk",
+          onClick: () => {
+            window.location.href = "/semuaBarang";
+          },
+        });
       } else {
         const errorData = await response.json();
         console.error("Error creating product:", errorData);
         showModal(
-          "Gagal", 
+          "Gagal",
           `Gagal menambahkan produk: ${errorData.detail || "Unknown error"}`,
           "error"
         );
       }
     } catch (error) {
-      console.log(error);
       console.error("Network error:", error);
       showModal(
-        "Kesalahan Jaringan", 
+        "Kesalahan Jaringan",
         "Terjadi kesalahan jaringan. Silakan coba lagi.",
         "error"
       );
@@ -119,7 +148,6 @@ export default function AddProductPage() {
     }
   };
 
-  // Here's the return statement with the UI
   return (
     <div className="max-w-md mx-auto p-4">
       <header className="flex items-center mb-4">
@@ -151,7 +179,6 @@ export default function AddProductPage() {
         className="bg-white rounded-lg p-4 shadow-sm space-y-4"
         encType="multipart/form-data"
       >
-        {/* Placeholder/gambar */}
         <div className="flex justify-center">
           <label
             htmlFor="imageUpload"
@@ -192,22 +219,30 @@ export default function AddProductPage() {
           />
         </div>
 
-        {/* Form inputs */}
         <TextInput
           id="productName"
           label="Nama Produk"
           value={productName}
           onChange={(value) => setProductName(value)}
           placeholder="Pie Jeruk"
+          error={errors.productName}
+          errorMessage="Nama produk tidak boleh kosong"
         />
 
-        <TextInput
-          id="category"
-          label="Kategori"
-          value={category}
-          onChange={(value) => setCategory(value)}
-          placeholder="Makanan"
-        />
+        {/* Replace TextInput with Dropdown for category */}
+        <div>
+          <Dropdown
+            selected={category}
+            options={categoryOptions}
+            label="Pilih Kategori"
+            onSelect={setCategory}
+          />
+          {errors.category && (
+            <p className="mt-1 text-sm text-red-600">
+              Kategori tidak boleh kosong
+            </p>
+          )}
+        </div>
 
         <TextInput
           id="priceSell"
@@ -217,6 +252,8 @@ export default function AddProductPage() {
           placeholder="13.000"
           type="number"
           currency
+          error={errors.priceSell}
+          errorMessage="Harga jual tidak boleh kosong"
         />
 
         <TextInput
@@ -227,6 +264,8 @@ export default function AddProductPage() {
           placeholder="9.000"
           type="number"
           currency
+          error={errors.priceCost}
+          errorMessage="Harga modal tidak boleh kosong"
         />
 
         <TextInput
@@ -236,30 +275,24 @@ export default function AddProductPage() {
           onChange={setCurrentStock}
           placeholder="450"
           type="number"
+          error={errors.currentStock}
+          errorMessage="Stok tidak boleh kosong"
         />
 
-        {/* Pilih Satuan */}
-        <div className="w-1/3">
-          <label
-            htmlFor="unit"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Pilih Satuan
-          </label>
-          <select
-            id="unit"
-            value={unit}
-            onChange={(e) => setUnit(e.target.value)}
-            className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          >
-            <option value="Pcs">Pcs</option>
-            <option value="Kg">Kg</option>
-            <option value="Botol">Botol</option>
-            <option value="Liter">Liter</option>
-          </select>
+        <div>
+          <Dropdown
+            selected={unit}
+            options={unitOptions}
+            label="Pilih Satuan"
+            onSelect={setUnit}
+          />
+          {errors.unit && (
+            <p className="mt-1 text-sm text-red-600">
+              Satuan tidak boleh kosong
+            </p>
+          )}
         </div>
 
-        {/* Tombol Submit */}
         <div className="pt-4">
           <button
             type="submit"
