@@ -20,7 +20,7 @@ interface ModalConfig {
   };
 }
 
-interface ModalContextType {
+export interface ModalContextType {
   showModal: (
     title: string,
     message: string,
