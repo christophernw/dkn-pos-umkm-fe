@@ -13,7 +13,7 @@ export const Navbar = () => {
         { text: 'Produk', icon: ProductIcon, route: ["/informasi", "/semuaBarang"] },
         { text: 'Transaksi', icon: TransactionIcon, route: ["/transaksi"] },
         { text: 'Beranda', icon: HomeIcon, route: ["/"] },
-        { text: 'Laporan', icon: ReportIcon, route: ["/report"] },
+        { text: 'Utang', icon: ReportIcon, route: ["/report"] },
         { text: 'Pengaturan', icon: SettingsIcon, route: ["/pengaturan"] },
     ], []);
 
