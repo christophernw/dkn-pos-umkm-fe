@@ -19,7 +19,7 @@ type Config = {
   
 const config: Config = {
   development: {
-    apiUrl: "http://localhost:8000/api",
+    apiUrl: "http://103.177.95.190:8001/api",
     hostname: "http://localhost:3000/",
   },
   production: {
@@ -31,7 +31,7 @@ const config: Config = {
     hostname: "https://dkn-pos-umkm-fe-staging.vercel.app/",
   },
   test: {
-    apiUrl: "http://localhost:8000/api",
+    apiUrl: "http://103.177.95.190:8001/api",
     hostname: "http://localhost:3000/",
   },
 };
