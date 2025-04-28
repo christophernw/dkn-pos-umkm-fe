@@ -27,7 +27,7 @@ interface ReportDateRange {
 
 const ReportPage = () => {
   const { user, accessToken } = useAuth();
-  const { showModal } = useModal();
+  const { showModal, hideModal } = useModal();
   const router = useRouter();
   const [view, setView] = useState<"summary" | "detail">("summary");
   const [utangSaya, setUtangSaya] = useState<number>(0);
@@ -39,15 +39,36 @@ const ReportPage = () => {
     endDate: ''
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
   const [isGeneratingReport, setIsGeneratingReport] = useState<boolean>(false);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState<boolean>(false);
 
   // Check user role access - only Pemilik and Pengelola can access
   useEffect(() => {
-    if (user && user.role !== "Pemilik" && user.role !== "Pengelola") {
-      router.push("/");
+    // Wait until authentication data is loaded before checking permissions
+    if (user) {
+      setIsAuthLoading(false);
+      if (user.role !== "Pemilik" && user.role !== "Pengelola") {
+        // Show modal first
+        showModal(
+          "Akses Ditolak", 
+          "Maaf, hanya Pemilik atau Pengelola yang dapat mengakses laporan.", 
+          "error", 
+          {
+            label: "Kembali ke Beranda",
+            onClick: () => {
+              hideModal();
+              router.push("/");
+            }
+          }
+        );
+        
+        return;
+      }
+    } else if (accessToken === null) {
+      setIsAuthLoading(false);
     }
-  }, [user, router]);
+  }, [user, accessToken, router]);
 
   // Fetch summary data
   useEffect(() => {
@@ -174,8 +195,13 @@ const ReportPage = () => {
     return amount.toLocaleString("id-ID");
   };
 
-  if (!user || (user.role !== "Pemilik" && user.role !== "Pengelola")) {
-    return <div className="p-8 text-center text-red-600 font-bold">Access Denied: Only Pemilik or Pengelola can view reports</div>;
+  // Show loading state while authentication is being checked
+  if (isAuthLoading) {
+    return (
+      <div className="p-8 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+      </div>
+    );
   }
 
   // Render summary view
