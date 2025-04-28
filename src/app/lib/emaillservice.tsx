@@ -44,7 +44,7 @@ abstract class EmailService<T extends BaseEmailData> {
 
 export class InvitationEmailService extends EmailService<InvitationEmailData> {
   getTemplateId(): string {
-    return process.env.NEXT_PUBLIC_EMAILJS_INVITATION_TEMPLATE_ID!;
+    return process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!;
   }
 
   prepareTemplateParams(data: InvitationEmailData): Record<string, string> {

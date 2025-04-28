@@ -1,5 +1,5 @@
 // __tests__/sendEmail.test.ts
-import { sendInvitationEmail, sendNotificationEmail } from "@/src/app/lib/sendemaill";
+import { sendInvitationEmail, sendNotificationEmail } from "@/src/app/lib/emaillservice";
 import emailjs from "@emailjs/browser";
 
 jest.mock("@emailjs/browser", () => ({
