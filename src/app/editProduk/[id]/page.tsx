@@ -4,13 +4,12 @@ import { useParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useModal } from "@/contexts/ModalContext";
 import config from "@/src/config";
-import { ChevronDown, Check } from "lucide-react";
 import TextInput from "../../tambahProduk/components/textInput";
-import Dropdown from "@/src/components/Dropdown";
+import EnhancedDropdown from "@/src/components/elements/modal/EnhancedDropdown";
 
-// Dropdown Options
-const unitOptions = ["Pcs", "Kg", "Botol", "Liter"];
-const categoryOptions = [
+// Initial dropdown options
+const initialUnitOptions = ["Pcs", "Kg", "Botol", "Liter"];
+const initialCategoryOptions = [
   "Sembako",
   "Perawatan Diri",
   "Pakaian & Aksesori",
@@ -38,6 +37,10 @@ export default function EditProductPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
   
+  // State for managing custom options
+  const [categoryOptions, setCategoryOptions] = useState([...initialCategoryOptions]);
+  const [unitOptions, setUnitOptions] = useState([...initialUnitOptions]);
+  
   // Add state for field validation errors
   const [errors, setErrors] = useState({
     productName: false,
@@ -61,11 +64,25 @@ export default function EditProductPage() {
         if (response.ok) {
           const product = await response.json();
           setProductName(product.nama || "");
-          setCategory(product.kategori || "");
+          
+          // Check if category exists in options, if not add it
+          const productCategory = product.kategori || "";
+          if (productCategory && !categoryOptions.includes(productCategory)) {
+            setCategoryOptions([...categoryOptions, productCategory]);
+          }
+          setCategory(productCategory);
+          
           setPriceSell(formatHarga(product.harga_jual?.toString()) || "");
           setPriceCost(formatHarga(product.harga_modal?.toString()) || "");
           setCurrentStock(product.stok?.toString() || "");
-          setUnit(product.satuan || "Kg");
+          
+          // Check if unit exists in options, if not add it
+          const productUnit = product.satuan || "";
+          if (productUnit && !unitOptions.includes(productUnit)) {
+            setUnitOptions([...unitOptions, productUnit]);
+          }
+          setUnit(productUnit);
+          
           if (product.foto) {
             setPreviewImg(`${config.apiUrl}${product.foto.slice(4)}`);
           }
@@ -82,6 +99,34 @@ export default function EditProductPage() {
 
     fetchProduct();
   }, [id, accessToken, showModal]);
+
+  const handleAddCustomCategory = (newCategory: string) => {
+    if (!categoryOptions.includes(newCategory)) {
+      setCategoryOptions([...categoryOptions, newCategory]);
+    }
+    setCategory(newCategory);
+    
+    // Show success message
+    showModal(
+      "Berhasil",
+      `Kategori "${newCategory}" berhasil ditambahkan`,
+      "success"
+    );
+  };
+
+  const handleAddCustomUnit = (newUnit: string) => {
+    if (!unitOptions.includes(newUnit)) {
+      setUnitOptions([...unitOptions, newUnit]);
+    }
+    setUnit(newUnit);
+    
+    // Show success message
+    showModal(
+      "Berhasil",
+      `Satuan "${newUnit}" berhasil ditambahkan`,
+      "success"
+    );
+  };
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
@@ -260,12 +305,14 @@ export default function EditProductPage() {
           errorMessage="Nama produk tidak boleh kosong"
         />
 
+        {/* Replace with EnhancedDropdown for category */}
         <div>
-          <Dropdown
+          <EnhancedDropdown
             selected={category}
             options={categoryOptions}
             label="Kategori"
             onSelect={setCategory}
+            onAddCustom={handleAddCustomCategory}
           />
           {errors.category && (
             <p className="mt-1 text-sm text-red-600">
@@ -308,12 +355,14 @@ export default function EditProductPage() {
           errorMessage="Stok tidak boleh kosong"
         />
 
+        {/* Replace with EnhancedDropdown for unit */}
         <div>
-          <Dropdown
+          <EnhancedDropdown
             selected={unit}
             options={unitOptions}
-            label="Pilih Satuan"
+            label="Satuan"
             onSelect={setUnit}
+            onAddCustom={handleAddCustomUnit}
           />
           {errors.unit && (
             <p className="mt-1 text-sm text-red-600">
