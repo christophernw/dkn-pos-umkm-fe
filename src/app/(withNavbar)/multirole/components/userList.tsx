@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useModal } from "@/contexts/ModalContext"; // Import useModal hook
 import config from "@/src/config";
 import { Trash } from "lucide-react";
+import { sendNotificationEmail } from "@/src/app/lib/sendemaill";
 
 interface User {
   id: number;
@@ -15,7 +16,7 @@ interface User {
 
 const UserList = () => {
   const { user, accessToken } = useAuth();
-  const { showModal, hideModal } = useModal(); // Add showModal from context
+  const { showModal, hideModal } = useModal(); 
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,6 +57,13 @@ const UserList = () => {
   }, [accessToken]);
 
   const handleDeleteUser = async (userId: number) => {
+    const userToDelete = users.find(u => u.id === userId); 
+  
+    if (!userToDelete) {
+      showModal("Error", "User tidak ditemukan.", "error");
+      return;
+    }
+  
     showModal(
       "Konfirmasi",
       "Apakah Anda yakin ingin menghapus pengguna ini?",
@@ -66,7 +74,7 @@ const UserList = () => {
           try {
             setIsDeleting(true);
             setError(null);
-
+  
             const response = await fetch(
               `${config.apiUrl}/auth/remove-user-from-toko`,
               {
@@ -78,16 +86,22 @@ const UserList = () => {
                 body: JSON.stringify({ user_id: userId }),
               }
             );
-
+  
             if (!response.ok) {
               const errorData = await response.json();
               throw new Error(errorData.error || "Failed to remove user");
             }
-
-            // Refresh the user list after successful deletion
+  
+            await sendNotificationEmail({
+              to: userToDelete.email,
+              senderName: user?.name || "Admin", 
+              senderEmail: user?.email || "no-reply@example.com", 
+              userName: userToDelete.name, 
+              ownerName: user?.name || "Pemilik Toko", 
+            });
+  
             await fetchUsers();
-
-            // Show success message
+  
             showModal("Berhasil", "Pengguna berhasil dihapus!", "success");
           } catch (error: any) {
             setError(error.message);
@@ -109,6 +123,7 @@ const UserList = () => {
       }
     );
   };
+  
 
   return (
     <div className="bg-white p-4 rounded-2xl shadow-md">

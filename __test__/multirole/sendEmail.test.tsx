@@ -1,5 +1,5 @@
 // __tests__/sendEmail.test.ts
-import { sendEmail } from "@/src/app/lib/sendInvitationEmail";
+import { sendInvitationEmail, sendNotificationEmail } from "@/src/app/lib/sendemaill";
 import emailjs from "@emailjs/browser";
 
 jest.mock("@emailjs/browser", () => ({
@@ -19,7 +19,7 @@ describe("sendEmail", () => {
 
     mockSend.mockResolvedValueOnce({ status: 200 });
 
-    const result = await sendEmail(emailData);
+    const result = await sendInvitationEmail(emailData);
 
     expect(mockSend).toHaveBeenCalledWith(
       process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!,
@@ -47,7 +47,7 @@ describe("sendEmail", () => {
       senderEmail: "sender@example.com",
     };
   
-    await expect(sendEmail(emailData)).rejects.toThrow("Failed to send email");
+    await expect(sendInvitationEmail(emailData)).rejects.toThrow("Failed to send email");
   });  
 });
 
