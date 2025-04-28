@@ -6,6 +6,8 @@ import config from "@/src/config";
 import { useRouter } from "next/navigation";
 import { generateDebtReportPDF, PDFReportData } from "@/src/utils/pdfGenerator";
 import { generateDebtReportExcel, ExcelReportData } from "@/src/utils/excelGenerator";
+import { CoinIcon } from "@/public/icons/CoinIcon";
+import { StockIcon } from "@/public/icons/StockIcon";
 
 // Define types
 interface Transaction {
@@ -27,9 +29,8 @@ interface ReportDateRange {
 
 const ReportPage = () => {
   const { user, accessToken } = useAuth();
-  const { showModal, hideModal } = useModal();
+  const { showModal } = useModal();
   const router = useRouter();
-  const [view, setView] = useState<"summary" | "detail">("summary");
   const [utangSaya, setUtangSaya] = useState<number>(0);
   const [utangPelanggan, setUtangPelanggan] = useState<number>(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -38,37 +39,19 @@ const ReportPage = () => {
     startDate: '',
     endDate: ''
   });
+  const [customStartDate, setCustomStartDate] = useState<string>('');
+  const [customEndDate, setCustomEndDate] = useState<string>('');
+  const [firstTransactionDate, setFirstTransactionDate] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
   const [isGeneratingReport, setIsGeneratingReport] = useState<boolean>(false);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState<boolean>(false);
 
   // Check user role access - only Pemilik and Pengelola can access
   useEffect(() => {
-    // Wait until authentication data is loaded before checking permissions
-    if (user) {
-      setIsAuthLoading(false);
-      if (user.role !== "Pemilik" && user.role !== "Pengelola") {
-        // Show modal first
-        showModal(
-          "Akses Ditolak", 
-          "Maaf, hanya Pemilik atau Pengelola yang dapat mengakses laporan.", 
-          "error", 
-          {
-            label: "Kembali ke Beranda",
-            onClick: () => {
-              hideModal();
-              router.push("/");
-            }
-          }
-        );
-        
-        return;
-      }
-    } else if (accessToken === null) {
-      setIsAuthLoading(false);
+    if (user && user.role !== "Pemilik" && user.role !== "Pengelola") {
+      router.push("/");
     }
-  }, [user, accessToken, router]);
+  }, [user, router]);
 
   // Fetch summary data
   useEffect(() => {
@@ -98,21 +81,82 @@ const ReportPage = () => {
     fetchSummary();
   }, [accessToken]);
 
-  // Fetch transactions for detailed view
+  // Fetch first transaction date
   useEffect(() => {
-    if (view !== "detail" || !accessToken) return;
+    if (!accessToken) return;
 
-    const fetchTransactions = async () => {
-      setIsLoading(true);
+    const fetchFirstTransactionDate = async () => {
       try {
         const response = await fetch(
-          `${config.apiUrl}/transaksi/debt-report?days=${dateRange}`,
+          `${config.apiUrl}/transaksi/first-debt-date`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
           }
         );
+
+        if (response.ok) {
+          const data = await response.json();
+          setFirstTransactionDate(data.first_date || '');
+          
+          // Initialize custom dates if they haven't been set
+          if (!customStartDate) {
+            setCustomStartDate(data.first_date || '');
+          }
+          if (!customEndDate) {
+            const today = new Date().toISOString().split('T')[0];
+            setCustomEndDate(today);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching first transaction date:", error);
+      }
+    };
+
+    fetchFirstTransactionDate();
+  }, [accessToken]);
+
+  // Update custom dates when date range changes
+  useEffect(() => {
+    if (dateRange === 'custom') return; // Don't update if custom is selected
+    
+    const endDate = new Date();
+    let startDate = new Date();
+    
+    if (dateRange === 'all') {
+      // Use first transaction date for "Semua"
+      if (firstTransactionDate) {
+        startDate = new Date(firstTransactionDate);
+      } else {
+        // Default to 1 year if first transaction date is not available
+        startDate.setFullYear(startDate.getFullYear() - 1);
+      }
+    } else {
+      // Convert dateRange to number of days
+      const days = parseInt(dateRange);
+      startDate.setDate(startDate.getDate() - days);
+    }
+    
+    setCustomStartDate(startDate.toISOString().split('T')[0]);
+    setCustomEndDate(endDate.toISOString().split('T')[0]);
+  }, [dateRange, firstTransactionDate]);
+
+  // Fetch transactions data
+  useEffect(() => {
+    if (!accessToken) return;
+
+    const fetchTransactions = async () => {
+      setIsLoading(true);
+      try {
+        
+        const url = `${config.apiUrl}/transaksi/debt-report-by-date?start_date=${customStartDate}&end_date=${customEndDate}`;
+        
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
 
         if (response.ok) {
           const data = await response.json();
@@ -129,8 +173,13 @@ const ReportPage = () => {
       }
     };
 
+    // Only fetch if we have valid dates when using custom range
+    if ((dateRange === 'custom' || dateRange === 'all') && (!customStartDate || !customEndDate)) {
+      return;
+    }
+
     fetchTransactions();
-  }, [view, dateRange, accessToken]);
+  }, [dateRange, customStartDate, customEndDate, accessToken]);
 
   const handleDownloadClick = () => {
     setIsDownloadModalOpen(true);
@@ -195,141 +244,150 @@ const ReportPage = () => {
     return amount.toLocaleString("id-ID");
   };
 
-  // Show loading state while authentication is being checked
-  if (isAuthLoading) {
-    return (
-      <div className="p-8 flex justify-center items-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-      </div>
-    );
+  if (!user || (user.role !== "Pemilik" && user.role !== "Pengelola")) {
+    return <div className="p-8 text-center text-red-600 font-bold">Access Denied: Only Pemilik or Pengelola can view reports</div>;
   }
 
-  // Render summary view
-  if (view === "summary") {
-    return (
-      <div className="p-4">
-        <h1 className="text-xl font-bold mb-4">Laporan Utang Piutang</h1>
-        
-        {isLoading ? (
-          <div className="flex justify-center items-center h-40">
-            <p>Loading...</p>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-white rounded-xl p-4 shadow-sm">
-                <h2 className="text-red-600 font-semibold">Utang Saya</h2>
-                <p className="text-xl font-bold mt-2">Rp{formatCurrency(utangSaya)}</p>
-              </div>
-              <div className="bg-white rounded-xl p-4 shadow-sm">
-                <h2 className="text-green-600 font-semibold">Utang Pelanggan</h2>
-                <p className="text-xl font-bold mt-2">Rp{formatCurrency(utangPelanggan)}</p>
-              </div>
-            </div>
-            
-            <button
-              onClick={() => setView("detail")}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium"
-            >
-              Lihat Laporan Utang
-            </button>
-          </>
-        )}
-      </div>
-    );
-  }
-
-  // Render detailed view
   return (
     <div className="p-4">
-      <div className="flex items-center mb-4">
-        <button
-          onClick={() => setView("summary")}
-          className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2"
-        >
-          <svg
-            className="w-4 h-4 transform scale-x-[-1]"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 14 10"
-          >
-            <path
-              stroke="black"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M1 5h12m0 0L9 1m4 4L9 9"
-            />
-          </svg>
-        </button>
-        <h1 className="text-xl font-semibold flex-1 text-center">Laporan Utang Piutang</h1>
-        <div className="w-10"></div>
-      </div>
-
-      <div className="bg-white rounded-xl p-4 shadow-sm mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Pilih Tanggal Laporan
-        </label>
-        <select
-          value={dateRange}
-          onChange={(e) => setDateRange(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-md"
-        >
-          <option value="7">7 Hari Terakhir</option>
-          <option value="30">Bulan Ini</option>
-          <option value="90">3 Bulan Terakhir</option>
-          <option value="180">6 Bulan Terakhir</option>
-          <option value="365">1 Tahun Terakhir</option>
-        </select>
-      </div>
-
+      <h1 className="text-xl font-bold mb-4">Laporan Utang Piutang</h1>
+      
       {isLoading ? (
         <div className="flex justify-center items-center h-40">
           <p>Loading...</p>
         </div>
       ) : (
         <>
-          <div className="space-y-3 mb-6">
-            {transactions.length === 0 ? (
-              <p className="text-center text-gray-500 py-4 bg-white rounded-lg shadow-sm">
-                Tidak ada data utang untuk periode ini.
-              </p>
-            ) : (
-              transactions.map((transaction) => (
-                <div
-                  key={transaction.id}
-                  className="bg-white rounded-xl p-3 shadow-sm cursor-pointer"
-                  onClick={() => router.push(`/transaksi/detail/${transaction.id}`)}
-                >
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Transaksi #{transaction.id}</span>
-                    <span className="text-sm text-gray-500">
-                      {new Date(transaction.created_at).toLocaleDateString("id-ID")}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center mt-2">
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                        transaction.transaction_type === "pemasukan"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {transaction.transaction_type === "pemasukan" ? "Berikan" : "Terima"}
-                    </span>
-                    <span className="font-semibold">
-                      Rp{formatCurrency(transaction.total_amount)}
-                    </span>
-                  </div>
+          {/* Summary Cards - Styled similarly to other pages */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-white rounded-xl p-4 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="bg-red-100 p-3 rounded-full">
+                  <StockIcon className="text-red-500" />
                 </div>
-              ))
-            )}
+                <p className="font-medium">Utang Saya</p>
+              </div>
+              <div className="flex flex-col gap-1">
+                <p className="text-xl font-bold text-red-600">
+                  Rp{formatCurrency(utangSaya)}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Belum dilunasi
+                </p>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="bg-green-100 p-3 rounded-full">
+                  <CoinIcon className="text-green-500" />
+                </div>
+                <p className="font-medium">Utang Pelanggan</p>
+              </div>
+              <div className="flex flex-col gap-1">
+                <p className="text-xl font-bold text-green-600">
+                  Rp{formatCurrency(utangPelanggan)}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Belum dilunasi
+                </p>
+              </div>
+            </div>
           </div>
 
+          {/* Date Range Filter */}
+          <div className="bg-white rounded-xl p-4 shadow-sm mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Pilih Tanggal Laporan
+            </label>
+            <select
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md mb-3"
+            >
+              <option value="7">7 Hari Terakhir</option>
+              <option value="30">Bulan Ini</option>
+              <option value="90">3 Bulan Terakhir</option>
+              <option value="180">6 Bulan Terakhir</option>
+              <option value="365">1 Tahun Terakhir</option>
+              <option value="all">Semua</option>
+            </select>
+            
+            <div className="grid grid-cols-2 gap-3 mt-2">
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">
+                  Tanggal Mulai
+                </label>
+                <input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => {
+                    setCustomStartDate(e.target.value);
+                  }}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">
+                  Tanggal Akhir
+                </label>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => {
+                    setCustomEndDate(e.target.value);
+                  }}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Transactions List */}
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold mb-3">Daftar Transaksi Belum Lunas</h2>
+            
+            <div className="space-y-3">
+              {transactions.length === 0 ? (
+                <p className="text-center text-gray-500 py-4 bg-white rounded-lg shadow-sm">
+                  Tidak ada data utang untuk periode ini.
+                </p>
+              ) : (
+                transactions.map((transaction) => (
+                  <div
+                    key={transaction.id}
+                    className="bg-white rounded-xl p-3 shadow-sm cursor-pointer"
+                    onClick={() => router.push(`/transaksi/detail/${transaction.id}`)}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">Transaksi #{transaction.id}</span>
+                      <span className="text-sm text-gray-500">
+                        {new Date(transaction.created_at).toLocaleDateString("id-ID")}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                          transaction.transaction_type === "pemasukan"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {transaction.transaction_type === "pemasukan" ? "Berikan" : "Terima"}
+                      </span>
+                      <span className="font-semibold">
+                        Rp{formatCurrency(transaction.total_amount)}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Download Button */}
           <button
             onClick={handleDownloadClick}
             disabled={isGeneratingReport || transactions.length === 0}
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium mb-20 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium mb-20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center z-20"
           >
             {isGeneratingReport ? "Memproses..." : "Unduh Laporan"}
           </button>
