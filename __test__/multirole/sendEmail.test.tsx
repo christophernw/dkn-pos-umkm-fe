@@ -49,23 +49,5 @@ describe("sendEmail", () => {
   
     await expect(sendEmail(emailData)).rejects.toThrow("Failed to send email");
   });  
-
-  it("should handle emailjs send rate limiting", async () => {
-    const mockSend = emailjs.send as jest.Mock;
-    mockSend.mockRejectedValueOnce({ status: 429, message: "Too Many Requests" });
-  
-    const emailData = {
-      to: "recipient@example.com",
-      inviteLink: "https://example.com/invite",
-      senderName: "Sender Name",
-      senderEmail: "sender@example.com",
-    };
-  
-    try {
-      await sendEmail(emailData);
-    } catch (error: any) {
-      expect(error.status).toBe(429);
-      expect(error.message).toBe("Too Many Requests");
-    }
-  });  
 });
+

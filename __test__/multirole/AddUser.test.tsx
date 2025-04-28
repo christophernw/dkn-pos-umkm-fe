@@ -37,6 +37,12 @@ jest.mock("@/src/app/(withNavbar)/multirole/adduser/services/invitationService",
     ),
 }));
 
+// Stub ModalSuccess
+jest.mock("@/src/app/components/ModalSuccess", () => ({
+  __esModule: true,
+  default: () => <div>Mock ModalSuccess</div>,
+}));
+
 describe("AddUserPage", () => {
   beforeEach(() => {
     mockConsoleLog.mockClear();
