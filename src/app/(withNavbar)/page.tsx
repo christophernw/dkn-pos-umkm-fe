@@ -8,86 +8,11 @@ import { CoinIcon } from "@/public/icons/CoinIcon";
 import { StockIcon } from "@/public/icons/StockIcon";
 import { NotesIcon } from "@/public/icons/notesIcon";
 import Logo from "@/public/images/logo.png"; // Import the logo image
-import config from '@/src/config';
-import { useModal } from "@/contexts/ModalContext";
 
 export default function Home() {
-  const { user, accessToken } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
-  const { showModal } = useModal();
-  const [isCreatingStore, setIsCreatingStore] = useState(false);
   
-  // Function to create a new store for users without one
-  const handleCreateNewStore = async () => {
-    if (!accessToken) {
-      return;
-    }
-    
-    try {
-      setIsCreatingStore(true);
-      
-      const response = await fetch(`${config.apiUrl}/auth/create-new-store`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (response.ok) {
-        // Refresh the page to update user data
-        window.location.reload();
-      } else {
-        const error = await response.json();
-        showModal(
-          "Error",
-          error.message || "Failed to create store",
-          "error"
-        );
-      }
-    } catch (error) {
-      console.error("Error creating store:", error);
-      showModal(
-        "Error",
-        "Something went wrong. Please try again.",
-        "error"
-      );
-    } finally {
-      setIsCreatingStore(false);
-    }
-  };
-  
-  // If user is logged in but has no toko (removed user or new user)
-  if (user && !user.toko_id) {
-    return (
-      <div className="p-4 flex flex-col gap-6 items-center justify-center min-h-screen">
-        {/* Logo Section */}
-        <div className="flex justify-center mb-4">
-          <img src={Logo.src} alt="LANCAR Logo" className="h-32" />
-        </div>
-        
-        <div className="bg-white rounded-xl p-6 shadow-md w-full max-w-md text-center">
-          <h1 className="text-xl font-bold mb-4">
-            Selamat Datang, {user.name}!
-          </h1>
-          
-          <p className="text-gray-600 mb-6">
-            Anda belum terhubung dengan toko. Anda dapat membuat toko baru atau menunggu undangan untuk bergabung dengan toko yang ada.
-          </p>
-          
-          <button
-            onClick={handleCreateNewStore}
-            disabled={isCreatingStore}
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-xl font-medium hover:bg-blue-700 transition disabled:bg-blue-400"
-          >
-            {isCreatingStore ? "Membuat Toko..." : "Buat Toko Baru"}
-          </button>
-        </div>
-      </div>
-    );
-  }
-  
-  // Regular home page for users with a toko
   return (
     <div className="p-4 flex flex-col gap-6">
       {/* Logo Section */}
