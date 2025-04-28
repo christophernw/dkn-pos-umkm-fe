@@ -49,7 +49,12 @@ export default function InvitePage() {
           await signOut({ redirect: false });
         } else {
           setStatus('error');
-          setMessage(data.error || "Terjadi kesalahan saat memvalidasi undangan.");
+          // Check if the error indicates the invitation doesn't exist or was deleted
+          if (data.error === "Invalid invitation") {
+            setMessage("Undangan tidak valid atau telah dihapus oleh pemilik. Silakan minta undangan baru.");
+          } else {
+            setMessage(data.error || "Terjadi kesalahan saat memvalidasi undangan.");
+          }
         }
       } catch (error) {
         console.error("Error validating invitation:", error);
@@ -81,8 +86,8 @@ export default function InvitePage() {
               </svg>
               <p>{message}</p>
             </div>
-            <Link href="/" className="block w-full bg-blue-600 text-white py-3 px-4 rounded-3xl text-center font-semibold hover:bg-blue-700 transition">
-              Kembali ke Beranda
+            <Link href="/login" className="block w-full bg-blue-600 text-white py-3 px-4 rounded-3xl text-center font-semibold hover:bg-blue-700 transition">
+              Login ke Aplikasi
             </Link>
           </div>
         ) : (
