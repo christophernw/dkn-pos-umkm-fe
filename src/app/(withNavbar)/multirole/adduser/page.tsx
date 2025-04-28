@@ -6,8 +6,13 @@ import { AiOutlineArrowLeft } from "react-icons/ai";
 import { useAuth } from "@/contexts/AuthContext";
 import { sendEmail } from "@/src/app/lib/sendInvitationEmail";
 import { sanitizeInput, validateInputs } from "./utils/inputValidation";
-import { sendInvitation } from "../adduser/services/invitationService";
-import { InvitationPayload, InvitationResponse } from "./types/types";
+// import { sendInvitation } from "../adduser/services/invitationService";
+// import { InvitationPayload, InvitationResponse } from "./types/types";
+import { 
+  sendInvitation, 
+  InvitationPayload, 
+  InvitationResponse 
+} from "../services/invitationService";
 import { Modal } from '@/src/components/elements/modal/Modal'
 import config from "@/src/config";
 import { ConfirmModal } from "./component/confirmmodal";
