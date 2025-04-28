@@ -10,11 +10,11 @@ import ReportIcon from '@/public/icons/navbar/ReportIcon'
 
 export const Navbar = () => {
     const navItems = React.useMemo(() => [
-        { text: 'Product', icon: ProductIcon, route: ["/informasi", "/semuaBarang"] },
-        { text: 'Transaction', icon: TransactionIcon, route: ["/transaksi"] },
-        { text: 'Home', icon: HomeIcon, route: ["/"] },
-        { text: 'Report', icon: ReportIcon, route: ["/report"] },
-        { text: 'Setting', icon: SettingsIcon, route: ["/pengaturan"] },
+        { text: 'Produk', icon: ProductIcon, route: ["/informasi", "/semuaBarang"] },
+        { text: 'Transaksi', icon: TransactionIcon, route: ["/transaksi"] },
+        { text: 'Beranda', icon: HomeIcon, route: ["/"] },
+        { text: 'Laporan', icon: ReportIcon, route: ["/report"] },
+        { text: 'Pengaturan', icon: SettingsIcon, route: ["/pengaturan"] },
     ], []);
 
     const [activeItem, setActiveItem] = useState<string | null>(null);
