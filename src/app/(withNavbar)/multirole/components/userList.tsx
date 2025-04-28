@@ -50,7 +50,7 @@ const UserList = () => {
       setUsers(usersData);
 
       // Fetch pending invitations
-      if (user && user.role === "Pemilik") {
+      if (user) {
         try {
           const pendingInvitationsData = await getPendingInvitations(accessToken);
           setPendingInvitations(pendingInvitationsData);
