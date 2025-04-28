@@ -96,17 +96,13 @@ const ReportPage = () => {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   });
 
-  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
-  // Check user role access - only Pemilik and Pengelola can access
   useEffect(() => {
-    // Wait until authentication data is loaded before checking permissions
     if (user) {
       setIsAuthLoading(false);
       
-      // Set access based on role
       if (user.role === "Pemilik" || user.role === "Pengelola") {
         setHasAccess(true);
       } else {
@@ -131,70 +127,6 @@ const ReportPage = () => {
       resetDateRange();
     }
   };
-
-  // Fetch summary data - only if user has access
-  // useEffect(() => {
-  //   if (!accessToken || !hasAccess || reportType !== "utang") {
-  //     setIsLoading(false);
-  //     return;
-  //   }
-
-  //   const fetchSummary = async () => {
-  //     if (!accessToken || !hasAccess || reportType === "arus-kas") {
-  //       return;
-  //     }
-
-  //     setIsLoading(true);
-  //     try {
-  //       // Fetch debt summary (for both report types)
-  //       const debtResponse = await fetch(
-  //         `${config.apiUrl}/transaksi/debt-summary`,
-  //         {
-  //           headers: {
-  //             Authorization: `Bearer ${accessToken}`,
-  //           },
-  //         }
-  //       );
-
-  //       // If we're in financial report mode, also fetch total transactions summary
-  //       let totalPemasukan = 0;
-  //       let totalPengeluaran = 0;
-        
-  //       if (reportType === "keuangan") {
-  //         const financialResponse = await fetch(
-  //           `${config.apiUrl}/transaksi/summary/monthly`,
-  //           {
-  //             headers: {
-  //               Authorization: `Bearer ${accessToken}`,
-  //             },
-  //           }
-  //         );
-          
-  //         if (financialResponse.ok) {
-  //           const financialData = await financialResponse.json();
-  //           totalPemasukan = financialData.pemasukan.amount || 0;
-  //           totalPengeluaran = financialData.pengeluaran.amount || 0;
-  //         }
-  //       }
-
-  //       if (debtResponse.ok) {
-  //         const debtData = await debtResponse.json();
-  //         setSummary({
-  //           utangSaya: debtData.utang_saya || 0,
-  //           utangPelanggan: debtData.utang_pelanggan || 0,
-  //           totalPemasukan: totalPemasukan,
-  //           totalPengeluaran: totalPengeluaran
-  //         });
-  //       }
-  //     } catch (error) {
-  //       console.error("Error fetching summary data:", error);
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-
-  //   fetchSummary();
-  // }, [accessToken, reportType, hasAccess]);
 
   // Fetch first transaction date - only if user has access
   useEffect(() => {
