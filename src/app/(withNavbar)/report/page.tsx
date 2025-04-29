@@ -1,3 +1,4 @@
+// src/app/(withNavbar)/report/page.tsx - Updated with proper timezone handling
 "use client";
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -5,7 +6,10 @@ import { useModal } from "@/contexts/ModalContext";
 import config from "@/src/config";
 import { useRouter } from "next/navigation";
 import { generateDebtReportPDF, PDFReportData } from "@/src/utils/pdfGenerator";
-import { generateDebtReportExcel, ExcelReportData } from "@/src/utils/excelGenerator";
+import {
+  generateDebtReportExcel,
+  ExcelReportData,
+} from "@/src/utils/excelGenerator";
 import { CoinIcon } from "@/public/icons/CoinIcon";
 import { StockIcon } from "@/public/icons/StockIcon";
 
@@ -36,15 +40,16 @@ const ReportPage = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [dateRange, setDateRange] = useState<string>("7"); // Default to last 7 days
   const [reportDateRange, setReportDateRange] = useState<ReportDateRange>({
-    startDate: '',
-    endDate: ''
+    startDate: "",
+    endDate: "",
   });
-  const [customStartDate, setCustomStartDate] = useState<string>('');
-  const [customEndDate, setCustomEndDate] = useState<string>('');
-  const [firstTransactionDate, setFirstTransactionDate] = useState<string>('');
+  const [customStartDate, setCustomStartDate] = useState<string>("");
+  const [customEndDate, setCustomEndDate] = useState<string>("");
+  const [firstTransactionDate, setFirstTransactionDate] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isGeneratingReport, setIsGeneratingReport] = useState<boolean>(false);
-  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState<boolean>(false);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] =
+    useState<boolean>(false);
 
   // Check user role access - only Pemilik and Pengelola can access
   useEffect(() => {
@@ -60,11 +65,14 @@ const ReportPage = () => {
     const fetchSummary = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`${config.apiUrl}/transaksi/debt-summary`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        const response = await fetch(
+          `${config.apiUrl}/transaksi/debt-summary`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
 
         if (response.ok) {
           const data = await response.json();
@@ -98,14 +106,14 @@ const ReportPage = () => {
 
         if (response.ok) {
           const data = await response.json();
-          setFirstTransactionDate(data.first_date || '');
-          
+          setFirstTransactionDate(data.first_date || "");
+
           // Initialize custom dates if they haven't been set
           if (!customStartDate) {
-            setCustomStartDate(data.first_date || '');
+            setCustomStartDate(data.first_date || "");
           }
           if (!customEndDate) {
-            const today = new Date().toISOString().split('T')[0];
+            const today = new Date().toISOString().split("T")[0];
             setCustomEndDate(today);
           }
         }
@@ -119,39 +127,63 @@ const ReportPage = () => {
 
   // Update custom dates when date range changes
   useEffect(() => {
-    if (dateRange === 'custom') return; // Don't update if custom is selected
-    
-    const endDate = new Date();
-    let startDate = new Date();
-    
-    if (dateRange === 'all') {
+    if (dateRange === "custom") return; // Don't update if custom is selected
+
+    // Get current date in Asia/Jakarta timezone (UTC+7)
+    const now = new Date();
+    // Adjust for UTC+7
+    const jakartaTime = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+
+    // Set time to end of day (23:59:59) in local timezone
+    const endDate = new Date(jakartaTime);
+    endDate.setHours(23, 59, 59, 999);
+
+    let startDate = new Date(jakartaTime);
+
+    if (dateRange === "all") {
       // Use first transaction date for "Semua"
       if (firstTransactionDate) {
-        startDate = new Date(firstTransactionDate);
+        startDate = new Date(firstTransactionDate + "T00:00:00+07:00");
       } else {
         // Default to 1 year if first transaction date is not available
         startDate.setFullYear(startDate.getFullYear() - 1);
       }
     } else {
-      // Convert dateRange to number of days
+      // Convert dateRange to number of days and set the start date
       const days = parseInt(dateRange);
       startDate.setDate(startDate.getDate() - days);
+      // Set time to start of day (00:00:00) in local timezone
+      startDate.setHours(0, 0, 0, 0);
     }
-    
-    setCustomStartDate(startDate.toISOString().split('T')[0]);
-    setCustomEndDate(endDate.toISOString().split('T')[0]);
+
+    // Format dates as YYYY-MM-DD
+    setCustomStartDate(startDate.toISOString().split("T")[0]);
+    setCustomEndDate(endDate.toISOString().split("T")[0]);
   }, [dateRange, firstTransactionDate]);
 
-  // Fetch transactions data
+  // Fetch transactions data with timezone handling
   useEffect(() => {
     if (!accessToken) return;
 
     const fetchTransactions = async () => {
       setIsLoading(true);
       try {
-        
-        const url = `${config.apiUrl}/transaksi/debt-report-by-date?start_date=${customStartDate}&end_date=${customEndDate}`;
-        
+        // Add timezone offset to make it clear these are in UTC+7
+        // Even though we're only passing the date part, this helps ensure
+        // the backend knows these dates are in local time
+        const startDateWithTz = customStartDate
+          ? `${customStartDate}T00:00:00+07:00`
+          : "";
+        const endDateWithTz = customEndDate
+          ? `${customEndDate}T23:59:59+07:00`
+          : "";
+
+        // URL encode the date strings with timezone info
+        const encodedStartDate = encodeURIComponent(startDateWithTz);
+        const encodedEndDate = encodeURIComponent(endDateWithTz);
+
+        const url = `${config.apiUrl}/transaksi/debt-report-by-date?start_date=${encodedStartDate}&end_date=${encodedEndDate}`;
+
         const response = await fetch(url, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -163,7 +195,7 @@ const ReportPage = () => {
           setTransactions(data.transactions || []);
           setReportDateRange({
             startDate: data.start_date,
-            endDate: data.end_date
+            endDate: data.end_date,
           });
         }
       } catch (error) {
@@ -173,8 +205,11 @@ const ReportPage = () => {
       }
     };
 
-    // Only fetch if we have valid dates when using custom range
-    if ((dateRange === 'custom' || dateRange === 'all') && (!customStartDate || !customEndDate)) {
+    // Only fetch if we have valid dates
+    if (
+      (dateRange === "custom" || dateRange === "all") &&
+      (!customStartDate || !customEndDate)
+    ) {
       return;
     }
 
@@ -188,50 +223,54 @@ const ReportPage = () => {
   const handleDownload = async (format: string) => {
     try {
       setIsGeneratingReport(true);
-      
+
       // Prepare data for report
       const reportData = {
         transactions,
         startDate: reportDateRange.startDate,
         endDate: reportDateRange.endDate,
         utangSaya,
-        utangPelanggan
+        utangPelanggan,
       };
-      
+
       // Generate report based on format
       let blob: Blob;
       let fileName: string;
-      
-      if (format === 'pdf') {
+
+      if (format === "pdf") {
         blob = await generateDebtReportPDF(reportData as PDFReportData);
         fileName = `Laporan_Utang_Piutang_${dateRange}_Hari.pdf`;
       } else {
         blob = generateDebtReportExcel(reportData as ExcelReportData);
         fileName = `Laporan_Utang_Piutang_${dateRange}_Hari.xlsx`;
       }
-      
+
       // Create download link and trigger download
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = fileName;
       document.body.appendChild(link);
       link.click();
-      
+
       // Clean up
       URL.revokeObjectURL(url);
       document.body.removeChild(link);
-      
+
       showModal(
         "Laporan Diunduh",
-        `Laporan dalam format ${format === "pdf" ? "PDF" : "Excel"} telah berhasil diunduh.`,
+        `Laporan dalam format ${
+          format === "pdf" ? "PDF" : "Excel"
+        } telah berhasil diunduh.`,
         "success"
       );
     } catch (error) {
       console.error(`Error generating ${format} report:`, error);
       showModal(
         "Gagal Mengunduh",
-        `Terjadi kesalahan saat mengunduh laporan dalam format ${format === "pdf" ? "PDF" : "Excel"}.`,
+        `Terjadi kesalahan saat mengunduh laporan dalam format ${
+          format === "pdf" ? "PDF" : "Excel"
+        }.`,
         "error"
       );
     } finally {
@@ -244,14 +283,31 @@ const ReportPage = () => {
     return amount.toLocaleString("id-ID");
   };
 
+  // Format date in Indonesia locale (UTC+7)
+  const formatLocalDate = (dateString: string): string => {
+    const date = new Date(dateString);
+
+    // Format using Indonesian locale
+    return date.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: "Asia/Jakarta", // Explicitly use Jakarta timezone
+    });
+  };
+
   if (!user || (user.role !== "Pemilik" && user.role !== "Pengelola")) {
-    return <div className="p-8 text-center text-red-600 font-bold">Access Denied: Only Pemilik or Pengelola can view reports</div>;
+    return (
+      <div className="p-8 text-center text-red-600 font-bold">
+        Access Denied: Only Pemilik or Pengelola can view reports
+      </div>
+    );
   }
 
   return (
     <div className="p-4">
       <h1 className="text-xl font-bold mb-4">Laporan Utang Piutang</h1>
-      
+
       {isLoading ? (
         <div className="flex justify-center items-center h-40">
           <p>Loading...</p>
@@ -271,9 +327,7 @@ const ReportPage = () => {
                 <p className="text-xl font-bold text-red-600">
                   Rp{formatCurrency(utangSaya)}
                 </p>
-                <p className="text-xs text-gray-500">
-                  Belum dilunasi
-                </p>
+                <p className="text-xs text-gray-500">Belum dilunasi</p>
               </div>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm">
@@ -287,9 +341,7 @@ const ReportPage = () => {
                 <p className="text-xl font-bold text-green-600">
                   Rp{formatCurrency(utangPelanggan)}
                 </p>
-                <p className="text-xs text-gray-500">
-                  Belum dilunasi
-                </p>
+                <p className="text-xs text-gray-500">Belum dilunasi</p>
               </div>
             </div>
           </div>
@@ -310,8 +362,9 @@ const ReportPage = () => {
               <option value="180">6 Bulan Terakhir</option>
               <option value="365">1 Tahun Terakhir</option>
               <option value="all">Semua</option>
+              <option value="custom">Kustom</option>
             </select>
-            
+
             <div className="grid grid-cols-2 gap-3 mt-2">
               <div>
                 <label className="block text-sm text-gray-600 mb-1">
@@ -321,6 +374,7 @@ const ReportPage = () => {
                   type="date"
                   value={customStartDate}
                   onChange={(e) => {
+                    setDateRange("custom");
                     setCustomStartDate(e.target.value);
                   }}
                   className="w-full p-2 border border-gray-300 rounded-md"
@@ -334,6 +388,7 @@ const ReportPage = () => {
                   type="date"
                   value={customEndDate}
                   onChange={(e) => {
+                    setDateRange("custom");
                     setCustomEndDate(e.target.value);
                   }}
                   className="w-full p-2 border border-gray-300 rounded-md"
@@ -344,8 +399,10 @@ const ReportPage = () => {
 
           {/* Transactions List */}
           <div className="mb-6">
-            <h2 className="text-lg font-semibold mb-3">Daftar Transaksi Belum Lunas</h2>
-            
+            <h2 className="text-lg font-semibold mb-3">
+              Daftar Transaksi Belum Lunas
+            </h2>
+
             <div className="space-y-3">
               {transactions.length === 0 ? (
                 <p className="text-center text-gray-500 py-4 bg-white rounded-lg shadow-sm">
@@ -356,22 +413,29 @@ const ReportPage = () => {
                   <div
                     key={transaction.id}
                     className="bg-white rounded-xl p-3 shadow-sm cursor-pointer"
-                    onClick={() => router.push(`/transaksi/detail/${transaction.id}`)}
+                    onClick={() =>
+                      router.push(`/transaksi/detail/${transaction.id}`)
+                    }
                   >
                     <div className="flex justify-between items-center">
-                      <span className="font-medium">Transaksi #{transaction.id}</span>
+                      <span className="font-medium">
+                        Transaksi #{transaction.id}
+                      </span>
                       <span className="text-sm text-gray-500">
-                        {new Date(transaction.created_at).toLocaleDateString("id-ID")}
+                        {formatLocalDate(transaction.created_at)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center mt-2">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${
                           transaction.transaction_type === "pemasukan"
                             ? "bg-green-100 text-green-800"
                             : "bg-red-100 text-red-800"
                         }`}
                       >
-                        {transaction.transaction_type === "pemasukan" ? "Berikan" : "Terima"}
+                        {transaction.transaction_type === "pemasukan"
+                          ? "Berikan"
+                          : "Terima"}
                       </span>
                       <span className="font-semibold">
                         Rp{formatCurrency(transaction.total_amount)}
@@ -392,51 +456,90 @@ const ReportPage = () => {
             {isGeneratingReport ? "Memproses..." : "Unduh Laporan"}
           </button>
 
-          {/* Download Modal */}
+          {/* Download Modal - Fixed Excel Icon */}
           {isDownloadModalOpen && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
               <div className="bg-white rounded-xl p-5 w-5/6 max-w-md">
                 <h3 className="text-lg font-semibold mb-4">Unduh Laporan</h3>
-                <p className="text-gray-600 mb-4">Pilih format laporan yang ingin diunduh:</p>
-                
+                <p className="text-gray-600 mb-4">
+                  Pilih format laporan yang ingin diunduh:
+                </p>
+
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <button
                     onClick={() => handleDownload("pdf")}
                     disabled={isGeneratingReport}
                     className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   >
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      className="h-12 w-12 text-red-500 mb-2" 
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-12 w-12 text-red-500 mb-2"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="1.5"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+                      />
                     </svg>
                     <span>PDF</span>
                   </button>
-                  
+
                   <button
                     onClick={() => handleDownload("xlsx")}
                     disabled={isGeneratingReport}
                     className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   >
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      className="h-12 w-12 text-green-600 mb-2" 
+                    {/* Updated Excel Icon */}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-12 w-12 text-green-600 mb-2"
                       viewBox="0 0 24 24"
                       fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H5.625c-.621 0-1.125-.504-1.125-1.125v-17.25c0-.621.504-1.125 1.125-1.125h12.75c.621 0 1.125.504 1.125 1.125v17.25c0 .621-.504 1.125-1.125 1.125z" />
+                      <path
+                        d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M14 2V8H20"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M8 13H16"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M8 17H16"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M10 9H8"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
                     </svg>
                     <span>Excel</span>
                   </button>
                 </div>
-                
+
                 <button
                   onClick={() => setIsDownloadModalOpen(false)}
                   disabled={isGeneratingReport}

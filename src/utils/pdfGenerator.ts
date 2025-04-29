@@ -65,21 +65,25 @@ export const generateDebtReportPDF = async (reportData: PDFReportData): Promise<
           <table style="width: 100%; border-collapse: collapse;">
             <thead style="background-color: #f3f4f6;">
               <tr>
-                <th style="padding: 12px; text-align: left;">ID Transaksi</th>
-                <th style="padding: 12px; text-align: left;">Tanggal</th>
-                <th style="padding: 12px; text-align: left;">Tipe</th>
-                <th style="padding: 12px; text-align: right;">Jumlah</th>
+                <th style="padding: 12px; text-align: left; font-size: 14px;">ID Transaksi</th>
+                <th style="padding: 12px; text-align: left; font-size: 14px;">Tanggal</th>
+                <th style="padding: 12px; text-align: left; font-size: 14px;">Tipe</th>
+                <th style="padding: 12px; text-align: left; font-size: 14px;">Kategori</th>
+                <th style="padding: 12px; text-align: left; font-size: 14px;">Status</th>
+                <th style="padding: 12px; text-align: right; font-size: 14px;">Jumlah</th>
               </tr>
             </thead>
             <tbody>
               ${reportData.transactions.map((transaction, index) => `
                 <tr style="background-color: ${index % 2 === 0 ? '#ffffff' : '#f9fafb'}">
-                  <td style="padding: 12px;">${transaction.id}</td>
-                  <td style="padding: 12px;">${formatDate(transaction.created_at)}</td>
-                  <td style="padding: 12px;">
+                  <td style="padding: 12px; font-size: 13px;">${transaction.id}</td>
+                  <td style="padding: 12px; font-size: 13px;">${formatDateWithTime(transaction.created_at)}</td>
+                  <td style="padding: 12px; font-size: 13px;">
                     ${transaction.transaction_type === "pemasukan" ? "Berikan" : "Terima"}
                   </td>
-                  <td style="padding: 12px; text-align: right;">
+                  <td style="padding: 12px; font-size: 13px;">${transaction.category}</td>
+                  <td style="padding: 12px; font-size: 13px;">${transaction.status}</td>
+                  <td style="padding: 12px; text-align: right; font-size: 13px;">
                     Rp ${formatCurrency(transaction.total_amount)}
                   </td>
                 </tr>
@@ -91,7 +95,7 @@ export const generateDebtReportPDF = async (reportData: PDFReportData): Promise<
 
       <div style="margin-top: 30px; text-align: center; font-size: 14px; color: #6b7280;">
         <p>© LANCAR - Sistem POS untuk UMKM</p>
-        <p>Laporan dibuat pada ${new Date().toLocaleDateString("id-ID")}</p>
+        <p>Laporan dibuat pada ${formatDateWithTime(new Date().toISOString())}</p>
       </div>
     </div>
   `;
@@ -129,10 +133,32 @@ const formatCurrency = (amount: number): string => {
   return amount.toLocaleString("id-ID");
 };
 
+// Format date in Indonesia locale with Jakarta timezone (UTC+7)
 const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString("id-ID", {
+  // Create a date object
+  const date = new Date(dateString);
+  
+  // Format using Indonesian locale with Jakarta timezone
+  return date.toLocaleDateString("id-ID", {
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: "Asia/Jakarta" // Explicitly use Jakarta timezone (UTC+7)
+  });
+};
+
+// Format date with time in Indonesia locale with Jakarta timezone (UTC+7)
+const formatDateWithTime = (dateString: string): string => {
+  // Create a date object
+  const date = new Date(dateString);
+  
+  // Format date and time using Indonesian locale with Jakarta timezone
+  return date.toLocaleString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Jakarta" // Explicitly use Jakarta timezone (UTC+7)
   });
 };

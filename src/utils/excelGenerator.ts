@@ -11,47 +11,89 @@ export interface ExcelReportData {
 }
 
 /**
- * Generates an Excel report from the provided data
+ * Generates an Excel report from the provided data - all in a single sheet
  */
 export const generateDebtReportExcel = (reportData: ExcelReportData): Blob => {
   // Create a new workbook
   const workbook = XLSX.utils.book_new();
   
-  // Create summary worksheet
-  const summaryData = [
-    ['Laporan Utang Piutang'],
-    [`Periode: ${formatDate(reportData.startDate)} - ${formatDate(reportData.endDate)}`],
-    [],
-    ['Ringkasan'],
-    ['Kategori', 'Jumlah'],
-    ['Utang Saya', `Rp ${formatCurrency(reportData.utangSaya)}`],
-    ['Utang Pelanggan', `Rp ${formatCurrency(reportData.utangPelanggan)}`],
+  // Create a single comprehensive sheet with all data
+  const data: any[][] = [];
+  
+  // Title and period
+  data.push(['Laporan Utang Piutang']);
+  data.push([`Periode: ${formatDate(reportData.startDate)} - ${formatDate(reportData.endDate)}`]);
+  data.push([]);
+  
+  // Summary section
+  data.push(['RINGKASAN']);
+  data.push(['Kategori', 'Jumlah']);
+  data.push(['Utang Saya', `Rp ${formatCurrency(reportData.utangSaya)}`]);
+  data.push(['Utang Pelanggan', `Rp ${formatCurrency(reportData.utangPelanggan)}`]);
+  data.push([]);
+  
+  // Transaction details section
+  data.push(['DETAIL TRANSAKSI']);
+  data.push(['ID Transaksi', 'Tanggal', 'Tipe', 'Kategori', 'Status', 'Jumlah']);
+  
+  // Add all transactions
+  reportData.transactions.forEach(transaction => {
+    data.push([
+      transaction.id,
+      formatDateWithTime(transaction.created_at),
+      transaction.transaction_type === 'pemasukan' ? 'Berikan' : 'Terima',
+      transaction.category,
+      transaction.status,
+      `Rp ${formatCurrency(transaction.total_amount)}`
+    ]);
+    
+    // If transaction has items, add them directly below the transaction
+    if (transaction.items && transaction.items.length > 0) {
+      // Add item header, indented to show hierarchy
+      data.push(['', 'Detail Produk:', 'Nama', 'Jumlah', 'Harga Satuan', 'Subtotal']);
+      
+      // Add each item under the transaction
+      transaction.items.forEach((item: any) => {
+        const unitPrice = transaction.transaction_type === 'pemasukan' ? 
+          item.harga_jual_saat_transaksi : 
+          item.harga_modal_saat_transaksi;
+          
+        data.push([
+          '', 
+          '', 
+          item.product_name,
+          item.quantity,
+          `Rp ${formatCurrency(unitPrice)}`,
+          `Rp ${formatCurrency(item.quantity * unitPrice)}`
+        ]);
+      });
+      
+      // Add a blank row after items for better readability
+      data.push([]);
+    }
+  });
+  
+  // Add footer with generation timestamp
+  data.push([]);
+  data.push(['Laporan dibuat pada', formatDateWithTime(new Date().toISOString())]);
+  
+  // Create the sheet
+  const sheet = XLSX.utils.aoa_to_sheet(data);
+  
+  // Apply column widths for better readability
+  const colWidths = [
+    { wch: 15 },  // A: ID/Category
+    { wch: 25 },  // B: Date/Detail
+    { wch: 20 },  // C: Type/Product
+    { wch: 15 },  // D: Category/Quantity
+    { wch: 15 },  // E: Status/Unit Price
+    { wch: 15 },  // F: Amount/Subtotal
   ];
   
-  const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
-  XLSX.utils.book_append_sheet(workbook, summarySheet, 'Ringkasan');
+  sheet['!cols'] = colWidths;
   
-  // Create details worksheet
-  const detailsHeaders = [
-    ['ID Transaksi', 'Tanggal', 'Tipe', 'Jumlah']
-  ];
-  
-  const detailsData = reportData.transactions.map(transaction => [
-    transaction.id,
-    formatDate(transaction.created_at),
-    transaction.transaction_type === 'pemasukan' ? 'Berikan' : 'Terima',
-    `Rp ${formatCurrency(transaction.total_amount)}`
-  ]);
-  
-  const detailsSheet = XLSX.utils.aoa_to_sheet([...detailsHeaders, ...detailsData]);
-  XLSX.utils.book_append_sheet(workbook, detailsSheet, 'Detail Transaksi');
-  
-  // Apply some basic styling (column widths)
-  const summaryColWidths = [{ wch: 20 }, { wch: 20 }];
-  const detailsColWidths = [{ wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 20 }];
-  
-  summarySheet['!cols'] = summaryColWidths;
-  detailsSheet['!cols'] = detailsColWidths;
+  // Add the sheet to the workbook
+  XLSX.utils.book_append_sheet(workbook, sheet, 'Laporan Utang Piutang');
   
   // Generate the Excel file as a blob
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
@@ -63,10 +105,32 @@ const formatCurrency = (amount: number): string => {
   return amount.toLocaleString("id-ID");
 };
 
+// Format date in Indonesia locale with Jakarta timezone (UTC+7)
 const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString("id-ID", {
+  // Create a date object
+  const date = new Date(dateString);
+  
+  // Format using Indonesian locale with Jakarta timezone
+  return date.toLocaleDateString("id-ID", {
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: "Asia/Jakarta" // Explicitly use Jakarta timezone (UTC+7)
+  });
+};
+
+// Format date with time in Indonesia locale with Jakarta timezone (UTC+7)
+const formatDateWithTime = (dateString: string): string => {
+  // Create a date object
+  const date = new Date(dateString);
+  
+  // Format date and time using Indonesian locale with Jakarta timezone
+  return date.toLocaleString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Jakarta" // Explicitly use Jakarta timezone (UTC+7)
   });
 };
