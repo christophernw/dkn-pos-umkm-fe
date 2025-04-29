@@ -44,6 +44,8 @@ const ReportPage = () => {
   const router = useRouter();
   const [reportType, setReportType] = useState<"keuangan" | "utang">("utang");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  // Add a state to track authorization
+  const [hasAccess, setHasAccess] = useState<boolean>(false);
   
   // Summary data
   const [summary, setSummary] = useState<ReportSummary>({
@@ -72,8 +74,22 @@ const ReportPage = () => {
     // Wait until authentication data is loaded before checking permissions
     if (user) {
       setIsAuthLoading(false);
-      if (user.role !== "Pemilik" && user.role !== "Pengelola") {
-        // Show modal first
+      
+      // Set access based on role
+      if (user.role === "Pemilik" || user.role === "Pengelola") {
+        setHasAccess(true);
+      } else {
+        // Reset all data to ensure unauthorized users see nothing
+        setSummary({
+          utangSaya: 0,
+          utangPelanggan: 0,
+          totalPemasukan: 0,
+          totalPengeluaran: 0
+        });
+        setTransactions([]);
+        setHasAccess(false);
+        
+        // Show modal for unauthorized access
         showModal(
           "Akses Ditolak", 
           "Maaf, hanya Pemilik atau Pengelola yang dapat mengakses laporan.", 
@@ -86,11 +102,10 @@ const ReportPage = () => {
             }
           }
         );
-        
-        return;
       }
     } else if (accessToken === null) {
       setIsAuthLoading(false);
+      setHasAccess(false);
     }
   }, [user, accessToken, router]);
 
@@ -106,9 +121,12 @@ const ReportPage = () => {
     }
   };
 
-  // Fetch summary data
+  // Fetch summary data - only if user has access
   useEffect(() => {
-    if (!accessToken) return;
+    if (!accessToken || !hasAccess) {
+      setIsLoading(false);
+      return;
+    }
 
     const fetchSummary = async () => {
       setIsLoading(true);
@@ -161,11 +179,13 @@ const ReportPage = () => {
     };
 
     fetchSummary();
-  }, [accessToken, reportType]);
+  }, [accessToken, reportType, hasAccess]);
 
-  // Fetch first transaction date
+  // Fetch first transaction date - only if user has access
   useEffect(() => {
-    if (!accessToken) return;
+    if (!accessToken || !hasAccess) {
+      return;
+    }
 
     const fetchFirstTransactionDate = async () => {
       try {
@@ -198,7 +218,7 @@ const ReportPage = () => {
     };
 
     fetchFirstTransactionDate();
-  }, [accessToken, reportType]);
+  }, [accessToken, reportType, hasAccess, customStartDate, customEndDate]);
 
   const resetDateRange = () => {
     // Get current date in Asia/Jakarta timezone (UTC+7)
@@ -235,13 +255,16 @@ const ReportPage = () => {
 
   // Update custom dates when date range changes
   useEffect(() => {
-    if (dateRange === "custom") return; // Don't update if custom is selected
+    if (dateRange === "custom" || !hasAccess) return; // Don't update if custom is selected or no access
     resetDateRange();
-  }, [dateRange, firstTransactionDate]);
+  }, [dateRange, firstTransactionDate, hasAccess]);
 
-  // Fetch transactions data with timezone handling
+  // Fetch transactions data with timezone handling - only if user has access
   useEffect(() => {
-    if (!accessToken) return;
+    if (!accessToken || !hasAccess) {
+      setIsLoading(false);
+      return;
+    }
 
     const fetchTransactions = async () => {
       setIsLoading(true);
@@ -297,13 +320,22 @@ const ReportPage = () => {
     }
 
     fetchTransactions();
-  }, [dateRange, customStartDate, customEndDate, accessToken, reportType]);
+  }, [dateRange, customStartDate, customEndDate, accessToken, reportType, hasAccess]);
 
   const handleDownloadClick = () => {
+    if (!hasAccess) {
+      // Prevent download if no access
+      return;
+    }
     setIsDownloadModalOpen(true);
   };
 
   const handleDownload = async (format: string) => {
+    if (!hasAccess) {
+      // Prevent download if no access
+      return;
+    }
+    
     try {
       setIsGeneratingReport(true);
 
@@ -384,6 +416,8 @@ const ReportPage = () => {
 
   // Handle start date change with validation
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!hasAccess) return;
+    
     const newStartDate = e.target.value;
     // Set to custom date range
     setDateRange("custom");
@@ -399,6 +433,8 @@ const ReportPage = () => {
 
   // Handle end date change with validation
   const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!hasAccess) return;
+    
     const newEndDate = e.target.value;
     // Set to custom date range
     setDateRange("custom");
@@ -427,7 +463,7 @@ const ReportPage = () => {
         <div className="relative">
           <div
             className="flex p-1 bg-white rounded-full items-center gap-2 w-fit cursor-pointer"
-            onClick={() => setDropdownOpen(!dropdownOpen)}
+            onClick={() => hasAccess && setDropdownOpen(!dropdownOpen)}
           >
             <div className="bg-primary-indigo rounded-full p-2">
               <NotesIcon />
@@ -453,7 +489,7 @@ const ReportPage = () => {
             </div>
           </div>
 
-          {dropdownOpen && (
+          {dropdownOpen && hasAccess && (
             <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg z-10 w-[220px]">
               <div
                 className={`p-3 cursor-pointer hover:bg-gray-100 ${
@@ -560,8 +596,9 @@ const ReportPage = () => {
             </label>
             <select
               value={dateRange}
-              onChange={(e) => setDateRange(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md mb-3"
+              onChange={(e) => hasAccess && setDateRange(e.target.value)}
+              className={`w-full p-2 border border-gray-300 rounded-md mb-3 ${!hasAccess ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+              disabled={!hasAccess}
             >
               <option value="7">7 Hari Terakhir</option>
               <option value="30">Bulan Ini</option>
@@ -582,7 +619,8 @@ const ReportPage = () => {
                   value={customStartDate}
                   onChange={handleStartDateChange}
                   max={customEndDate}
-                  className="w-full p-2 border border-gray-300 rounded-md"
+                  className={`w-full p-2 border border-gray-300 rounded-md ${!hasAccess ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                  disabled={!hasAccess}
                 />
               </div>
               <div>
@@ -594,7 +632,8 @@ const ReportPage = () => {
                   value={customEndDate}
                   onChange={handleEndDateChange}
                   min={customStartDate}
-                  className="w-full p-2 border border-gray-300 rounded-md"
+                  className={`w-full p-2 border border-gray-300 rounded-md ${!hasAccess ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                  disabled={!hasAccess}
                 />
               </div>
             </div>
@@ -611,18 +650,18 @@ const ReportPage = () => {
             <div className="space-y-3">
               {transactions.length === 0 ? (
                 <p className="text-center text-gray-500 py-4 bg-white rounded-lg shadow-sm">
-                  {reportType === "utang"
-                    ? "Tidak ada data utang untuk periode ini."
-                    : "Tidak ada transaksi untuk periode ini."}
+                  {hasAccess 
+                    ? (reportType === "utang"
+                      ? "Tidak ada data utang untuk periode ini."
+                      : "Tidak ada transaksi untuk periode ini.")
+                    : "Tidak ada data yang dapat ditampilkan."}
                 </p>
               ) : (
                 transactions.map((transaction) => (
                   <div
                     key={transaction.id}
-                    className="bg-white rounded-xl p-3 shadow-sm cursor-pointer"
-                    onClick={() =>
-                      router.push(`/transaksi/detail/${transaction.id}`)
-                    }
+                    className={`bg-white rounded-xl p-3 shadow-sm ${hasAccess ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                    onClick={() => hasAccess && router.push(`/transaksi/detail/${transaction.id}`)}
                   >
                     <div className="flex justify-between items-center">
                       <span className="font-medium">
@@ -671,7 +710,7 @@ const ReportPage = () => {
           {/* Download Button */}
           <button
             onClick={handleDownloadClick}
-            disabled={isGeneratingReport || transactions.length === 0}
+            disabled={isGeneratingReport || transactions.length === 0 || !hasAccess}
             className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium mb-20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center z-20"
           >
             {isGeneratingReport ? "Memproses..." : "Unduh Laporan"}
