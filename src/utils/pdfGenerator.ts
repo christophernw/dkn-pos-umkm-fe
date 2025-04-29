@@ -9,6 +9,9 @@ export interface PDFReportData {
   endDate: string;
   utangSaya: number;
   utangPelanggan: number;
+  totalPemasukan?: number;
+  totalPengeluaran?: number;
+  reportType: "keuangan" | "utang";
 }
 
 /**
@@ -23,11 +26,16 @@ export const generateDebtReportPDF = async (reportData: PDFReportData): Promise<
   reportContainer.style.width = '795px'; // A4 width at 96 DPI
   document.body.appendChild(reportContainer);
 
+  // Determine report title based on type
+  const reportTitle = reportData.reportType === "utang" 
+    ? "Laporan Utang Piutang"
+    : "Laporan Keuangan";
+
   // Render the report content
   reportContainer.innerHTML = `
     <div style="padding: 40px; font-family: Arial, sans-serif;">
       <div style="text-align: center; margin-bottom: 30px;">
-        <h1 style="font-size: 24px; font-weight: bold;">Laporan Utang Piutang</h1>
+        <h1 style="font-size: 24px; font-weight: bold;">${reportTitle}</h1>
         <p style="color: #666;">
           Periode: ${formatDate(reportData.startDate)} - ${formatDate(reportData.endDate)}
         </p>
@@ -40,18 +48,39 @@ export const generateDebtReportPDF = async (reportData: PDFReportData): Promise<
         <div style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
           <table style="width: 100%; border-collapse: collapse;">
             <tbody>
-              <tr style="border-bottom: 1px solid #e5e7eb;">
-                <td style="padding: 12px; background-color: #f9fafb; font-weight: 500;">Utang Saya</td>
-                <td style="padding: 12px; text-align: right; color: #dc2626; font-weight: 500;">
-                  Rp ${formatCurrency(reportData.utangSaya)}
-                </td>
-              </tr>
-              <tr>
-                <td style="padding: 12px; background-color: #f9fafb; font-weight: 500;">Utang Pelanggan</td>
-                <td style="padding: 12px; text-align: right; color: #16a34a; font-weight: 500;">
-                  Rp ${formatCurrency(reportData.utangPelanggan)}
-                </td>
-              </tr>
+              ${reportData.reportType === "utang" ? `
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                  <td style="padding: 12px; background-color: #f9fafb; font-weight: 500;">Utang Saya</td>
+                  <td style="padding: 12px; text-align: right; color: #dc2626; font-weight: 500;">
+                    Rp ${formatCurrency(reportData.utangSaya)}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 12px; background-color: #f9fafb; font-weight: 500;">Utang Pelanggan</td>
+                  <td style="padding: 12px; text-align: right; color: #16a34a; font-weight: 500;">
+                    Rp ${formatCurrency(reportData.utangPelanggan)}
+                  </td>
+                </tr>
+              ` : `
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                  <td style="padding: 12px; background-color: #f9fafb; font-weight: 500;">Total Pemasukan</td>
+                  <td style="padding: 12px; text-align: right; color: #16a34a; font-weight: 500;">
+                    Rp ${formatCurrency(reportData.totalPemasukan || 0)}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 12px; background-color: #f9fafb; font-weight: 500;">Total Pengeluaran</td>
+                  <td style="padding: 12px; text-align: right; color: #dc2626; font-weight: 500;">
+                    Rp ${formatCurrency(reportData.totalPengeluaran || 0)}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 12px; background-color: #f9fafb; font-weight: 500;">Saldo</td>
+                  <td style="padding: 12px; text-align: right; font-weight: 700; ${(reportData.totalPemasukan || 0) >= (reportData.totalPengeluaran || 0) ? 'color: #16a34a' : 'color: #dc2626'}">
+                    Rp ${formatCurrency(Math.abs((reportData.totalPemasukan || 0) - (reportData.totalPengeluaran || 0)))}
+                  </td>
+                </tr>
+              `}
             </tbody>
           </table>
         </div>
@@ -59,7 +88,9 @@ export const generateDebtReportPDF = async (reportData: PDFReportData): Promise<
 
       <div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-          <h2 style="font-size: 18px; font-weight: 600;">Detail Transaksi</h2>
+          <h2 style="font-size: 18px; font-weight: 600;">
+            ${reportData.reportType === "utang" ? "Detail Transaksi Belum Lunas" : "Detail Transaksi"}
+          </h2>
         </div>
         <div style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
           <table style="width: 100%; border-collapse: collapse;">

@@ -8,6 +8,9 @@ export interface ExcelReportData {
   endDate: string;
   utangSaya: number;
   utangPelanggan: number;
+  totalPemasukan?: number;
+  totalPengeluaran?: number;
+  reportType: "keuangan" | "utang";
 }
 
 /**
@@ -20,20 +23,37 @@ export const generateDebtReportExcel = (reportData: ExcelReportData): Blob => {
   // Create a single comprehensive sheet with all data
   const data: any[][] = [];
   
+  // Determine report title based on type
+  const reportTitle = reportData.reportType === "utang" 
+    ? "Laporan Utang Piutang"
+    : "Laporan Keuangan";
+  
   // Title and period
-  data.push(['Laporan Utang Piutang']);
+  data.push([reportTitle]);
   data.push([`Periode: ${formatDate(reportData.startDate)} - ${formatDate(reportData.endDate)}`]);
   data.push([]);
   
   // Summary section
   data.push(['RINGKASAN']);
   data.push(['Kategori', 'Jumlah']);
-  data.push(['Utang Saya', `Rp ${formatCurrency(reportData.utangSaya)}`]);
-  data.push(['Utang Pelanggan', `Rp ${formatCurrency(reportData.utangPelanggan)}`]);
+  
+  if (reportData.reportType === "utang") {
+    // Debt/receivables summary
+    data.push(['Utang Saya', `Rp ${formatCurrency(reportData.utangSaya)}`]);
+    data.push(['Utang Pelanggan', `Rp ${formatCurrency(reportData.utangPelanggan)}`]);
+  } else {
+    // Financial summary
+    data.push(['Total Pemasukan', `Rp ${formatCurrency(reportData.totalPemasukan || 0)}`]);
+    data.push(['Total Pengeluaran', `Rp ${formatCurrency(reportData.totalPengeluaran || 0)}`]);
+    
+    const saldo = (reportData.totalPemasukan || 0) - (reportData.totalPengeluaran || 0);
+    data.push(['Saldo', `Rp ${formatCurrency(Math.abs(saldo))}`]);
+  }
+  
   data.push([]);
   
   // Transaction details section
-  data.push(['DETAIL TRANSAKSI']);
+  data.push([reportData.reportType === "utang" ? 'DETAIL TRANSAKSI BELUM LUNAS' : 'DETAIL TRANSAKSI']);
   data.push(['ID Transaksi', 'Tanggal', 'Tipe', 'Kategori', 'Status', 'Jumlah']);
   
   // Add all transactions
@@ -93,7 +113,7 @@ export const generateDebtReportExcel = (reportData: ExcelReportData): Blob => {
   sheet['!cols'] = colWidths;
   
   // Add the sheet to the workbook
-  XLSX.utils.book_append_sheet(workbook, sheet, 'Laporan Utang Piutang');
+  XLSX.utils.book_append_sheet(workbook, sheet, reportTitle);
   
   // Generate the Excel file as a blob
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
