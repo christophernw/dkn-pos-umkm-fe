@@ -40,7 +40,7 @@ interface ReportSummary {
 
 const ReportPage = () => {
   const { user, accessToken } = useAuth();
-  const { showModal } = useModal();
+  const { showModal, hideModal } = useModal();
   const router = useRouter();
   const [reportType, setReportType] = useState<"keuangan" | "utang">("utang");
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -62,16 +62,37 @@ const ReportPage = () => {
   const [customStartDate, setCustomStartDate] = useState<string>("");
   const [customEndDate, setCustomEndDate] = useState<string>("");
   const [firstTransactionDate, setFirstTransactionDate] = useState<string>("");
+  const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isGeneratingReport, setIsGeneratingReport] = useState<boolean>(false);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState<boolean>(false);
 
   // Check user role access - only Pemilik and Pengelola can access
   useEffect(() => {
-    if (user && user.role !== "Pemilik" && user.role !== "Pengelola") {
-      router.push("/");
+    // Wait until authentication data is loaded before checking permissions
+    if (user) {
+      setIsAuthLoading(false);
+      if (user.role !== "Pemilik" && user.role !== "Pengelola") {
+        // Show modal first
+        showModal(
+          "Akses Ditolak", 
+          "Maaf, hanya Pemilik atau Pengelola yang dapat mengakses laporan.", 
+          "error", 
+          {
+            label: "Kembali ke Beranda",
+            onClick: () => {
+              hideModal();
+              router.push("/");
+            }
+          }
+        );
+        
+        return;
+      }
+    } else if (accessToken === null) {
+      setIsAuthLoading(false);
     }
-  }, [user, router]);
+  }, [user, accessToken, router]);
 
   // Handle report type change
   const handleReportTypeChange = (type: "keuangan" | "utang") => {
@@ -391,10 +412,11 @@ const ReportPage = () => {
     }
   };
 
-  if (!user || (user.role !== "Pemilik" && user.role !== "Pengelola")) {
+  // Show loading state while authentication is being checked
+  if (isAuthLoading) {
     return (
-      <div className="p-8 text-center text-red-600 font-bold">
-        Access Denied: Only Pemilik or Pengelola can view reports
+      <div className="p-8 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
       </div>
     );
   }
