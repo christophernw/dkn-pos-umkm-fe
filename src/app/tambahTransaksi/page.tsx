@@ -377,7 +377,7 @@ export default function TambahTransaksiPage() {
           {transactionMode === "pemasukan" ? (
             <>
               <option>Penjualan Barang</option>
-              <option>Penambahan Modal</option>
+              <option>Pendapatan Pinjaman</option>
               <option>Pendapatan Di Luar Usaha</option>
               <option>Pendapatan Lain-Lain</option>
               <option>Pendapatan Jasa/Komisi</option>
@@ -387,8 +387,8 @@ export default function TambahTransaksiPage() {
           ) : (
             <>
               <option>Pembelian Stok</option>
-              <option>Pembelian bahan baku</option>
-              <option>Biaya operasional</option>
+              <option>Pembelian Bahan Baku</option>
+              <option>Biaya Operasional</option>
               <option>Gaji/Bonus Karyawan</option>
               <option>Pemberian utang</option>
               <option>Pembayaran Utang/Cicilan</option>
