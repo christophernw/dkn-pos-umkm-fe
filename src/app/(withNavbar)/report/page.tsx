@@ -361,6 +361,36 @@ const ReportPage = () => {
     });
   };
 
+  // Handle start date change with validation
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newStartDate = e.target.value;
+    // Set to custom date range
+    setDateRange("custom");
+    
+    // Validate: Start date cannot be after end date
+    if (customEndDate && newStartDate > customEndDate) {
+      // If invalid, set start date to end date
+      setCustomStartDate(customEndDate);
+    } else {
+      setCustomStartDate(newStartDate);
+    }
+  };
+
+  // Handle end date change with validation
+  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEndDate = e.target.value;
+    // Set to custom date range
+    setDateRange("custom");
+    
+    // Validate: End date cannot be before start date
+    if (customStartDate && newEndDate < customStartDate) {
+      // If invalid, set end date to start date
+      setCustomEndDate(customStartDate);
+    } else {
+      setCustomEndDate(newEndDate);
+    }
+  };
+
   if (!user || (user.role !== "Pemilik" && user.role !== "Pengelola")) {
     return (
       <div className="p-8 text-center text-red-600 font-bold">
@@ -371,11 +401,7 @@ const ReportPage = () => {
 
   return (
     <div className="p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-bold">
-          {reportType === "utang" ? "Laporan Utang Piutang" : "Laporan Keuangan"}
-        </h1>
-        
+      <div className="flex justify-start items-center mb-4">
         <div className="relative">
           <div
             className="flex p-1 bg-white rounded-full items-center gap-2 w-fit cursor-pointer"
@@ -406,7 +432,7 @@ const ReportPage = () => {
           </div>
 
           {dropdownOpen && (
-            <div className="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-lg z-10 w-[220px]">
+            <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg z-10 w-[220px]">
               <div
                 className={`p-3 cursor-pointer hover:bg-gray-100 ${
                   reportType === "keuangan"
@@ -532,10 +558,8 @@ const ReportPage = () => {
                 <input
                   type="date"
                   value={customStartDate}
-                  onChange={(e) => {
-                    setDateRange("custom");
-                    setCustomStartDate(e.target.value);
-                  }}
+                  onChange={handleStartDateChange}
+                  max={customEndDate}
                   className="w-full p-2 border border-gray-300 rounded-md"
                 />
               </div>
@@ -546,10 +570,8 @@ const ReportPage = () => {
                 <input
                   type="date"
                   value={customEndDate}
-                  onChange={(e) => {
-                    setDateRange("custom");
-                    setCustomEndDate(e.target.value);
-                  }}
+                  onChange={handleEndDateChange}
+                  min={customStartDate}
                   className="w-full p-2 border border-gray-300 rounded-md"
                 />
               </div>
