@@ -1,15 +1,14 @@
-// tambahProduk/page.tsx
 "use client";
 import { useState, ChangeEvent } from "react";
 import TextInput from "./components/textInput";
 import { useAuth } from "@/contexts/AuthContext";
 import config from "@/src/config";
 import { useModal } from "@/contexts/ModalContext";
-import Dropdown from "@/src/components/Dropdown";
+import EnhancedDropdown from "@/src/components/elements/modal/EnhancedDropdown";
 
-// Dropdown Options
-const unitOptions = ["Pcs", "Kg", "Botol", "Liter"];
-const categoryOptions = [
+// Initial dropdown options
+const initialUnitOptions = ["Pcs", "Kg", "Botol", "Liter"];
+const initialCategoryOptions = [
   "Sembako",
   "Perawatan Diri",
   "Pakaian & Aksesori",
@@ -30,6 +29,10 @@ export default function AddProductPage() {
   const { accessToken } = useAuth();
   const [loading, setLoading] = useState(false);
   const { showModal, hideModal } = useModal();
+
+  // State for managing custom options
+  const [categoryOptions, setCategoryOptions] = useState([...initialCategoryOptions]);
+  const [unitOptions, setUnitOptions] = useState([...initialUnitOptions]);
 
   // Add state for field errors
   const [errors, setErrors] = useState({
@@ -65,6 +68,34 @@ export default function AddProductPage() {
     if (fileInput) {
       fileInput.value = "";
     }
+  }; // Missing closing bracket was here
+
+  const handleAddCustomCategory = (newCategory: string) => {
+    if (!categoryOptions.includes(newCategory)) {
+      setCategoryOptions([...categoryOptions, newCategory]);
+    }
+    setCategory(newCategory);
+    
+    // Show success message
+    showModal(
+      "Berhasil",
+      `Kategori "${newCategory}" berhasil ditambahkan`,
+      "success"
+    );
+  };
+
+  const handleAddCustomUnit = (newUnit: string) => {
+    if (!unitOptions.includes(newUnit)) {
+      setUnitOptions([...unitOptions, newUnit]);
+    }
+    setUnit(newUnit);
+    
+    // Show success message
+    showModal(
+      "Berhasil",
+      `Satuan "${newUnit}" berhasil ditambahkan`,
+      "success"
+    );
   };
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -267,12 +298,14 @@ export default function AddProductPage() {
           errorMessage="Nama produk tidak boleh kosong"
         />
 
+        {/* Replace TextInput with EnhancedDropdown for category */}
         <div>
-          <Dropdown
+          <EnhancedDropdown
             selected={category}
             options={categoryOptions}
-            label="Pilih Kategori"
+            label="Kategori"
             onSelect={setCategory}
+            onAddCustom={handleAddCustomCategory}
           />
           {errors.category && (
             <p className="mt-1 text-sm text-red-600">
@@ -316,12 +349,14 @@ export default function AddProductPage() {
           errorMessage="Stok tidak boleh kosong"
         />
 
+        {/* Replace TextInput with EnhancedDropdown for unit */}
         <div>
-          <Dropdown
+          <EnhancedDropdown
             selected={unit}
             options={unitOptions}
-            label="Pilih Satuan"
+            label="Satuan"
             onSelect={setUnit}
+            onAddCustom={handleAddCustomUnit}
           />
           {errors.unit && (
             <p className="mt-1 text-sm text-red-600">
