@@ -265,6 +265,8 @@ export default function TambahTransaksiPage() {
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
       }
 
+      resetForm()
+
       showModal(
         "Berhasil",
         "Transaksi berhasil disimpan!",
@@ -276,7 +278,7 @@ export default function TambahTransaksiPage() {
         {
           label: "Tambah Baru",
           onClick: () => {
-            resetForm()
+            // resetForm()
             hideModal()
           },
         },
