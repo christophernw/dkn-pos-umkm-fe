@@ -40,7 +40,7 @@ interface ReportSummary {
 
 const ReportPage = () => {
   const { user, accessToken } = useAuth();
-  const { showModal, hideModal } = useModal();
+  const { showModal } = useModal();
   const router = useRouter();
   const [reportType, setReportType] = useState<"keuangan" | "utang">("utang");
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -79,29 +79,7 @@ const ReportPage = () => {
       if (user.role === "Pemilik" || user.role === "Pengelola") {
         setHasAccess(true);
       } else {
-        // Reset all data to ensure unauthorized users see nothing
-        setSummary({
-          utangSaya: 0,
-          utangPelanggan: 0,
-          totalPemasukan: 0,
-          totalPengeluaran: 0
-        });
-        setTransactions([]);
         setHasAccess(false);
-        
-        // Show modal for unauthorized access
-        showModal(
-          "Akses Ditolak", 
-          "Maaf, hanya Pemilik atau Pengelola yang dapat mengakses laporan.", 
-          "error", 
-          {
-            label: "Kembali ke Beranda",
-            onClick: () => {
-              hideModal();
-              router.push("/");
-            }
-          }
-        );
       }
     } else if (accessToken === null) {
       setIsAuthLoading(false);
@@ -460,6 +438,23 @@ const ReportPage = () => {
     return (
       <div className="p-8 flex justify-center items-center">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+  
+  if (!hasAccess) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gray-100">
+        <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-sm">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Akses Ditolak</h1>
+          <p className="mb-6">Karyawan tidak diperbolehkan mengakses halaman Laporan.</p>
+          <button
+            onClick={() => router.push("/")}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Kembali ke Beranda
+          </button>
+        </div>
       </div>
     );
   }
