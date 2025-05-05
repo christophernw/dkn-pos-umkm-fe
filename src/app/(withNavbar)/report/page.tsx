@@ -46,6 +46,7 @@ export interface ArusKasTransaction {
   keterangan?: string;
   nominal: string; 
   tanggal_transaksi: string; 
+  transaksi_id: number;
 }
 
 export interface ArusKasReportResponse {
@@ -89,6 +90,10 @@ const ReportPage = () => {
   const [isGeneratingReport, setIsGeneratingReport] = useState<boolean>(false);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState<boolean>(false);
   const [arusKasTransactions, setArusKasTransactions] = useState<ArusKasTransaction[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  });
 
   // Check user role access - only Pemilik and Pengelola can access
   useEffect(() => {
@@ -213,13 +218,15 @@ const ReportPage = () => {
     }
 
     const fetchFirstTransactionDate = async () => {
-      if (!accessToken || !hasAccess || reportType === "arus-kas") {
-        return;
-      }
       try {
+
+        const today = new Date();
+        const month = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+
         const endpoint = reportType === "utang" 
-          ? `${config.apiUrl}/transaksi/first-debt-date`
-          : `${config.apiUrl}/transaksi/first-transaction-date`;
+          ?  `${config.apiUrl}/transaksi/first-debt-date`
+          : reportType !== "arus-kas" ? `${config.apiUrl}/transaksi/first-transaction-date` 
+          : `${config.apiUrl}/laporan/aruskas-report?month=${month}`;
           
         const response = await fetch(endpoint, {
           headers: {
@@ -228,8 +235,18 @@ const ReportPage = () => {
         });
 
         if (response.ok) {
-          const data = await response.json();
-          setFirstTransactionDate(data.first_date || "");
+          let data: any = null;
+          if (reportType !== "arus-kas") {
+            data = await response.json();
+            setFirstTransactionDate(data.first_date || "");
+          } else {
+            data  = await response.json() as ArusKasReportResponse;
+            setSummary(prev => ({
+              ...prev,
+              totalPemasukan: Number(data.total_inflow) || 0,
+              totalPengeluaran: Number(data.total_outflow) || 0
+            }));
+          }
 
           // Initialize custom dates if they haven't been set
           if (!customStartDate) {
@@ -318,17 +335,13 @@ const ReportPage = () => {
         } else if (reportType === "keuangan") {
           endpoint = `${config.apiUrl}/transaksi/financial-report-by-date`;
         } else {
-          const today = new Date();
-          const month = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
-          endpoint = `${config.apiUrl}/laporan/aruskas-report?month=${month}`;
+          endpoint = `${config.apiUrl}/laporan/aruskas-report?month=${selectedMonth}`;
           console.log("endpoint arus kas", endpoint);
         }
 
         const url = reportType === "arus-kas"
           ? endpoint
           : `${endpoint}?start_date=${encodedStartDate}&end_date=${encodedEndDate}`;
-        
-        console.log("INI URL",url)
 
         const response = await fetch(url, {
           headers: {
@@ -344,9 +357,12 @@ const ReportPage = () => {
               startDate: data.start_date,
               endDate: data.end_date,
             });
+            setArusKasTransactions([])
           } else {
             const data : ArusKasReportResponse = await response.json();
+            console.log("data arus kas", data);
             setArusKasTransactions(data.transactions || []);
+            setTransactions([])
           }
         }
       } catch (error) {
@@ -365,7 +381,7 @@ const ReportPage = () => {
     }
 
     fetchTransactions();
-  }, [dateRange, customStartDate, customEndDate, accessToken, reportType, hasAccess]);
+  }, [dateRange, customStartDate, customEndDate, accessToken, reportType, hasAccess, selectedMonth]);
 
   const handleDownloadClick = () => {
     if (!hasAccess) {
@@ -384,17 +400,29 @@ const ReportPage = () => {
     try {
       setIsGeneratingReport(true);
 
-      // Prepare data for report
-      const reportData = {
-        transactions,
-        startDate: reportDateRange.startDate,
-        endDate: reportDateRange.endDate,
-        utangSaya: summary.utangSaya,
-        utangPelanggan: summary.utangPelanggan,
-        totalPemasukan: summary.totalPemasukan,
-        totalPengeluaran: summary.totalPengeluaran,
-        reportType: reportType
-      };
+      let reportData;
+
+      if (reportType !== "arus-kas") {
+        reportData = {
+          transactions,
+          startDate: reportDateRange.startDate,
+          endDate: reportDateRange.endDate,
+          utangSaya: summary.utangSaya,
+          utangPelanggan: summary.utangPelanggan,
+          totalPemasukan: summary.totalPemasukan,
+          totalPengeluaran: summary.totalPengeluaran,
+          reportType: reportType,
+        };
+      } else {
+        reportData = {
+          transactions: arusKasTransactions,
+          startDate: selectedMonth,
+          endDate: selectedMonth,
+          totalPemasukan: summary.totalPemasukan,
+          totalPengeluaran: summary.totalPengeluaran,
+          reportType: reportType,
+        };
+      }
 
       // Generate report based on format
       let blob: Blob;
@@ -402,10 +430,10 @@ const ReportPage = () => {
 
       if (format === "pdf") {
         blob = await generateDebtReportPDF(reportData as PDFReportData);
-        fileName = `Laporan_${reportType === "utang" ? "Utang_Piutang" : "Keuangan"}_${dateRange}_Hari.pdf`;
+        fileName = `Laporan_${reportType === "utang" ? "Utang_Piutang" : reportType !== "arus-kas" ? "Keuangan" : "Arus Kas"}_${dateRange}_Hari.pdf`;
       } else {
         blob = generateDebtReportExcel(reportData as ExcelReportData);
-        fileName = `Laporan_${reportType === "utang" ? "Utang_Piutang" : "Keuangan"}_${dateRange}_Hari.xlsx`;
+        fileName = `Laporan_${reportType === "utang" ? "Utang_Piutang" : reportType !== "arus-kas" ? "Keuangan" : "Arus Kas"}_${dateRange}_Hari.xlsx`;
       }
 
       // Create download link and trigger download
@@ -501,8 +529,6 @@ const ReportPage = () => {
       </div>
     );
   }
-
-  console.log("TRANSAKSI ARUS KAS: ", arusKasTransactions)
 
   return (
     <div className="p-4">
@@ -678,54 +704,69 @@ const ReportPage = () => {
           </div>
 
           {/* Date Range Filter */}
-          <div className="bg-white rounded-xl p-4 shadow-sm mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Pilih Tanggal Laporan
-            </label>
-            <select
-              value={dateRange}
-              onChange={(e) => hasAccess && setDateRange(e.target.value)}
-              className={`w-full p-2 border border-gray-300 rounded-md mb-3 ${!hasAccess ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-              disabled={!hasAccess}
-            >
-              <option value="7">7 Hari Terakhir</option>
-              <option value="30">Bulan Ini</option>
-              <option value="90">3 Bulan Terakhir</option>
-              <option value="180">6 Bulan Terakhir</option>
-              <option value="365">1 Tahun Terakhir</option>
-              <option value="all">Semua</option>
-              <option value="custom">Kustom</option>
-            </select>
+          {reportType !== "arus-kas" ? (
+            <div className="bg-white rounded-xl p-4 shadow-sm mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Pilih Tanggal Laporan
+              </label>
+              <select
+                value={dateRange}
+                onChange={(e) => hasAccess && setDateRange(e.target.value)}
+                className={`w-full p-2 border border-gray-300 rounded-md mb-3 ${!hasAccess ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                disabled={!hasAccess}
+              >
+                <option value="7">7 Hari Terakhir</option>
+                <option value="30">Bulan Ini</option>
+                <option value="90">3 Bulan Terakhir</option>
+                <option value="180">6 Bulan Terakhir</option>
+                <option value="365">1 Tahun Terakhir</option>
+                <option value="all">Semua</option>
+                <option value="custom">Kustom</option>
+              </select>
 
-            <div className="grid grid-cols-2 gap-3 mt-2">
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">
-                  Tanggal Mulai
-                </label>
-                <input
-                  type="date"
-                  value={customStartDate}
-                  onChange={handleStartDateChange}
-                  max={customEndDate}
-                  className={`w-full p-2 border border-gray-300 rounded-md ${!hasAccess ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                  disabled={!hasAccess}
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">
-                  Tanggal Akhir
-                </label>
-                <input
-                  type="date"
-                  value={customEndDate}
-                  onChange={handleEndDateChange}
-                  min={customStartDate}
-                  className={`w-full p-2 border border-gray-300 rounded-md ${!hasAccess ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                  disabled={!hasAccess}
-                />
+              <div className="grid grid-cols-2 gap-3 mt-2">
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">
+                    Tanggal Mulai
+                  </label>
+                  <input
+                    type="date"
+                    value={customStartDate}
+                    onChange={handleStartDateChange}
+                    max={customEndDate}
+                    className={`w-full p-2 border border-gray-300 rounded-md ${!hasAccess ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                    disabled={!hasAccess}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">
+                    Tanggal Akhir
+                  </label>
+                  <input
+                    type="date"
+                    value={customEndDate}
+                    onChange={handleEndDateChange}
+                    min={customStartDate}
+                    className={`w-full p-2 border border-gray-300 rounded-md ${!hasAccess ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                    disabled={!hasAccess}
+                  />
+                </div>
               </div>
             </div>
+          ) : (
+            <div className="bg-white rounded-xl p-4 shadow-sm mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Pilih Bulan Laporan
+            </label>
+            <input
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => hasAccess && setSelectedMonth(e.target.value)}
+              className={`w-full p-2 border border-gray-300 rounded-md ${!hasAccess ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+              disabled={!hasAccess}
+            />
           </div>
+          )}
 
           {/* Transactions List */}
           <div className="mb-6">
@@ -736,7 +777,7 @@ const ReportPage = () => {
             </h2>
 
             <div className="space-y-3">
-              {transactions.length === 0 ? (
+              {transactions.length === 0 && arusKasTransactions.length === 0 ? (
                 <p className="text-center text-gray-500 py-4 bg-white rounded-lg shadow-sm">
                   {hasAccess 
                     ? (reportType === "utang"
@@ -744,7 +785,7 @@ const ReportPage = () => {
                       : "Tidak ada transaksi untuk periode ini.")
                     : "Tidak ada data yang dapat ditampilkan."}
                 </p>
-              ) : (
+              ) : transactions.length !== 0 && reportType !== "arus-kas" ? (
                 transactions.map((transaction) => (
                   <div
                     key={transaction.id}
@@ -791,6 +832,39 @@ const ReportPage = () => {
                     )}
                   </div>
                 ))
+              ) : reportType === "arus-kas" && (
+                arusKasTransactions.map((transaction) => (
+                  <div
+                    key={transaction.transaksi_id}
+                    className={`bg-white rounded-xl p-3 shadow-sm ${hasAccess ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                    onClick={() => hasAccess && router.push(`/transaksi/detail/${transaction.transaksi_id}`)}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">
+                        Transaksi #{transaction.transaksi_id}
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        {formatLocalDate(transaction.tanggal_transaksi)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          transaction.jenis === "inflow"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {transaction.jenis === "inflow"
+                          ? "Kas Masuk"
+                          : "Kas Keluar"}
+                      </span>
+                      <span className="font-semibold">
+                        Rp{formatCurrency(Number(transaction.nominal))}
+                      </span>
+                    </div>
+                  </div>
+                ))
               )}
             </div>
           </div>
@@ -798,7 +872,7 @@ const ReportPage = () => {
           {/* Download Button */}
           <button
             onClick={handleDownloadClick}
-            disabled={isGeneratingReport || transactions.length === 0 || !hasAccess}
+            disabled={isGeneratingReport || (transactions.length === 0 && arusKasTransactions.length === 0) || !hasAccess}
             className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium mb-20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center z-20"
           >
             {isGeneratingReport ? "Memproses..." : "Unduh Laporan"}
