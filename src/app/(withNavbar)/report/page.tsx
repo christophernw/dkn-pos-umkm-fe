@@ -155,7 +155,7 @@ const ReportPage = () => {
     }
 
     const fetchSummary = async () => {
-      if (!accessToken || !hasAccess || reportType === "arus-kas") {
+      if (!accessToken || !hasAccess) {
         return;
       }
 
@@ -221,12 +221,12 @@ const ReportPage = () => {
       try {
 
         const today = new Date();
-        const month = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+        // const month = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
 
         const endpoint = reportType === "utang" 
           ?  `${config.apiUrl}/transaksi/first-debt-date`
           : reportType !== "arus-kas" ? `${config.apiUrl}/transaksi/first-transaction-date` 
-          : `${config.apiUrl}/laporan/aruskas-report?month=${month}`;
+          : `${config.apiUrl}/laporan/aruskas-report`;
           
         const response = await fetch(endpoint, {
           headers: {
@@ -335,13 +335,11 @@ const ReportPage = () => {
         } else if (reportType === "keuangan") {
           endpoint = `${config.apiUrl}/transaksi/financial-report-by-date`;
         } else {
-          endpoint = `${config.apiUrl}/laporan/aruskas-report?month=${selectedMonth}`;
+          endpoint = `${config.apiUrl}/laporan/aruskas-report`;
           console.log("endpoint arus kas", endpoint);
         }
 
-        const url = reportType === "arus-kas"
-          ? endpoint
-          : `${endpoint}?start_date=${encodedStartDate}&end_date=${encodedEndDate}`;
+        const url = `${endpoint}?start_date=${encodedStartDate}&end_date=${encodedEndDate}`;
 
         const response = await fetch(url, {
           headers: {
@@ -360,11 +358,9 @@ const ReportPage = () => {
             setArusKasTransactions([])
           } else {
             const data : ArusKasReportResponse = await response.json();
-            console.log("data arus kas", data);
             setArusKasTransactions(data.transactions || []);
-            setTransactions([])
           }
-        }
+        }    
       } catch (error) {
         console.error(`Error fetching ${reportType} report:`, error);
       } finally {
@@ -703,70 +699,56 @@ const ReportPage = () => {
             )}
           </div>
 
-          {/* Date Range Filter */}
-          {reportType !== "arus-kas" ? (
-            <div className="bg-white rounded-xl p-4 shadow-sm mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Pilih Tanggal Laporan
-              </label>
-              <select
-                value={dateRange}
-                onChange={(e) => hasAccess && setDateRange(e.target.value)}
-                className={`w-full p-2 border border-gray-300 rounded-md mb-3 ${!hasAccess ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                disabled={!hasAccess}
-              >
-                <option value="7">7 Hari Terakhir</option>
-                <option value="30">Bulan Ini</option>
-                <option value="90">3 Bulan Terakhir</option>
-                <option value="180">6 Bulan Terakhir</option>
-                <option value="365">1 Tahun Terakhir</option>
-                <option value="all">Semua</option>
-                <option value="custom">Kustom</option>
-              </select>
+          {/* Date Range Filter (Selalu ditampilkan) */}
+          <div className="bg-white rounded-xl p-4 shadow-sm mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Pilih Tanggal Laporan
+            </label>
+            <select
+              value={dateRange}
+              onChange={(e) => hasAccess && setDateRange(e.target.value)}
+              className={`w-full p-2 border border-gray-300 rounded-md mb-3 ${!hasAccess ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+              disabled={!hasAccess}
+            >
+              <option value="7">7 Hari Terakhir</option>
+              <option value="30">Bulan Ini</option>
+              <option value="90">3 Bulan Terakhir</option>
+              <option value="180">6 Bulan Terakhir</option>
+              <option value="365">1 Tahun Terakhir</option>
+              <option value="all">Semua</option>
+              <option value="custom">Kustom</option>
+            </select>
 
-              <div className="grid grid-cols-2 gap-3 mt-2">
-                <div>
-                  <label className="block text-sm text-gray-600 mb-1">
-                    Tanggal Mulai
-                  </label>
-                  <input
-                    type="date"
-                    value={customStartDate}
-                    onChange={handleStartDateChange}
-                    max={customEndDate}
-                    className={`w-full p-2 border border-gray-300 rounded-md ${!hasAccess ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                    disabled={!hasAccess}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-600 mb-1">
-                    Tanggal Akhir
-                  </label>
-                  <input
-                    type="date"
-                    value={customEndDate}
-                    onChange={handleEndDateChange}
-                    min={customStartDate}
-                    className={`w-full p-2 border border-gray-300 rounded-md ${!hasAccess ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                    disabled={!hasAccess}
-                  />
-                </div>
+            <div className="grid grid-cols-2 gap-3 mt-2">
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">
+                  Tanggal Mulai
+                </label>
+                <input
+                  type="date"
+                  value={customStartDate}
+                  onChange={handleStartDateChange}
+                  max={customEndDate}
+                  className={`w-full p-2 border border-gray-300 rounded-md ${!hasAccess ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                  disabled={!hasAccess}
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">
+                  Tanggal Akhir
+                </label>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={handleEndDateChange}
+                  min={customStartDate}
+                  className={`w-full p-2 border border-gray-300 rounded-md ${!hasAccess ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                  disabled={!hasAccess}
+                />
               </div>
             </div>
-          ) : (
-            <div className="bg-white rounded-xl p-4 shadow-sm mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Pilih Bulan Laporan
-            </label>
-            <input
-              type="month"
-              value={selectedMonth}
-              onChange={(e) => hasAccess && setSelectedMonth(e.target.value)}
-              className={`w-full p-2 border border-gray-300 rounded-md ${!hasAccess ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-              disabled={!hasAccess}
-            />
           </div>
-          )}
+
 
           {/* Transactions List */}
           <div className="mb-6">
