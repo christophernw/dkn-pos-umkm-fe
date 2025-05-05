@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import HeaderProduk from '@/src/components/HeaderProduk';
 import config from '@/src/config';
 import { useAuth } from '@/contexts/AuthContext';
+import { PlusIcon } from '@/public/icons/PlusIcon';
 
 interface TopSellingProduct {
   id: number;
@@ -181,7 +182,7 @@ const SemuaBarangPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 pb-20">
+    <div className="relative min-h-screen">
       <HeaderProduk />
       <main className="container mx-auto px-4 py-6 space-y-6">
         
@@ -389,6 +390,14 @@ const SemuaBarangPage: React.FC = () => {
         </section>
 
       </main>
+
+      {/* Floating Add Product Button - updated to match Semua Barang page styling */}
+      <button
+        className="bg-primary-indigo rounded-full w-fit fixed bottom-4 right-4 sm:right-[calc(50%-(420px/2)+1rem)] p-4 mb-24"
+        onClick={() => router.push('/tambahProduk')}
+      >
+        <PlusIcon />
+      </button>
     </div>
   );
 };

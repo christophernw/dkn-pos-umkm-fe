@@ -4,10 +4,15 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AiOutlineArrowLeft } from "react-icons/ai";
 import { useAuth } from "@/contexts/AuthContext";
-import { sendEmail } from "@/src/app/lib/sendInvitationEmail";
+import { sendInvitationEmail } from "@/src/app/lib/emailservice";
 import { sanitizeInput, validateInputs } from "./utils/inputValidation";
-import { sendInvitation } from "../adduser/services/invitationService";
-import { InvitationPayload, InvitationResponse } from "./types/types";
+// import { sendInvitation } from "../adduser/services/invitationService";
+// import { InvitationPayload, InvitationResponse } from "./types/types";
+import { 
+  sendInvitation, 
+  InvitationPayload, 
+  InvitationResponse 
+} from "../services/invitationService";
 import { Modal } from '@/src/components/elements/modal/Modal'
 import config from "@/src/config";
 import { ConfirmModal } from "./component/confirmmodal";
@@ -66,7 +71,7 @@ export default function AddUserPage() {
         }/auth/invite?token=${encodeURIComponent(token)}`;
 
         try {
-          await sendEmail({
+          await sendInvitationEmail({
             to: email,
             inviteLink,
             senderName: user?.name || "LANCAR Admin",

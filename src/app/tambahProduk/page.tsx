@@ -1,15 +1,14 @@
 "use client";
 import { useState, ChangeEvent } from "react";
-import { ChevronDown, Check } from "lucide-react";
 import TextInput from "./components/textInput";
 import { useAuth } from "@/contexts/AuthContext";
 import config from "@/src/config";
 import { useModal } from "@/contexts/ModalContext";
-import Dropdown from "@/src/components/Dropdown";
+import EnhancedDropdown from "@/src/components/elements/modal/EnhancedDropdown";
 
-// Dropdown Options
-const unitOptions = ["Pcs", "Kg", "Botol", "Liter"];
-const categoryOptions = [
+// Initial dropdown options
+const initialUnitOptions = ["Pcs", "Kg", "Botol", "Liter"];
+const initialCategoryOptions = [
   "Sembako",
   "Perawatan Diri",
   "Pakaian & Aksesori",
@@ -29,7 +28,11 @@ export default function AddProductPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const { accessToken } = useAuth();
   const [loading, setLoading] = useState(false);
-  const { showModal } = useModal();
+  const { showModal, hideModal } = useModal();
+
+  // State for managing custom options
+  const [categoryOptions, setCategoryOptions] = useState([...initialCategoryOptions]);
+  const [unitOptions, setUnitOptions] = useState([...initialUnitOptions]);
 
   // Add state for field errors
   const [errors, setErrors] = useState({
@@ -40,6 +43,60 @@ export default function AddProductPage() {
     currentStock: false,
     unit: false,
   });
+
+  const resetForm = () => {
+    // Reset all form fields
+    setProductName("");
+    setCategory("");
+    setPriceSell("");
+    setPriceCost("");
+    setCurrentStock("");
+    setUnit("");
+    setPreviewImg(null);
+    setImageFile(null);
+    setErrors({
+      productName: false,
+      category: false,
+      priceSell: false,
+      priceCost: false,
+      currentStock: false,
+      unit: false,
+    });
+
+    // Reset the file input
+    const fileInput = document.getElementById("imageUpload") as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = "";
+    }
+  }; // Missing closing bracket was here
+
+  const handleAddCustomCategory = (newCategory: string) => {
+    if (!categoryOptions.includes(newCategory)) {
+      setCategoryOptions([...categoryOptions, newCategory]);
+    }
+    setCategory(newCategory);
+    
+    // Show success message
+    showModal(
+      "Berhasil",
+      `Kategori "${newCategory}" berhasil ditambahkan`,
+      "success"
+    );
+  };
+
+  const handleAddCustomUnit = (newUnit: string) => {
+    if (!unitOptions.includes(newUnit)) {
+      setUnitOptions([...unitOptions, newUnit]);
+    }
+    setUnit(newUnit);
+    
+    // Show success message
+    showModal(
+      "Berhasil",
+      `Satuan "${newUnit}" berhasil ditambahkan`,
+      "success"
+    );
+  };
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
@@ -86,7 +143,7 @@ export default function AddProductPage() {
       priceSell: !priceSell.trim(),
       priceCost: !priceCost.trim(),
       currentStock: !currentStock.trim(),
-      unit: !unit.trim(), // Add unit validation
+      unit: !unit.trim(),
     };
 
     setErrors(newErrors);
@@ -102,8 +159,8 @@ export default function AddProductPage() {
     const payload = {
       nama: productName,
       kategori: category,
-      harga_jual: parseFloat(priceSell),
-      harga_modal: parseFloat(priceCost),
+      harga_jual: parseFloat(priceSell.replace(/\./g, "")),
+      harga_modal: parseFloat(priceCost.replace(/\./g, "")),
       stok: parseFloat(currentStock),
       satuan: unit,
     };
@@ -121,12 +178,24 @@ export default function AddProductPage() {
       });
 
       if (response.status === 201) {
-        showModal("Berhasil", "Produk berhasil ditambahkan!", "success", {
-          label: "Lihat Semua Produk",
-          onClick: () => {
-            window.location.href = "/semuaBarang";
+        showModal(
+          "Berhasil",
+          "Produk berhasil ditambahkan!",
+          "success",
+          {
+            label: "Lihat Semua Produk",
+            onClick: () => {
+              window.location.href = "/semuaBarang";
+            },
           },
-        });
+          {
+            label: "Tambah Baru",
+            onClick: () => {
+              resetForm();
+              hideModal();
+            },
+          }
+        );
       } else {
         const errorData = await response.json();
         console.error("Error creating product:", errorData);
@@ -229,13 +298,14 @@ export default function AddProductPage() {
           errorMessage="Nama produk tidak boleh kosong"
         />
 
-        {/* Replace TextInput with Dropdown for category */}
+        {/* Replace TextInput with EnhancedDropdown for category */}
         <div>
-          <Dropdown
+          <EnhancedDropdown
             selected={category}
             options={categoryOptions}
-            label="Pilih Kategori"
+            label="Kategori"
             onSelect={setCategory}
+            onAddCustom={handleAddCustomCategory}
           />
           {errors.category && (
             <p className="mt-1 text-sm text-red-600">
@@ -248,7 +318,7 @@ export default function AddProductPage() {
           id="priceSell"
           label="Harga Jual"
           value={priceSell}
-          onChange={(_, raw) => setPriceSell(raw)}
+          onChange={(value) => setPriceSell(value)}
           placeholder="13.000"
           type="number"
           currency
@@ -260,7 +330,7 @@ export default function AddProductPage() {
           id="priceCost"
           label="Harga Modal"
           value={priceCost}
-          onChange={(_, raw) => setPriceCost(raw)}
+          onChange={(value) => setPriceCost(value)}
           placeholder="9.000"
           type="number"
           currency
@@ -272,19 +342,21 @@ export default function AddProductPage() {
           id="currentStock"
           label="Stok"
           value={currentStock}
-          onChange={setCurrentStock}
+          onChange={(value) => setCurrentStock(value)}
           placeholder="450"
           type="number"
           error={errors.currentStock}
           errorMessage="Stok tidak boleh kosong"
         />
 
+        {/* Replace TextInput with EnhancedDropdown for unit */}
         <div>
-          <Dropdown
+          <EnhancedDropdown
             selected={unit}
             options={unitOptions}
-            label="Pilih Satuan"
+            label="Satuan"
             onSelect={setUnit}
+            onAddCustom={handleAddCustomUnit}
           />
           {errors.unit && (
             <p className="mt-1 text-sm text-red-600">
