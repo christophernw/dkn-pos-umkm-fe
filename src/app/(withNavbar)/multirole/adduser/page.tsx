@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AiOutlineArrowLeft } from "react-icons/ai";
 import { useAuth } from "@/contexts/AuthContext";
+<<<<<<< HEAD
 import { sendInvitationEmail} from "@/src/app/lib/emaillservice";
+=======
+import { sendInvitationEmail } from "@/src/app/lib/emailservice";
+>>>>>>> 34a2089d1e315d3af0233fdbc341be4e4bf27e35
 import { sanitizeInput, validateInputs } from "./utils/inputValidation";
 // import { sendInvitation } from "../adduser/services/invitationService";
 // import { InvitationPayload, InvitationResponse } from "./types/types";

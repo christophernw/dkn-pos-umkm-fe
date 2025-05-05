@@ -6,7 +6,7 @@ import { useModal } from "@/contexts/ModalContext";
 import config from "@/src/config";
 import { Trash, Clock } from "lucide-react";
 import { getPendingInvitations, deleteInvitation, PendingInvitation } from "../services/invitationService";
-import { sendRemovalNotificationEmail } from "@/src/app/lib/sendRemovalNotificationEmail";
+import { sendRemovalNotificationEmail } from "@/src/app/lib/emailservice";
 
 interface User {
   id: number;
@@ -106,9 +106,12 @@ const UserList = () => {
             try {
               await sendRemovalNotificationEmail({
                 to: userToRemove.email,
+                senderName: user?.name || "Store Owner",   
+                senderEmail: user?.email || "no-reply@example.com", 
                 userName: userToRemove.name,
                 ownerName: user?.name || "Store Owner"
               });
+              
             } catch (emailError) {
               console.error("Frontend email sending failed:", emailError);
               // Continue even if frontend email fails
