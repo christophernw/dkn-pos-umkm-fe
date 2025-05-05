@@ -7,11 +7,11 @@ export interface PDFReportData {
   transactions: any[];
   startDate: string;
   endDate: string;
-  utangSaya: number;
-  utangPelanggan: number;
+  utangSaya?: number;
+  utangPelanggan?: number;
   totalPemasukan?: number;
   totalPengeluaran?: number;
-  reportType: "keuangan" | "utang";
+  reportType: "keuangan" | "utang" | "arus-kas";
 }
 
 /**
@@ -52,13 +52,13 @@ export const generateDebtReportPDF = async (reportData: PDFReportData): Promise<
                 <tr style="border-bottom: 1px solid #e5e7eb;">
                   <td style="padding: 12px; background-color: #f9fafb; font-weight: 500;">Utang Saya</td>
                   <td style="padding: 12px; text-align: right; color: #dc2626; font-weight: 500;">
-                    Rp ${formatCurrency(reportData.utangSaya)}
+                    Rp ${formatCurrency(reportData.utangSaya || 0)}
                   </td>
                 </tr>
                 <tr>
                   <td style="padding: 12px; background-color: #f9fafb; font-weight: 500;">Utang Pelanggan</td>
                   <td style="padding: 12px; text-align: right; color: #16a34a; font-weight: 500;">
-                    Rp ${formatCurrency(reportData.utangPelanggan)}
+                    Rp ${formatCurrency(reportData.utangPelanggan || 0)}
                   </td>
                 </tr>
               ` : `
@@ -100,25 +100,41 @@ export const generateDebtReportPDF = async (reportData: PDFReportData): Promise<
                 <th style="padding: 12px; text-align: left; font-size: 14px;">Tanggal</th>
                 <th style="padding: 12px; text-align: left; font-size: 14px;">Tipe</th>
                 <th style="padding: 12px; text-align: left; font-size: 14px;">Kategori</th>
-                <th style="padding: 12px; text-align: left; font-size: 14px;">Status</th>
+                <th style="padding: 12px; text-align: left; font-size: 14px;">Keterangan</th>
                 <th style="padding: 12px; text-align: right; font-size: 14px;">Jumlah</th>
               </tr>
             </thead>
             <tbody>
-              ${reportData.transactions.map((transaction, index) => `
-                <tr style="background-color: ${index % 2 === 0 ? '#ffffff' : '#f9fafb'}">
-                  <td style="padding: 12px; font-size: 13px;">${transaction.id}</td>
-                  <td style="padding: 12px; font-size: 13px;">${formatDateWithTime(transaction.created_at)}</td>
-                  <td style="padding: 12px; font-size: 13px;">
-                    ${transaction.transaction_type === "pemasukan" ? "Berikan" : "Terima"}
-                  </td>
-                  <td style="padding: 12px; font-size: 13px;">${transaction.category}</td>
-                  <td style="padding: 12px; font-size: 13px;">${transaction.status}</td>
-                  <td style="padding: 12px; text-align: right; font-size: 13px;">
-                    Rp ${formatCurrency(transaction.total_amount)}
-                  </td>
-                </tr>
-              `).join('')}
+              ${
+                reportData.transactions.map((transaction, index) => {
+                  const isArusKas = reportData.reportType === "arus-kas";
+                  const bgColor = index % 2 === 0 ? '#ffffff' : '#f9fafb';
+
+                  const id = isArusKas ? transaction.transaksi_id : transaction.id;
+                  const tanggal = isArusKas
+                    ? formatDateWithTime(transaction.tanggal_transaksi)
+                    : formatDateWithTime(transaction.created_at);
+                  const tipe = isArusKas
+                    ? (transaction.jenis === "inflow" ? "Kas Masuk" : "Kas Keluar")
+                    : (transaction.transaction_type === "pemasukan" ? "Berikan" : "Terima");
+                  const kategori = transaction.kategori || transaction.category;
+                  const keterangan = transaction.keterangan || transaction.status;
+                  const nominal = isArusKas ? transaction.nominal : transaction.total_amount;
+
+                  return `
+                    <tr style="background-color: ${bgColor};">
+                      <td style="padding: 12px; font-size: 13px;">${id}</td>
+                      <td style="padding: 12px; font-size: 13px;">${tanggal}</td>
+                      <td style="padding: 12px; font-size: 13px;">${tipe}</td>
+                      <td style="padding: 12px; font-size: 13px;">${kategori}</td>
+                      <td style="padding: 12px; font-size: 13px;">${keterangan}</td>
+                      <td style="padding: 12px; text-align: right; font-size: 13px;">
+                        Rp ${formatCurrency(nominal)}
+                      </td>
+                    </tr>
+                  `;
+                }).join("")
+              }
             </tbody>
           </table>
         </div>

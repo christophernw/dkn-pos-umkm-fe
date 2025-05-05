@@ -1,4 +1,5 @@
 // src/utils/excelGenerator.ts
+import { report } from 'process';
 import * as XLSX from 'xlsx';
 
 // Type definitions for the Excel report data
@@ -10,7 +11,7 @@ export interface ExcelReportData {
   utangPelanggan: number;
   totalPemasukan?: number;
   totalPengeluaran?: number;
-  reportType: "keuangan" | "utang";
+  reportType: "keuangan" | "utang" | "arus-kas";
 }
 
 /**
@@ -26,7 +27,8 @@ export const generateDebtReportExcel = (reportData: ExcelReportData): Blob => {
   // Determine report title based on type
   const reportTitle = reportData.reportType === "utang" 
     ? "Laporan Utang Piutang"
-    : "Laporan Keuangan";
+    : reportData.reportType !== "arus-kas" ? 
+    "Laporan Keuangan" : "Laporan Arus Kas";
   
   // Title and period
   data.push([reportTitle]);
@@ -54,42 +56,44 @@ export const generateDebtReportExcel = (reportData: ExcelReportData): Blob => {
   
   // Transaction details section
   data.push([reportData.reportType === "utang" ? 'DETAIL TRANSAKSI BELUM LUNAS' : 'DETAIL TRANSAKSI']);
-  data.push(['ID Transaksi', 'Tanggal', 'Tipe', 'Kategori', 'Status', 'Jumlah']);
+  data.push(['ID Transaksi', 'Tanggal', 'Tipe', 'Kategori', 'Keterangan', 'Jumlah']);
   
   // Add all transactions
-  reportData.transactions.forEach(transaction => {
+  reportData.transactions.forEach((transaction) => {
+    const isArusKas = reportData.reportType === "arus-kas";
+
     data.push([
-      transaction.id,
-      formatDateWithTime(transaction.created_at),
-      transaction.transaction_type === 'pemasukan' ? 'Berikan' : 'Terima',
-      transaction.category,
-      transaction.status,
-      `Rp ${formatCurrency(transaction.total_amount)}`
+      isArusKas ? transaction.transaksi_id : transaction.id,
+      formatDateWithTime(isArusKas ? transaction.tanggal_transaksi : transaction.created_at),
+      isArusKas
+        ? (transaction.jenis === "inflow" ? "Kas Masuk" : "Kas Keluar")
+        : (transaction.transaction_type === "pemasukan" ? "Berikan" : "Terima"),
+      transaction.kategori || transaction.category,
+      transaction.keterangan || transaction.status,
+      `Rp ${formatCurrency(isArusKas ? transaction.nominal : transaction.total_amount)}`
     ]);
-    
+
     // If transaction has items, add them directly below the transaction
     if (transaction.items && transaction.items.length > 0) {
-      // Add item header, indented to show hierarchy
-      data.push(['', 'Detail Produk:', 'Nama', 'Jumlah', 'Harga Satuan', 'Subtotal']);
-      
-      // Add each item under the transaction
+      // Item header
+      data.push(["", "Detail Produk:", "Nama", "Jumlah", "Harga Satuan", "Subtotal"]);
+
       transaction.items.forEach((item: any) => {
-        const unitPrice = transaction.transaction_type === 'pemasukan' ? 
-          item.harga_jual_saat_transaksi : 
-          item.harga_modal_saat_transaksi;
-          
+        const unitPrice = transaction.transaction_type === "pemasukan"
+          ? item.harga_jual_saat_transaksi
+          : item.harga_modal_saat_transaksi;
+
         data.push([
-          '', 
-          '', 
+          "",
+          "",
           item.product_name,
           item.quantity,
           `Rp ${formatCurrency(unitPrice)}`,
           `Rp ${formatCurrency(item.quantity * unitPrice)}`
         ]);
       });
-      
-      // Add a blank row after items for better readability
-      data.push([]);
+
+      data.push([]); // Blank row for readability
     }
   });
   
