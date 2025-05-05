@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, ChangeEvent } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useModal } from "@/contexts/ModalContext";
 import config from "@/src/config";
@@ -25,6 +25,7 @@ function formatHarga(value: string): string {
 
 export default function EditProductPage() {
   const { id } = useParams();
+  const router = useRouter();
   const { showModal } = useModal();
   const { accessToken } = useAuth();
   const [productName, setProductName] = useState("");
@@ -36,6 +37,7 @@ export default function EditProductPage() {
   const [previewImg, setPreviewImg] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   
   // State for managing custom options
   const [categoryOptions, setCategoryOptions] = useState([...initialCategoryOptions]);
@@ -158,6 +160,7 @@ export default function EditProductPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
 
     // Validate fields before submission
     const newErrors = {
@@ -172,6 +175,7 @@ export default function EditProductPage() {
 
     // Check if any errors exist
     if (Object.values(newErrors).some((error) => error)) {
+      setSubmitting(false);
       return; // Stop submission if there are errors
     }
 
@@ -199,10 +203,8 @@ export default function EditProductPage() {
       });
 
       if (response.ok) {
-        showModal("Berhasil", "Produk berhasil diperbarui!", "success", {
-          label: "Lihat Semua Produk",
-          onClick: () => (window.location.href = "/semuaBarang"),
-        });
+        // Langsung redirect ke halaman semuaBarang tanpa menampilkan modal
+        router.push("/semuaBarang");
       } else {
         const errorData = await response.json();
         showModal(
@@ -210,9 +212,11 @@ export default function EditProductPage() {
           `Gagal memperbarui produk: ${errorData.message || "Unknown error"}`,
           "error"
         );
+        setSubmitting(false);
       }
     } catch (error) {
       showModal("Kesalahan Jaringan", "Silakan coba lagi.", "error");
+      setSubmitting(false);
     }
   };
 
@@ -325,7 +329,7 @@ export default function EditProductPage() {
           id="priceSell"
           label="Harga Jual"
           value={priceSell}
-          onChange={(_, raw) => setPriceSell(raw)}
+          onChange={(value) => setPriceSell(value)}
           placeholder="13.000"
           type="number"
           currency
@@ -337,7 +341,7 @@ export default function EditProductPage() {
           id="priceCost"
           label="Harga Modal"
           value={priceCost}
-          onChange={() => {}}
+          onChange={(value) => {}}
           placeholder="9.000"
           type="number"
           currency
@@ -375,9 +379,9 @@ export default function EditProductPage() {
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
-            disabled={loading}
+            disabled={loading || submitting}
           >
-            {loading ? "Menyimpan..." : "Simpan Perubahan"}
+            {submitting ? "Menyimpan..." : "Simpan Perubahan"}
           </button>
         </div>
       </form>

@@ -12,6 +12,7 @@ import {
 import { CoinIcon } from "@/public/icons/CoinIcon";
 import { StockIcon } from "@/public/icons/StockIcon";
 import { NotesIcon } from "@/public/icons/notesIcon";
+import { report } from "process";
 
 // Define types
 interface Transaction {
@@ -38,11 +39,30 @@ interface ReportSummary {
   totalPengeluaran: number;
 }
 
+export interface ArusKasTransaction {
+  id: number;
+  jenis: "inflow" | "outflow";
+  kategori: string;
+  keterangan?: string;
+  nominal: string; 
+  tanggal_transaksi: string; 
+}
+
+export interface ArusKasReportResponse {
+  id: number;
+  month: number;   
+  year: number;
+  total_inflow: string;   
+  total_outflow: string;
+  balance: string;
+  transactions: ArusKasTransaction[];
+}
+
 const ReportPage = () => {
   const { user, accessToken } = useAuth();
   const { showModal, hideModal } = useModal();
   const router = useRouter();
-  const [reportType, setReportType] = useState<"keuangan" | "utang">("utang");
+  const [reportType, setReportType] = useState<"keuangan" | "utang" | "arus-kas">("utang");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   // Add a state to track authorization
   const [hasAccess, setHasAccess] = useState<boolean>(false);
@@ -68,6 +88,7 @@ const ReportPage = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isGeneratingReport, setIsGeneratingReport] = useState<boolean>(false);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState<boolean>(false);
+  const [arusKasTransactions, setArusKasTransactions] = useState<ArusKasTransaction[]>([]);
 
   // Check user role access - only Pemilik and Pengelola can access
   useEffect(() => {
@@ -110,7 +131,7 @@ const ReportPage = () => {
   }, [user, accessToken, router]);
 
   // Handle report type change
-  const handleReportTypeChange = (type: "keuangan" | "utang") => {
+  const handleReportTypeChange = (type: "keuangan" | "utang" | "arus-kas") => {
     setReportType(type);
     setDropdownOpen(false);
     // Clear current transactions
@@ -129,6 +150,10 @@ const ReportPage = () => {
     }
 
     const fetchSummary = async () => {
+      if (!accessToken || !hasAccess || reportType === "arus-kas") {
+        return;
+      }
+
       setIsLoading(true);
       try {
         // Fetch debt summary (for both report types)
@@ -188,6 +213,9 @@ const ReportPage = () => {
     }
 
     const fetchFirstTransactionDate = async () => {
+      if (!accessToken || !hasAccess || reportType === "arus-kas") {
+        return;
+      }
       try {
         const endpoint = reportType === "utang" 
           ? `${config.apiUrl}/transaksi/first-debt-date`
@@ -283,12 +311,24 @@ const ReportPage = () => {
         const encodedStartDate = encodeURIComponent(startDateWithTz);
         const encodedEndDate = encodeURIComponent(endDateWithTz);
 
-        // Choose the endpoint based on the report type
-        const endpoint = reportType === "utang"
-          ? `${config.apiUrl}/transaksi/debt-report-by-date`
-          : `${config.apiUrl}/transaksi/financial-report-by-date`;
+        let endpoint = "";
+        console.log(reportType)
+        if (reportType === "utang") {
+          endpoint = `${config.apiUrl}/transaksi/debt-report-by-date`;
+        } else if (reportType === "keuangan") {
+          endpoint = `${config.apiUrl}/transaksi/financial-report-by-date`;
+        } else {
+          const today = new Date();
+          const month = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+          endpoint = `${config.apiUrl}/laporan/aruskas-report?month=${month}`;
+          console.log("endpoint arus kas", endpoint);
+        }
 
-        const url = `${endpoint}?start_date=${encodedStartDate}&end_date=${encodedEndDate}`;
+        const url = reportType === "arus-kas"
+          ? endpoint
+          : `${endpoint}?start_date=${encodedStartDate}&end_date=${encodedEndDate}`;
+        
+        console.log("INI URL",url)
 
         const response = await fetch(url, {
           headers: {
@@ -297,12 +337,17 @@ const ReportPage = () => {
         });
 
         if (response.ok) {
-          const data = await response.json();
-          setTransactions(data.transactions || []);
-          setReportDateRange({
-            startDate: data.start_date,
-            endDate: data.end_date,
-          });
+          if (reportType !== "arus-kas") {
+            const data = await response.json();
+            setTransactions(data.transactions || []);
+            setReportDateRange({
+              startDate: data.start_date,
+              endDate: data.end_date,
+            });
+          } else {
+            const data : ArusKasReportResponse = await response.json();
+            setArusKasTransactions(data.transactions || []);
+          }
         }
       } catch (error) {
         console.error(`Error fetching ${reportType} report:`, error);
@@ -457,6 +502,8 @@ const ReportPage = () => {
     );
   }
 
+  console.log("TRANSAKSI ARUS KAS: ", arusKasTransactions)
+
   return (
     <div className="p-4">
       <div className="flex justify-start items-center mb-4">
@@ -469,7 +516,7 @@ const ReportPage = () => {
               <NotesIcon />
             </div>
             <p className="pr-1">
-              {reportType === "utang" ? "Laporan Utang Piutang" : "Laporan Keuangan"}
+              {reportType === "utang" ? "Laporan Utang Piutang" : reportType === "keuangan" ? "Laporan Keuangan" : "Laporan Arus Kas"}
             </p>
             <div className="pr-2">
               <svg
@@ -510,6 +557,16 @@ const ReportPage = () => {
                 onClick={() => handleReportTypeChange("utang")}
               >
                 Laporan Utang Piutang
+              </div>
+              <div
+                className={`p-3 cursor-pointer hover:bg-gray-100 ${
+                  reportType === "arus-kas"
+                    ? "font-semibold text-primary-indigo"
+                    : ""
+                }`}
+                onClick={() => handleReportTypeChange("arus-kas")}
+              >
+                Laporan Arus Kas
               </div>
             </div>
           )}
@@ -555,7 +612,7 @@ const ReportPage = () => {
                   </div>
                 </div>
               </>
-            ) : (
+            ) : reportType === "keuangan" ? (
               <>
                 <div className="bg-white rounded-xl p-4 shadow-sm">
                   <div className="flex items-center gap-2 mb-3">
@@ -577,6 +634,37 @@ const ReportPage = () => {
                       <StockIcon className="text-red-500" />
                     </div>
                     <p className="font-medium">Total Pengeluaran</p>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <p className="text-xl font-bold text-red-600">
+                      Rp{formatCurrency(summary.totalPengeluaran)}
+                    </p>
+                    <p className="text-xs text-gray-500">Bulan ini</p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="bg-white rounded-xl p-4 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="bg-green-100 p-3 rounded-full">
+                      <CoinIcon className="text-green-500" />
+                    </div>
+                    <p className="font-medium">Total Kas Masuk</p>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <p className="text-xl font-bold text-green-600">
+                      Rp{formatCurrency(summary.totalPemasukan)}
+                    </p>
+                    <p className="text-xs text-gray-500">Bulan ini</p>
+                  </div>
+                </div>
+                <div className="bg-white rounded-xl p-4 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="bg-red-100 p-3 rounded-full">
+                      <StockIcon className="text-red-500" />
+                    </div>
+                    <p className="font-medium">Total Kas Keluar</p>
                   </div>
                   <div className="flex flex-col gap-1">
                     <p className="text-xl font-bold text-red-600">

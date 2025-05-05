@@ -125,3 +125,9 @@ html {
   margin-right: calc(-1 * (100vw - 100%));
   font-family: 'SF Pro Display', sans-serif;
 }
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0; 
+}

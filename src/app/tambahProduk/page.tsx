@@ -44,6 +44,32 @@ export default function AddProductPage() {
     unit: false,
   });
 
+  const resetForm = () => {
+    // Reset all form fields
+    setProductName("");
+    setCategory("");
+    setPriceSell("");
+    setPriceCost("");
+    setCurrentStock("");
+    setUnit("");
+    setPreviewImg(null);
+    setImageFile(null);
+    setErrors({
+      productName: false,
+      category: false,
+      priceSell: false,
+      priceCost: false,
+      currentStock: false,
+      unit: false,
+    });
+
+    // Reset the file input
+    const fileInput = document.getElementById("imageUpload") as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = "";
+    }
+  }; // Missing closing bracket was here
+
   const handleAddCustomCategory = (newCategory: string) => {
     if (!categoryOptions.includes(newCategory)) {
       setCategoryOptions([...categoryOptions, newCategory]);
