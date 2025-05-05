@@ -398,7 +398,14 @@ const ReportPage = () => {
   };
 
   const formatCurrency = (amount: number): string => {
-    return amount.toLocaleString("id-ID");
+    // Convert to number if it's a string, handle NaN cases
+    const amountNumber = typeof amount === 'string' ? parseFloat(amount) : amount;
+    
+    return isNaN(amountNumber) 
+      ? '0' 
+      : new Intl.NumberFormat('id-ID', {
+          maximumFractionDigits: 0 // No decimal places for currency
+        }).format(amountNumber);
   };
 
   // Format date in Indonesia locale (UTC+7)

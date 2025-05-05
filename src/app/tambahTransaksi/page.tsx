@@ -1,243 +1,234 @@
 "use client";
 
-import Image from "next/image";
-import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
-import { useModal } from "@/contexts/ModalContext";
-import ProductSelectorModal from "@/src/components/ProductSelectorModal";
-import config from "@/src/config";
-import { CoinIcon } from "@/public/icons/CoinIcon";
-import { StockIcon } from "@/public/icons/StockIcon";
-import { BellIcon } from "@/public/icons/BellIcon";
+import type React from "react"
+
+import Image from "next/image"
+import { useState, useMemo } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/contexts/AuthContext"
+import { useModal } from "@/contexts/ModalContext"
+import ProductSelectorModal from "@/src/components/ProductSelectorModal"
+import config from "@/src/config"
+import { CoinIcon } from "@/public/icons/CoinIcon"
+import { StockIcon } from "@/public/icons/StockIcon"
+import { BellIcon } from "@/public/icons/BellIcon"
 
 interface ProductCardProps {
-  id: number;
-  nama: string;
-  foto: string;
-  harga_modal: number;
-  harga_jual: number;
-  stok: number;
-  satuan: string;
-  kategori: string;
+  id: number
+  nama: string
+  foto: string
+  harga_modal: number
+  harga_jual: number
+  stok: number
+  satuan: string
+  kategori: string
 }
 
 interface SelectedProductItem {
-  product: ProductCardProps;
-  quantity: number;
+  product: ProductCardProps
+  quantity: number
 }
 
 function formatHarga(num: number): string {
-  return String(num).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return String(num).replace(/\B(?=(\d{3})+(?!\d))/g, ".")
 }
 
 export default function TambahTransaksiPage() {
-  const router = useRouter();
-  const { accessToken } = useAuth();
-  const { showModal, hideModal } = useModal();
-  const [selectedProducts, setSelectedProducts] = useState<SelectedProductItem[]>([]);
-  const [status, setStatus] = useState<"Lunas" | "Belum Lunas">("Lunas");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  const [transactionMode, setTransactionMode] = useState<"pemasukan" | "pengeluaran">("pemasukan");
-  const [manualTotalAmount, setManualTotalAmount] = useState<string>("");
-  const [manualTotalModal, setManualTotalModal] = useState<string>("");
+  const router = useRouter()
+  const { accessToken } = useAuth()
+  const { showModal, hideModal } = useModal()
+  const [selectedProducts, setSelectedProducts] = useState<SelectedProductItem[]>([])
+  const [status, setStatus] = useState<"Lunas" | "Belum Lunas">("Lunas")
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const [transactionMode, setTransactionMode] = useState<"pemasukan" | "pengeluaran">("pemasukan")
+  const [manualTotalAmount, setManualTotalAmount] = useState<string>("")
+  const [manualTotalModal, setManualTotalModal] = useState<string>("")
   const [categoryType, setCategoryType] = useState<string>(
-    transactionMode === "pemasukan" ? "Penjualan Barang" : "Pembelian Stok"
-  );
-  
-  const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
+    transactionMode === "pemasukan" ? "Penjualan Barang" : "Pembelian Stok",
+  )
+
+  const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false)
 
   // Recalculate default category when transaction mode changes
   useMemo(() => {
-    setCategoryType(transactionMode === "pemasukan" ? "Penjualan Barang" : "Pembelian Stok");
-  }, [transactionMode]);
+    setCategoryType(transactionMode === "pemasukan" ? "Penjualan Barang" : "Pembelian Stok")
+  }, [transactionMode])
 
   const calculatedTotalAmount = useMemo(() => {
     if (transactionMode === "pemasukan") {
       return selectedProducts.reduce((sum, item) => {
-        return sum + item.product.harga_jual * item.quantity;
-      }, 0);
+        return sum + item.product.harga_jual * item.quantity
+      }, 0)
     } else {
       if (categoryType !== "Pembelian Stok") {
-        return 0;
+        return 0
       }
       return selectedProducts.reduce((sum, item) => {
-        return sum + item.product.harga_modal * item.quantity;
-      }, 0);
+        return sum + item.product.harga_modal * item.quantity
+      }, 0)
     }
-  }, [selectedProducts, transactionMode, categoryType]);
+  }, [selectedProducts, transactionMode, categoryType])
 
   const calculatedTotalModal = useMemo(() => {
     if (transactionMode === "pemasukan") {
       return selectedProducts.reduce((sum, item) => {
-        return sum + item.product.harga_modal * item.quantity;
-      }, 0);
+        return sum + item.product.harga_modal * item.quantity
+      }, 0)
     }
-    return 0;
-  }, [selectedProducts, transactionMode]);
+    return 0
+  }, [selectedProducts, transactionMode])
 
   const effectiveTotalAmount = manualTotalAmount
-    ? parseInt(manualTotalAmount.replace(/\./g, ""), 10) || 0
-    : calculatedTotalAmount;
+    ? Number.parseInt(manualTotalAmount.replace(/\./g, ""), 10) || 0
+    : calculatedTotalAmount
 
   const effectiveTotalModal = manualTotalModal
-    ? parseInt(manualTotalModal.replace(/\./g, ""), 10) || 0
-    : calculatedTotalModal;
+    ? Number.parseInt(manualTotalModal.replace(/\./g, ""), 10) || 0
+    : calculatedTotalModal
 
   const keuntungan = useMemo(() => {
     if (transactionMode === "pemasukan") {
-      return effectiveTotalAmount - effectiveTotalModal;
+      return effectiveTotalAmount - effectiveTotalModal
     }
-    return 0;
-  }, [effectiveTotalAmount, effectiveTotalModal, transactionMode]);
+    return 0
+  }, [effectiveTotalAmount, effectiveTotalModal, transactionMode])
 
   const resetForm = () => {
-    setSelectedProducts([]);
-    setStatus("Lunas");
-    setManualTotalAmount("");
-    setManualTotalModal("");
-    setError(null);
-  };
+    setSelectedProducts([])
+    setStatus("Lunas")
+    setManualTotalAmount("")
+    setManualTotalModal("")
+    setError(null)
+  }
 
   const handleQuantityChange = (productId: number, change: number) => {
     setSelectedProducts((currentItems) => {
       const updatedItems = currentItems.map((item) => {
         if (item.product.id === productId) {
-          const productStock = item.product.stok;
-          const currentQuantity = item.quantity;
-          let newQuantity = currentQuantity + change;
+          const productStock = item.product.stok
+          const currentQuantity = item.quantity
+          let newQuantity = currentQuantity + change
 
           if (newQuantity < 1) {
-            newQuantity = 1;
+            newQuantity = 1
           } else if (transactionMode === "pemasukan" && change > 0 && newQuantity > productStock) {
-            newQuantity = productStock;
+            newQuantity = productStock
           }
 
-          return { ...item, quantity: newQuantity };
+          return { ...item, quantity: newQuantity }
         }
-        return item;
-      });
-      return updatedItems;
-    });
-  };
+        return item
+      })
+      return updatedItems
+    })
+  }
 
   const handleDirectQuantityChange = (productId: number, value: string) => {
-    const numericValue = parseInt(value, 10);
+    const numericValue = Number.parseInt(value, 10)
 
     setSelectedProducts((currentItems) => {
       return currentItems.map((item) => {
         if (item.product.id === productId) {
-          let newQuantity = numericValue;
+          let newQuantity = numericValue
           if (isNaN(newQuantity) || newQuantity < 1) {
-            newQuantity = 1;
+            newQuantity = 1
           } else if (transactionMode === "pemasukan" && newQuantity > item.product.stok) {
-            newQuantity = item.product.stok;
+            newQuantity = item.product.stok
           }
 
-          return { ...item, quantity: newQuantity };
+          return { ...item, quantity: newQuantity }
         }
-        return item;
-      });
-    });
-  };
+        return item
+      })
+    })
+  }
 
   const handleRemoveItem = (productId: number) => {
-    setSelectedProducts((currentItems) =>
-      currentItems.filter((item) => item.product.id !== productId)
-    );
-  };
+    setSelectedProducts((currentItems) => currentItems.filter((item) => item.product.id !== productId))
+  }
 
   const handleStatusChange = (newStatus: "Lunas" | "Belum Lunas") => {
-    setStatus(newStatus);
-  };
+    setStatus(newStatus)
+  }
 
   const handleOpenProductSelector = () => {
-    setIsProductSelectorOpen(true);
-  };
+    setIsProductSelectorOpen(true)
+  }
 
   const handleCloseProductSelector = () => {
-    setIsProductSelectorOpen(false);
-  };
+    setIsProductSelectorOpen(false)
+  }
 
   const handleProductSelect = (productToAdd: ProductCardProps) => {
-    const existingItem = selectedProducts.find(
-      (item) => item.product.id === productToAdd.id
-    );
+    const existingItem = selectedProducts.find((item) => item.product.id === productToAdd.id)
 
     if (existingItem) {
-      handleQuantityChange(productToAdd.id, 1);
+      handleQuantityChange(productToAdd.id, 1)
     } else {
       if (transactionMode === "pemasukan" && productToAdd.stok <= 0) {
-        showModal(
-          "Stok Habis",
-          `${productToAdd.nama} sedang habis stok.`,
-          "error"
-        );
-        return;
+        showModal("Stok Habis", `${productToAdd.nama} sedang habis stok.`, "error")
+        return
       }
-      
-      setSelectedProducts((prevItems) => [
-        ...prevItems,
-        { product: productToAdd, quantity: 1 },
-      ]);
+
+      setSelectedProducts((prevItems) => [...prevItems, { product: productToAdd, quantity: 1 }])
     }
-  };
+  }
 
   const handleTotalAmountChange = (value: string) => {
-    const numericValue = value.replace(/[^\d]/g, "");
-    const formattedValue = numericValue
-      ? formatHarga(parseInt(numericValue, 10))
-      : "";
-    setManualTotalAmount(formattedValue);
-  };
+    const numericValue = value.replace(/[^\d]/g, "")
+    const formattedValue = numericValue ? formatHarga(Number.parseInt(numericValue, 10)) : ""
+    setManualTotalAmount(formattedValue)
+  }
 
   const handleTotalModalChange = (value: string) => {
-    const numericValue = value.replace(/[^\d]/g, "");
-    const formattedValue = numericValue
-      ? formatHarga(parseInt(numericValue, 10))
-      : "";
-    setManualTotalModal(formattedValue);
-  };
+    const numericValue = value.replace(/[^\d]/g, "")
+    const formattedValue = numericValue ? formatHarga(Number.parseInt(numericValue, 10)) : ""
+    setManualTotalModal(formattedValue)
+  }
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setCategoryType(e.target.value);
-    if ((transactionMode === "pengeluaran" && e.target.value !== "Pembelian Stok") || 
-        (transactionMode === "pemasukan" && e.target.value !== "Penjualan Barang")) {
-      setSelectedProducts([]);
+    setCategoryType(e.target.value)
+    if (
+      (transactionMode === "pengeluaran" && e.target.value !== "Pembelian Stok") ||
+      (transactionMode === "pemasukan" && e.target.value !== "Penjualan Barang")
+    ) {
+      setSelectedProducts([])
     }
-  };
+  }
 
   const handleTransactionModeChange = (mode: "pemasukan" | "pengeluaran") => {
     if (mode !== transactionMode) {
-      setTransactionMode(mode);
-      setSelectedProducts([]);
-      setManualTotalAmount("");
-      setManualTotalModal("");
-      setCategoryType(mode === "pemasukan" ? "Penjualan Barang" : "Pembelian Stok");
+      setTransactionMode(mode)
+      setSelectedProducts([])
+      setManualTotalAmount("")
+      setManualTotalModal("")
+      setCategoryType(mode === "pemasukan" ? "Penjualan Barang" : "Pembelian Stok")
     }
-  };
+  }
 
   const handleSave = async () => {
-    if ((transactionMode === "pemasukan" && categoryType === "Penjualan Barang" && selectedProducts.length === 0) || 
-        (transactionMode === "pengeluaran" && categoryType === "Pembelian Stok" && selectedProducts.length === 0)) {
-      setError("Tambahkan setidaknya satu barang.");
-      return;
-    }
-    
-    if (effectiveTotalAmount <= 0) {
-      setError("Masukkan jumlah total yang valid.");
-      return;
-    }
-    
-    if (!accessToken) {
-      setError("Autentikasi diperlukan.");
-      return;
+    if (
+      (transactionMode === "pemasukan" && categoryType === "Penjualan Barang" && selectedProducts.length === 0) ||
+      (transactionMode === "pengeluaran" && categoryType === "Pembelian Stok" && selectedProducts.length === 0)
+    ) {
+      setError("Tambahkan setidaknya satu barang.")
+      return
     }
 
-    setIsLoading(true);
-    setError(null);
+    if (effectiveTotalAmount <= 0) {
+      setError("Masukkan jumlah total yang valid.")
+      return
+    }
+
+    if (!accessToken) {
+      setError("Autentikasi diperlukan.")
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
 
     const transactionData = {
       transaction_type: transactionMode,
@@ -245,11 +236,9 @@ export default function TambahTransaksiPage() {
       total_amount: effectiveTotalAmount,
       total_modal: transactionMode === "pemasukan" ? effectiveTotalModal : 0,
       amount:
-        transactionMode === "pemasukan" && categoryType === "Penjualan Barang"
-          ? keuntungan
-          : effectiveTotalAmount,
+        transactionMode === "pemasukan" && categoryType === "Penjualan Barang" ? keuntungan : effectiveTotalAmount,
       items:
-        (transactionMode === "pemasukan" && categoryType === "Penjualan Barang") || 
+        (transactionMode === "pemasukan" && categoryType === "Penjualan Barang") ||
         (transactionMode === "pengeluaran" && categoryType === "Pembelian Stok")
           ? selectedProducts.map((item) => ({
               product_id: item.product.id,
@@ -259,7 +248,7 @@ export default function TambahTransaksiPage() {
             }))
           : [],
       status: status,
-    };
+    }
 
     try {
       const response = await fetch(`${config.apiUrl}/transaksi`, {
@@ -269,15 +258,11 @@ export default function TambahTransaksiPage() {
           Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify(transactionData),
-      });
+      })
 
       if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: "Gagal menyimpan transaksi." }));
-        throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`
-        );
+        const errorData = await response.json().catch(() => ({ message: "Gagal menyimpan transaksi." }))
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
       }
 
       showModal(
@@ -286,26 +271,26 @@ export default function TambahTransaksiPage() {
         "success",
         {
           label: "Lihat Semua Transaksi",
-          onClick: () => window.location.href = "/transaksi",
+          onClick: () => (window.location.href = "/transaksi"),
         },
         {
           label: "Tambah Baru",
           onClick: () => {
-            resetForm();
-            hideModal();
+            resetForm()
+            hideModal()
           },
-        }
-      );
+        },
+      )
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message || "Terjadi kesalahan saat menyimpan.");
+        setError(err.message || "Terjadi kesalahan saat menyimpan.")
       } else {
-        setError("Terjadi kesalahan yang tidak diketahui.");
+        setError("Terjadi kesalahan yang tidak diketahui.")
       }
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <div className="p-4 max-w-md mx-auto bg-gray-50 min-h-screen pb-24">
@@ -337,28 +322,28 @@ export default function TambahTransaksiPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <button 
+        <button
           className={`shadow-sm rounded-3xl py-3 px-4 text-sm font-medium text-center flex items-center justify-center ${
-            transactionMode === "pemasukan" 
-              ? "bg-green-100 text-green-700" 
-              : "bg-white text-gray-500 hover:bg-gray-50"
+            transactionMode === "pemasukan" ? "bg-green-100 text-green-700" : "bg-white text-gray-500 hover:bg-gray-50"
           }`}
           onClick={() => handleTransactionModeChange("pemasukan")}
         >
-          <div className={`${transactionMode === "pemasukan" ? "bg-primary-blue" : "bg-gray-200"} p-1.5 rounded-full mr-2`}>
+          <div
+            className={`${transactionMode === "pemasukan" ? "bg-primary-blue" : "bg-gray-200"} p-1.5 rounded-full mr-2`}
+          >
             <CoinIcon />
           </div>
           Pemasukan
         </button>
-        <button 
+        <button
           className={`shadow-sm rounded-3xl py-3 px-4 text-sm font-medium text-center flex items-center justify-center ${
-            transactionMode === "pengeluaran" 
-              ? "bg-red-100 text-red-700" 
-              : "bg-white text-gray-500 hover:bg-gray-50"
+            transactionMode === "pengeluaran" ? "bg-red-100 text-red-700" : "bg-white text-gray-500 hover:bg-gray-50"
           }`}
           onClick={() => handleTransactionModeChange("pengeluaran")}
         >
-          <div className={`${transactionMode === "pengeluaran" ? "bg-primary-red" : "bg-gray-200"} p-1.5 rounded-full mr-2`}>
+          <div
+            className={`${transactionMode === "pengeluaran" ? "bg-primary-red" : "bg-gray-200"} p-1.5 rounded-full mr-2`}
+          >
             <StockIcon />
           </div>
           Pengeluaran
@@ -377,7 +362,7 @@ export default function TambahTransaksiPage() {
           {transactionMode === "pemasukan" ? (
             <>
               <option>Penjualan Barang</option>
-              <option>Penambahan Modal</option>
+              <option>Pendapatan Pinjaman</option>
               <option>Pendapatan Di Luar Usaha</option>
               <option>Pendapatan Lain-Lain</option>
               <option>Pendapatan Jasa/Komisi</option>
@@ -387,8 +372,8 @@ export default function TambahTransaksiPage() {
           ) : (
             <>
               <option>Pembelian Stok</option>
-              <option>Pembelian bahan baku</option>
-              <option>Biaya operasional</option>
+              <option>Pembelian Bahan Baku</option>
+              <option>Biaya Operasional</option>
               <option>Gaji/Bonus Karyawan</option>
               <option>Pemberian utang</option>
               <option>Pembayaran Utang/Cicilan</option>
@@ -411,16 +396,12 @@ export default function TambahTransaksiPage() {
             stroke="currentColor"
             className="w-4 h-4 text-gray-500"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="m19.5 8.25-7.5 7.5-7.5-7.5"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
           </svg>
         </div>
       </div>
 
-      {((transactionMode === "pemasukan" && categoryType === "Penjualan Barang") || 
+      {((transactionMode === "pemasukan" && categoryType === "Penjualan Barang") ||
         (transactionMode === "pengeluaran" && categoryType === "Pembelian Stok")) && (
         <>
           <div className="flex justify-between items-center mb-3">
@@ -437,11 +418,7 @@ export default function TambahTransaksiPage() {
                 stroke="currentColor"
                 className="w-4 h-4 mr-1"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 4.5v15m7.5-7.5h-15"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
               Tambah Barang
             </button>
@@ -454,10 +431,7 @@ export default function TambahTransaksiPage() {
               </p>
             ) : (
               selectedProducts.map((item) => (
-                <div
-                  key={item.product.id}
-                  className="bg-white rounded-xl flex items-center p-3 shadow-sm relative"
-                >
+                <div key={item.product.id} className="bg-white rounded-xl flex items-center p-3 shadow-sm relative">
                   <button
                     onClick={() => handleRemoveItem(item.product.id)}
                     className="absolute top-1 right-1 text-red-400 hover:text-red-600 p-1 z-10"
@@ -471,11 +445,7 @@ export default function TambahTransaksiPage() {
                       stroke="currentColor"
                       className="w-4 h-4"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M6 18 18 6M6 6l12 12"
-                      />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
                     </svg>
                   </button>
                   <div className="w-16 h-16 relative rounded-lg overflow-hidden mr-3 flex-shrink-0 bg-gray-100">
@@ -486,9 +456,7 @@ export default function TambahTransaksiPage() {
                         fill
                         className="object-cover"
                         sizes="64px"
-                        onError={(e) =>
-                          (e.currentTarget.src = "/images/placeholder.svg")
-                        }
+                        onError={(e) => (e.currentTarget.src = "/images/placeholder.svg")}
                       />
                     ) : (
                       <Image
@@ -501,41 +469,44 @@ export default function TambahTransaksiPage() {
                     )}
                   </div>
                   <div className="flex-1 mr-2">
-                    <h3 className="font-semibold text-sm">
-                      {item.product.nama}
-                    </h3>
-                    <p className={`font-medium text-sm ${transactionMode === "pemasukan" ? "text-blue-700" : "text-red-700"} mt-1`}>
-                      Rp {formatHarga(transactionMode === "pemasukan" ? item.product.harga_jual : item.product.harga_modal)}
+                    <h3 className="font-semibold text-sm">{item.product.nama}</h3>
+                    <p
+                      className={`font-medium text-sm ${transactionMode === "pemasukan" ? "text-blue-700" : "text-red-700"} mt-1`}
+                    >
+                      Rp{" "}
+                      {formatHarga(
+                        transactionMode === "pemasukan" ? item.product.harga_jual : item.product.harga_modal,
+                      )}
                     </p>
                   </div>
-                  <div className="flex items-center">
-                    <button
-                      onClick={() => handleQuantityChange(item.product.id, -1)}
-                      className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center hover:bg-blue-200 disabled:opacity-50"
-                      disabled={item.quantity <= 1}
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      value={item.quantity}
-                      onChange={(e) =>
-                        handleDirectQuantityChange(
-                          item.product.id,
-                          e.target.value
-                        )
-                      }
-                      className="w-12 text-center font-medium mx-1 border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded"
-                      min="1"
-                      max={transactionMode === "pemasukan" ? item.product.stok : undefined}
-                    />
-                    <button
-                      onClick={() => handleQuantityChange(item.product.id, 1)}
-                      className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center hover:bg-blue-200 disabled:opacity-50"
-                      disabled={transactionMode === "pemasukan" && item.quantity >= item.product.stok}
-                    >
-                      +
-                    </button>
+                  <div className="relative flex flex-col items-center">
+                    <div className="flex flex-row items-center">
+                      <button
+                        onClick={() => handleQuantityChange(item.product.id, -1)}
+                        className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center hover:bg-blue-200 disabled:opacity-50"
+                        disabled={item.quantity <= 1}
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        value={item.quantity}
+                        onChange={(e) => handleDirectQuantityChange(item.product.id, e.target.value)}
+                        className="w-12 text-center font-medium mx-1 border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded"
+                        min="1"
+                        max={transactionMode === "pemasukan" ? item.product.stok : undefined}
+                      />
+                      <button
+                        onClick={() => handleQuantityChange(item.product.id, 1)}
+                        className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center hover:bg-blue-200 disabled:opacity-50"
+                        disabled={transactionMode === "pemasukan" && item.quantity >= item.product.stok}
+                      >
+                        +
+                      </button>
+                    </div>
+                      {transactionMode === "pemasukan" && item.quantity >= item.product.stok && (
+                        <div className="absolute -bottom-5 text-xs text-red-500">Stok maksimum</div>
+                      )}
                   </div>
                 </div>
               ))
@@ -546,9 +517,7 @@ export default function TambahTransaksiPage() {
 
       <div className="bg-white rounded-xl p-4 space-y-3 shadow-sm mb-6">
         <div className="flex justify-between items-center">
-          <span className="text-gray-600">
-            Total {transactionMode === "pemasukan" ? "Pemasukan" : "Pengeluaran"}
-          </span>
+          <span className="text-gray-600">Total {transactionMode === "pemasukan" ? "Pemasukan" : "Pengeluaran"}</span>
           <div className="flex items-center border rounded px-2 focus-within:border-blue-500">
             <span className="text-gray-500 text-sm mr-1">Rp</span>
             <input
@@ -583,9 +552,7 @@ export default function TambahTransaksiPage() {
             <button
               onClick={() => handleStatusChange("Lunas")}
               className={`px-4 py-1 rounded-full text-sm ${
-                status === "Lunas"
-                  ? "bg-green-500 text-white shadow"
-                  : "text-gray-600"
+                status === "Lunas" ? "bg-green-500 text-white shadow" : "text-gray-600"
               }`}
             >
               Lunas
@@ -593,9 +560,7 @@ export default function TambahTransaksiPage() {
             <button
               onClick={() => handleStatusChange("Belum Lunas")}
               className={`px-4 py-1 rounded-full text-sm ${
-                status === "Belum Lunas"
-                  ? "bg-red-500 text-white shadow"
-                  : "text-gray-600"
+                status === "Belum Lunas" ? "bg-red-500 text-white shadow" : "text-gray-600"
               }`}
             >
               Belum Lunas
@@ -608,19 +573,14 @@ export default function TambahTransaksiPage() {
             <hr className="my-2" />
             <div className="flex justify-between items-center">
               <span className="text-gray-600 font-semibold">Keuntungan</span>
-              <span className="font-bold text-lg text-green-600">
-                Rp{formatHarga(keuntungan)}
-              </span>
+              <span className="font-bold text-lg text-green-600">Rp{formatHarga(keuntungan)}</span>
             </div>
           </>
         )}
       </div>
 
       {error && (
-        <div
-          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
-          role="alert"
-        >
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
           <span className="block sm:inline">{error}</span>
         </div>
       )}
@@ -629,8 +589,8 @@ export default function TambahTransaksiPage() {
         onClick={handleSave}
         disabled={
           isLoading ||
-          ((transactionMode === "pemasukan" && categoryType === "Penjualan Barang" && selectedProducts.length === 0) ||
-           (transactionMode === "pengeluaran" && categoryType === "Pembelian Stok" && selectedProducts.length === 0)) ||
+          (transactionMode === "pemasukan" && categoryType === "Penjualan Barang" && selectedProducts.length === 0) ||
+          (transactionMode === "pengeluaran" && categoryType === "Pembelian Stok" && selectedProducts.length === 0) ||
           effectiveTotalAmount === 0
         }
         className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-[calc(100%-2rem)] max-w-[calc(theme(maxWidth.md)-2rem)] bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center z-20"
@@ -643,14 +603,7 @@ export default function TambahTransaksiPage() {
               fill="none"
               viewBox="0 0 24 24"
             >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path
                 className="opacity-75"
                 fill="currentColor"
@@ -664,7 +617,7 @@ export default function TambahTransaksiPage() {
         )}
       </button>
 
-      {((transactionMode === "pemasukan" && categoryType === "Penjualan Barang") || 
+      {((transactionMode === "pemasukan" && categoryType === "Penjualan Barang") ||
         (transactionMode === "pengeluaran" && categoryType === "Pembelian Stok")) && (
         <ProductSelectorModal
           isOpen={isProductSelectorOpen}
@@ -674,5 +627,5 @@ export default function TambahTransaksiPage() {
         />
       )}
     </div>
-  );
+  )
 }
