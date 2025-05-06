@@ -1,5 +1,5 @@
 "use client";
-import { useState, ChangeEvent } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 import TextInput from "./components/textInput";
 import { useAuth } from "@/contexts/AuthContext";
 import config from "@/src/config";
@@ -44,6 +44,57 @@ export default function AddProductPage() {
     unit: false,
   });
 
+  // Add effect to fetch categories and units from backend
+  useEffect(() => {
+    const fetchCategoriesAndUnits = async () => {
+      if (!accessToken) return;
+      
+      try {
+        // Fetch categories
+        console.log("Fetching categories...");
+        const categoryResponse = await fetch(`${config.apiUrl}/produk/categories`, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (categoryResponse.ok) {
+          const categories = await categoryResponse.json();
+          if (categories.length > 0) {
+            // Combine fetched categories with initial ones, removing duplicates
+            const uniqueCategories = [...new Set([...initialCategoryOptions, ...categories])]
+            // const errorData = await categoryResponse.json().catch(() => ({}));
+            // console.error("Categories fetch error:", categoryResponse.status, errorData);;
+            // console.log("Fetched categories:", uniqueCategories);
+            // console.log("AAAAAAAAAAAAA=========================");
+            setCategoryOptions(uniqueCategories);
+          }
+        }
+        
+        // Fetch units
+        const unitResponse = await fetch(`${config.apiUrl}/produk/units`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        
+        if (unitResponse.ok) {
+          const units = await unitResponse.json();
+          if (units.length > 0) {
+            // Combine fetched units with initial ones, removing duplicates
+            const uniqueUnits = [...new Set([...initialUnitOptions, ...units])];
+            setUnitOptions(uniqueUnits);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching categories and units:", error);
+      }
+    };
+    
+    fetchCategoriesAndUnits();
+  }, [accessToken]);
+
   const resetForm = () => {
     // Reset all form fields
     setProductName("");
@@ -68,7 +119,7 @@ export default function AddProductPage() {
     if (fileInput) {
       fileInput.value = "";
     }
-  }; // Missing closing bracket was here
+  };
 
   const handleAddCustomCategory = (newCategory: string) => {
     if (!categoryOptions.includes(newCategory)) {

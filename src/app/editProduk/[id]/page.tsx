@@ -52,6 +52,51 @@ export default function EditProductPage() {
     unit: false,
   });
 
+  // Add effect to fetch categories and units from backend
+  useEffect(() => {
+    const fetchCategoriesAndUnits = async () => {
+      if (!accessToken) return;
+      
+      try {
+        // Fetch categories
+        const categoryResponse = await fetch(`${config.apiUrl}/produk/categories`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        
+        if (categoryResponse.ok) {
+          const categories = await categoryResponse.json();
+          if (categories.length > 0) {
+            // Combine fetched categories with initial ones, removing duplicates
+            const uniqueCategories = [...new Set([...initialCategoryOptions, ...categories])];
+            setCategoryOptions(uniqueCategories);
+          }
+        }
+        
+        // Fetch units
+        const unitResponse = await fetch(`${config.apiUrl}/produk/units`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        
+        if (unitResponse.ok) {
+          const units = await unitResponse.json();
+          if (units.length > 0) {
+            // Combine fetched units with initial ones, removing duplicates
+            const uniqueUnits = [...new Set([...initialUnitOptions, ...units])];
+            setUnitOptions(uniqueUnits);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching categories and units:", error);
+      }
+    };
+    
+    fetchCategoriesAndUnits();
+  }, [accessToken]);
+
   useEffect(() => {
     async function fetchProduct() {
       if (!accessToken || !id) return;
@@ -100,7 +145,7 @@ export default function EditProductPage() {
     }
 
     fetchProduct();
-  }, [id, accessToken, showModal]);
+  }, [id, accessToken, showModal, categoryOptions, unitOptions]);
 
   const handleAddCustomCategory = (newCategory: string) => {
     if (!categoryOptions.includes(newCategory)) {
