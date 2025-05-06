@@ -359,6 +359,12 @@ const ReportPage = () => {
           } else {
             const data : ArusKasReportResponse = await response.json();
             setArusKasTransactions(data.transactions || []);
+
+            setSummary(prev => ({
+              ...prev,
+              totalPemasukan: Number(data.total_inflow) || 0,
+              totalPengeluaran: Number(data.total_outflow) || 0
+            }));
           }
         }    
       } catch (error) {
