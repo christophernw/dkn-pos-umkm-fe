@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, ChangeEvent } from "react";
+import { useState, ChangeEvent } from "react";
 import TextInput from "./components/textInput";
 import { useAuth } from "@/contexts/AuthContext";
 import config from "@/src/config";
@@ -28,7 +28,7 @@ export default function AddProductPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const { accessToken } = useAuth();
   const [loading, setLoading] = useState(false);
-  const { showModal } = useModal();
+  const { showModal, hideModal } = useModal();
 
   // State for managing custom options
   const [categoryOptions, setCategoryOptions] = useState([...initialCategoryOptions]);
@@ -43,57 +43,6 @@ export default function AddProductPage() {
     currentStock: false,
     unit: false,
   });
-
-  // Add effect to fetch categories and units from backend
-  useEffect(() => {
-    const fetchCategoriesAndUnits = async () => {
-      if (!accessToken) return;
-      
-      try {
-        // Fetch categories
-        console.log("Fetching categories...");
-        const categoryResponse = await fetch(`${config.apiUrl}/produk/categories`, {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        if (categoryResponse.ok) {
-          const categories = await categoryResponse.json();
-          if (categories.length > 0) {
-            // Combine fetched categories with initial ones, removing duplicates
-            const uniqueCategories = [...new Set([...initialCategoryOptions, ...categories])]
-            // const errorData = await categoryResponse.json().catch(() => ({}));
-            // console.error("Categories fetch error:", categoryResponse.status, errorData);;
-            // console.log("Fetched categories:", uniqueCategories);
-            // console.log("AAAAAAAAAAAAA=========================");
-            setCategoryOptions(uniqueCategories);
-          }
-        }
-        
-        // Fetch units
-        const unitResponse = await fetch(`${config.apiUrl}/produk/units`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-        
-        if (unitResponse.ok) {
-          const units = await unitResponse.json();
-          if (units.length > 0) {
-            // Combine fetched units with initial ones, removing duplicates
-            const uniqueUnits = [...new Set([...initialUnitOptions, ...units])];
-            setUnitOptions(uniqueUnits);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching categories and units:", error);
-      }
-    };
-    
-    fetchCategoriesAndUnits();
-  }, [accessToken]);
 
   const resetForm = () => {
     // Reset all form fields
@@ -119,7 +68,7 @@ export default function AddProductPage() {
     if (fileInput) {
       fileInput.value = "";
     }
-  };
+  }; // Missing closing bracket was here
 
   const handleAddCustomCategory = (newCategory: string) => {
     if (!categoryOptions.includes(newCategory)) {
@@ -229,12 +178,24 @@ export default function AddProductPage() {
       });
 
       if (response.status === 201) {
-        showModal("Berhasil", "Produk berhasil ditambahkan!", "success", {
-          label: "Lihat Semua Produk",
-          onClick: () => {
-            window.location.href = "/semuaBarang";
+        showModal(
+          "Berhasil",
+          "Produk berhasil ditambahkan!",
+          "success",
+          {
+            label: "Lihat Semua Produk",
+            onClick: () => {
+              window.location.href = "/semuaBarang";
+            },
           },
-        });
+          {
+            label: "Tambah Baru",
+            onClick: () => {
+              resetForm();
+              hideModal();
+            },
+          }
+        );
       } else {
         const errorData = await response.json();
         console.error("Error creating product:", errorData);
@@ -357,7 +318,7 @@ export default function AddProductPage() {
           id="priceSell"
           label="Harga Jual"
           value={priceSell}
-          onChange={(_, raw) => setPriceSell(raw)}
+          onChange={(value) => setPriceSell(value)}
           placeholder="13.000"
           type="number"
           currency
@@ -369,7 +330,7 @@ export default function AddProductPage() {
           id="priceCost"
           label="Harga Modal"
           value={priceCost}
-          onChange={(_, raw) => setPriceCost(raw)}
+          onChange={(value) => setPriceCost(value)}
           placeholder="9.000"
           type="number"
           currency
@@ -381,7 +342,7 @@ export default function AddProductPage() {
           id="currentStock"
           label="Stok"
           value={currentStock}
-          onChange={setCurrentStock}
+          onChange={(value) => setCurrentStock(value)}
           placeholder="450"
           type="number"
           error={errors.currentStock}
