@@ -121,8 +121,6 @@ const ReportPage = () => {
   const handleReportTypeChange = (type: "keuangan" | "utang" | "arus-kas") => {
     setReportType(type);
     setDropdownOpen(false);
-    // Clear current transactions
-    setTransactions([]);
     // Reset pagination
     setCurrentPage(1);
     // Reset dates and fetch new data
