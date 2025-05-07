@@ -1,5 +1,5 @@
 "use client";
-import { useState, ChangeEvent } from "react";
+import { useState, ChangeEvent, useEffect } from "react";
 import TextInput from "./components/textInput";
 import { useAuth } from "@/contexts/AuthContext";
 import config from "@/src/config";
@@ -84,6 +84,40 @@ export default function AddProductPage() {
     );
   };
 
+  useEffect(() => {
+    const fetchCategoriesAndUnits = async () => {
+      if (!accessToken) return;
+
+      try {
+        // Categories
+        const catRes = await fetch(`${config.apiUrl}/produk/categories`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (catRes.ok) {
+          const cats = await catRes.json();
+          setCategoryOptions(
+            cats.length > 0 ? cats : [...initialCategoryOptions]
+          );
+        }
+
+        // Units
+        const unitRes = await fetch(`${config.apiUrl}/produk/units`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (unitRes.ok) {
+          const units = await unitRes.json();
+          setUnitOptions(
+            units.length > 0 ? units : [...initialUnitOptions]
+          );
+        }
+      } catch (err) {
+        console.error("Fetch kategori/satuan gagal:", err);
+      }
+    };
+
+    fetchCategoriesAndUnits();
+  }, [accessToken]);
+  
   const handleAddCustomUnit = (newUnit: string) => {
     if (!unitOptions.includes(newUnit)) {
       setUnitOptions([...unitOptions, newUnit]);
@@ -196,6 +230,12 @@ export default function AddProductPage() {
             },
           }
         );
+
+        const res = await fetch(`${config.apiUrl}/produk/categories`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const data = await res.json();
+        setCategoryOptions(data);
       } else {
         const errorData = await response.json();
         console.error("Error creating product:", errorData);

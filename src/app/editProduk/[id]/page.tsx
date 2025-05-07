@@ -67,11 +67,9 @@ export default function EditProductPage() {
         
         if (categoryResponse.ok) {
           const categories = await categoryResponse.json();
-          if (categories.length > 0) {
-            // Combine fetched categories with initial ones, removing duplicates
-            const uniqueCategories = [...new Set([...initialCategoryOptions, ...categories])];
-            setCategoryOptions(uniqueCategories);
-          }
+          setCategoryOptions(
+            categories.length > 0 ? categories : [...initialCategoryOptions]
+          );
         }
         
         // Fetch units
@@ -83,11 +81,9 @@ export default function EditProductPage() {
         
         if (unitResponse.ok) {
           const units = await unitResponse.json();
-          if (units.length > 0) {
-            // Combine fetched units with initial ones, removing duplicates
-            const uniqueUnits = [...new Set([...initialUnitOptions, ...units])];
-            setUnitOptions(uniqueUnits);
-          }
+          setUnitOptions(
+            units.length > 0 ? units : [...initialUnitOptions]
+          );
         }
       } catch (error) {
         console.error("Error fetching categories and units:", error);
@@ -248,6 +244,31 @@ export default function EditProductPage() {
       });
 
       if (response.ok) {
+        // Re-sync kategori & satuan toko sebelum redirect
+        try {
+          const catRes = await fetch(`${config.apiUrl}/produk/categories`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          if (catRes.ok) {
+            const cats = await catRes.json();
+            setCategoryOptions(
+              cats.length > 0 ? cats : [...initialCategoryOptions]
+            );
+          }
+
+          const unitRes = await fetch(`${config.apiUrl}/produk/units`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          if (unitRes.ok) {
+            const units = await unitRes.json();
+            setUnitOptions(
+              units.length > 0 ? units : [...initialUnitOptions]
+            );
+          }
+        } catch (err) {
+          console.error("Re-fetch kategori/satuan setelah update gagal:", err);
+        }
+
         // Langsung redirect ke halaman semuaBarang tanpa menampilkan modal
         router.push("/semuaBarang");
       } else {
