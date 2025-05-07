@@ -12,6 +12,8 @@ import {
 import { CoinIcon } from "@/public/icons/CoinIcon";
 import { StockIcon } from "@/public/icons/StockIcon";
 import { NotesIcon } from "@/public/icons/notesIcon";
+import { report } from "process";
+import { formatDate } from "@/src/utils/formatDate";
 
 // Define types
 interface Transaction {
@@ -38,11 +40,31 @@ interface ReportSummary {
   totalPengeluaran: number;
 }
 
+export interface ArusKasTransaction {
+  id: number;
+  jenis: "inflow" | "outflow";
+  kategori: string;
+  keterangan?: string;
+  nominal: string; 
+  tanggal_transaksi: string; 
+  transaksi_id: number;
+}
+
+export interface ArusKasReportResponse {
+  id: number;
+  month: number;   
+  year: number;
+  total_inflow: string;   
+  total_outflow: string;
+  balance: string;
+  transactions: ArusKasTransaction[];
+}
+
 const ReportPage = () => {
   const { user, accessToken } = useAuth();
   const { showModal } = useModal();
   const router = useRouter();
-  const [reportType, setReportType] = useState<"keuangan" | "utang">("utang");
+  const [reportType, setReportType] = useState<"keuangan" | "utang" | "arus-kas">("utang");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   // Add a state to track authorization
   const [hasAccess, setHasAccess] = useState<boolean>(false);
@@ -68,6 +90,15 @@ const ReportPage = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isGeneratingReport, setIsGeneratingReport] = useState<boolean>(false);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState<boolean>(false);
+  const [arusKasTransactions, setArusKasTransactions] = useState<ArusKasTransaction[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  });
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   // Check user role access - only Pemilik and Pengelola can access
   useEffect(() => {
@@ -88,11 +119,13 @@ const ReportPage = () => {
   }, [user, accessToken, router]);
 
   // Handle report type change
-  const handleReportTypeChange = (type: "keuangan" | "utang") => {
+  const handleReportTypeChange = (type: "keuangan" | "utang" | "arus-kas") => {
     setReportType(type);
     setDropdownOpen(false);
     // Clear current transactions
     setTransactions([]);
+    // Reset pagination
+    setCurrentPage(1);
     // Reset dates and fetch new data
     if (dateRange !== "custom") {
       resetDateRange();
@@ -100,64 +133,68 @@ const ReportPage = () => {
   };
 
   // Fetch summary data - only if user has access
-  useEffect(() => {
-    if (!accessToken || !hasAccess) {
-      setIsLoading(false);
-      return;
-    }
+  // useEffect(() => {
+  //   if (!accessToken || !hasAccess || reportType !== "utang") {
+  //     setIsLoading(false);
+  //     return;
+  //   }
 
-    const fetchSummary = async () => {
-      setIsLoading(true);
-      try {
-        // Fetch debt summary (for both report types)
-        const debtResponse = await fetch(
-          `${config.apiUrl}/transaksi/debt-summary`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
+  //   const fetchSummary = async () => {
+  //     if (!accessToken || !hasAccess || reportType === "arus-kas") {
+  //       return;
+  //     }
 
-        // If we're in financial report mode, also fetch total transactions summary
-        let totalPemasukan = 0;
-        let totalPengeluaran = 0;
+  //     setIsLoading(true);
+  //     try {
+  //       // Fetch debt summary (for both report types)
+  //       const debtResponse = await fetch(
+  //         `${config.apiUrl}/transaksi/debt-summary`,
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${accessToken}`,
+  //           },
+  //         }
+  //       );
+
+  //       // If we're in financial report mode, also fetch total transactions summary
+  //       let totalPemasukan = 0;
+  //       let totalPengeluaran = 0;
         
-        if (reportType === "keuangan") {
-          const financialResponse = await fetch(
-            `${config.apiUrl}/transaksi/summary/monthly`,
-            {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-            }
-          );
+  //       if (reportType === "keuangan") {
+  //         const financialResponse = await fetch(
+  //           `${config.apiUrl}/transaksi/summary/monthly`,
+  //           {
+  //             headers: {
+  //               Authorization: `Bearer ${accessToken}`,
+  //             },
+  //           }
+  //         );
           
-          if (financialResponse.ok) {
-            const financialData = await financialResponse.json();
-            totalPemasukan = financialData.pemasukan.amount || 0;
-            totalPengeluaran = financialData.pengeluaran.amount || 0;
-          }
-        }
+  //         if (financialResponse.ok) {
+  //           const financialData = await financialResponse.json();
+  //           totalPemasukan = financialData.pemasukan.amount || 0;
+  //           totalPengeluaran = financialData.pengeluaran.amount || 0;
+  //         }
+  //       }
 
-        if (debtResponse.ok) {
-          const debtData = await debtResponse.json();
-          setSummary({
-            utangSaya: debtData.utang_saya || 0,
-            utangPelanggan: debtData.utang_pelanggan || 0,
-            totalPemasukan: totalPemasukan,
-            totalPengeluaran: totalPengeluaran
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching summary data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  //       if (debtResponse.ok) {
+  //         const debtData = await debtResponse.json();
+  //         setSummary({
+  //           utangSaya: debtData.utang_saya || 0,
+  //           utangPelanggan: debtData.utang_pelanggan || 0,
+  //           totalPemasukan: totalPemasukan,
+  //           totalPengeluaran: totalPengeluaran
+  //         });
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching summary data:", error);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
 
-    fetchSummary();
-  }, [accessToken, reportType, hasAccess]);
+  //   fetchSummary();
+  // }, [accessToken, reportType, hasAccess]);
 
   // Fetch first transaction date - only if user has access
   useEffect(() => {
@@ -261,11 +298,17 @@ const ReportPage = () => {
         const encodedStartDate = encodeURIComponent(startDateWithTz);
         const encodedEndDate = encodeURIComponent(endDateWithTz);
 
-        // Choose the endpoint based on the report type
-        const endpoint = reportType === "utang"
-          ? `${config.apiUrl}/transaksi/debt-report-by-date`
-          : `${config.apiUrl}/transaksi/financial-report-by-date`;
+        let endpoint = "";
+        if (reportType === "utang") {
+          endpoint = `${config.apiUrl}/transaksi/debt-report-by-date`;
+        } else if (reportType === "keuangan") {
+          endpoint = `${config.apiUrl}/transaksi/financial-report-by-date`;
+        } else {
+          // Modified to use date range for arus-kas as well
+          endpoint = `${config.apiUrl}/laporan/aruskas-report`;
+        }
 
+        // Updated to use same URL structure for all report types
         const url = `${endpoint}?start_date=${encodedStartDate}&end_date=${encodedEndDate}`;
 
         const response = await fetch(url, {
@@ -275,12 +318,54 @@ const ReportPage = () => {
         });
 
         if (response.ok) {
-          const data = await response.json();
-          setTransactions(data.transactions || []);
-          setReportDateRange({
-            startDate: data.start_date,
-            endDate: data.end_date,
-          });
+          if (reportType !== "arus-kas") {
+            const data = await response.json();
+            const transactionsData = data.transactions as Transaction[] || [];
+            setTransactions(transactionsData || []);
+            setReportDateRange({
+              startDate: data.start_date,
+              endDate: data.end_date,
+            });
+
+            const totalPemasukan = transactionsData
+              .filter(t => t.transaction_type === "pemasukan")
+              .reduce((sum, t) => sum + Number(t.total_amount), 0);
+
+            const totalPengeluaran = transactionsData
+              .filter(t => t.transaction_type === "pengeluaran")
+              .reduce((sum, t) => sum + Number(t.total_amount), 0);
+
+            setSummary(prev => ({
+              ...prev,
+              utangSaya: totalPemasukan,
+              utangPelanggan: totalPengeluaran,
+              totalPemasukan,
+              totalPengeluaran
+            }));
+
+            setArusKasTransactions([]);
+          } else {
+            const data: ArusKasReportResponse = await response.json();
+            const transactionsData = data.transactions as ArusKasTransaction[] || [];
+            setArusKasTransactions(transactionsData || []);
+
+            const totalPemasukan = transactionsData
+              .filter(t => t.jenis === "inflow")
+              .reduce((sum, t) => sum + Number(t.nominal), 0);
+
+            const totalPengeluaran = transactionsData
+              .filter(t => t.jenis === "outflow")
+              .reduce((sum, t) => sum + Number(t.nominal), 0);
+
+            setSummary(prev => ({
+              ...prev,
+              totalPemasukan,
+              totalPengeluaran
+            }));
+            setTransactions([]);
+          }
+          // Reset to first page when loading new data
+          setCurrentPage(1);
         }
       } catch (error) {
         console.error(`Error fetching ${reportType} report:`, error);
@@ -298,7 +383,7 @@ const ReportPage = () => {
     }
 
     fetchTransactions();
-  }, [dateRange, customStartDate, customEndDate, accessToken, reportType, hasAccess]);
+  }, [dateRange, customStartDate, customEndDate, accessToken, reportType, hasAccess, selectedMonth]);
 
   const handleDownloadClick = () => {
     if (!hasAccess) {
@@ -317,17 +402,20 @@ const ReportPage = () => {
     try {
       setIsGeneratingReport(true);
 
-      // Prepare data for report
-      const reportData = {
-        transactions,
-        startDate: reportDateRange.startDate,
-        endDate: reportDateRange.endDate,
-        utangSaya: summary.utangSaya,
-        utangPelanggan: summary.utangPelanggan,
-        totalPemasukan: summary.totalPemasukan,
-        totalPengeluaran: summary.totalPengeluaran,
-        reportType: reportType
-      };
+      let reportData;
+
+      if (true) { // Now uniform for all report types
+        reportData = {
+          transactions: reportType === "arus-kas" ? arusKasTransactions : transactions,
+          startDate: reportDateRange.startDate,
+          endDate: reportDateRange.endDate,
+          utangSaya: summary.utangSaya,
+          utangPelanggan: summary.utangPelanggan,
+          totalPemasukan: summary.totalPemasukan,
+          totalPengeluaran: summary.totalPengeluaran,
+          reportType: reportType,
+        };
+      }
 
       // Generate report based on format
       let blob: Blob;
@@ -335,10 +423,10 @@ const ReportPage = () => {
 
       if (format === "pdf") {
         blob = await generateDebtReportPDF(reportData as PDFReportData);
-        fileName = `Laporan_${reportType === "utang" ? "Utang_Piutang" : "Keuangan"}_${dateRange}_Hari.pdf`;
+        fileName = `Laporan_${reportType === "utang" ? "Utang_Piutang" : reportType !== "arus-kas" ? "Keuangan" : "Arus Kas"}_${dateRange}_Hari.pdf`;
       } else {
         blob = generateDebtReportExcel(reportData as ExcelReportData);
-        fileName = `Laporan_${reportType === "utang" ? "Utang_Piutang" : "Keuangan"}_${dateRange}_Hari.xlsx`;
+        fileName = `Laporan_${reportType === "utang" ? "Utang_Piutang" : reportType !== "arus-kas" ? "Keuangan" : "Arus Kas"}_${dateRange}_Hari.xlsx`;
       }
 
       // Create download link and trigger download
@@ -376,7 +464,14 @@ const ReportPage = () => {
   };
 
   const formatCurrency = (amount: number): string => {
-    return amount.toLocaleString("id-ID");
+    // Convert to number if it's a string, handle NaN cases
+    const amountNumber = typeof amount === 'string' ? parseFloat(amount) : amount;
+    
+    return isNaN(amountNumber) 
+      ? '0' 
+      : new Intl.NumberFormat('id-ID', {
+          maximumFractionDigits: 0 // No decimal places for currency
+        }).format(amountNumber);
   };
 
   // Format date in Indonesia locale (UTC+7)
@@ -426,6 +521,101 @@ const ReportPage = () => {
     }
   };
 
+  // Pagination calculation
+  const getActiveTransactions = () => {
+    if (reportType === "arus-kas") {
+      const indexOfLastItem = currentPage * itemsPerPage;
+      const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+      return arusKasTransactions.slice(indexOfFirstItem, indexOfLastItem);
+    } else {
+      const indexOfLastItem = currentPage * itemsPerPage;
+      const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+      return transactions.slice(indexOfFirstItem, indexOfLastItem);
+    }
+  };
+
+  // Calculate total pages
+  const totalPages = Math.ceil(
+    reportType === "arus-kas" 
+      ? arusKasTransactions.length / itemsPerPage 
+      : transactions.length / itemsPerPage
+  );
+
+  // Pagination controls
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const renderPaginationButtons = () => {
+    const buttons = [];
+    const maxButtonsToShow = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxButtonsToShow / 2));
+    const endPage = Math.min(totalPages, startPage + maxButtonsToShow - 1);
+
+    if (endPage - startPage + 1 < maxButtonsToShow) {
+      startPage = Math.max(1, endPage - maxButtonsToShow + 1);
+    }
+
+    // First page button
+    if (startPage > 1) {
+      buttons.push(
+        <button
+          key="1"
+          onClick={() => handlePageChange(1)}
+          className="min-w-9 rounded-md border border-slate-300 py-1 px-2 text-xs hover:bg-blue-100 ml-1"
+        >
+          1
+        </button>
+      );
+      if (startPage > 2) {
+        buttons.push(
+          <span key="start-ellipsis" className="px-1">
+            ...
+          </span>
+        );
+      }
+    }
+
+    // Page buttons
+    for (let i = startPage; i <= endPage; i++) {
+      buttons.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`min-w-9 rounded-md ${
+            currentPage === i
+              ? "bg-primary-indigo text-white border border-primary-indigo"
+              : "border border-slate-300 hover:bg-blue-100"
+          } py-1 px-2 text-xs ml-1`}
+        >
+          {i}
+        </button>
+      );
+    }
+
+    // Last page button
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        buttons.push(
+          <span key="end-ellipsis" className="px-1">
+            ...
+          </span>
+        );
+      }
+      buttons.push(
+        <button
+          key={totalPages}
+          onClick={() => handlePageChange(totalPages)}
+          className="min-w-9 rounded-md border border-slate-300 py-1 px-2 text-xs hover:bg-blue-100 ml-1"
+        >
+          {totalPages}
+        </button>
+      );
+    }
+
+    return buttons;
+  };
+
   // Show loading state while authentication is being checked
   if (isAuthLoading) {
     return (
@@ -452,6 +642,13 @@ const ReportPage = () => {
     );
   }
 
+  // Get current transactions for display
+  const currentTransactions = getActiveTransactions();
+  const displayedTransactionsCount = currentTransactions.length;
+  const totalTransactionsCount = reportType === "arus-kas" 
+    ? arusKasTransactions.length 
+    : transactions.length;
+
   return (
     <div className="p-4">
       <div className="flex justify-start items-center mb-4">
@@ -464,7 +661,7 @@ const ReportPage = () => {
               <NotesIcon />
             </div>
             <p className="pr-1">
-              {reportType === "utang" ? "Laporan Utang Piutang" : "Laporan Keuangan"}
+              {reportType === "utang" ? "Laporan Utang Piutang" : reportType === "keuangan" ? "Laporan Laba Rugi" : "Laporan Arus Kas"}
             </p>
             <div className="pr-2">
               <svg
@@ -494,7 +691,7 @@ const ReportPage = () => {
                 }`}
                 onClick={() => handleReportTypeChange("keuangan")}
               >
-                Laporan Keuangan
+                Laporan Laba Rugi
               </div>
               <div
                 className={`p-3 cursor-pointer hover:bg-gray-100 ${
@@ -505,6 +702,16 @@ const ReportPage = () => {
                 onClick={() => handleReportTypeChange("utang")}
               >
                 Laporan Utang Piutang
+              </div>
+              <div
+                className={`p-3 cursor-pointer hover:bg-gray-100 ${
+                  reportType === "arus-kas"
+                    ? "font-semibold text-primary-indigo"
+                    : ""
+                }`}
+                onClick={() => handleReportTypeChange("arus-kas")}
+              >
+                Laporan Arus Kas
               </div>
             </div>
           )}
@@ -550,7 +757,7 @@ const ReportPage = () => {
                   </div>
                 </div>
               </>
-            ) : (
+            ) : reportType === "keuangan" ? (
               <>
                 <div className="bg-white rounded-xl p-4 shadow-sm">
                   <div className="flex items-center gap-2 mb-3">
@@ -563,7 +770,10 @@ const ReportPage = () => {
                     <p className="text-xl font-bold text-green-600">
                       Rp{formatCurrency(summary.totalPemasukan)}
                     </p>
-                    <p className="text-xs text-gray-500">Bulan ini</p>
+                    <p className="text-xs text-gray-500">{dateRange === "custom" && customStartDate && customEndDate
+                      ? `${formatDate(customStartDate)} - ${formatDate(customEndDate)}`
+                      : `${dateRange} Hari Terakhir`}
+                    </p>
                   </div>
                 </div>
                 <div className="bg-white rounded-xl p-4 shadow-sm">
@@ -577,14 +787,54 @@ const ReportPage = () => {
                     <p className="text-xl font-bold text-red-600">
                       Rp{formatCurrency(summary.totalPengeluaran)}
                     </p>
-                    <p className="text-xs text-gray-500">Bulan ini</p>
+                    <p className="text-xs text-gray-500">{dateRange === "custom" && customStartDate && customEndDate
+                      ? `${formatDate(customStartDate)} - ${formatDate(customEndDate)}`
+                      : `${dateRange} Hari Terakhir`}
+                    </p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="bg-white rounded-xl p-4 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="bg-green-100 p-3 rounded-full">
+                      <CoinIcon className="text-green-500" />
+                    </div>
+                    <p className="font-medium">Total Kas Masuk</p>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <p className="text-xl font-bold text-green-600">
+                      Rp{formatCurrency(summary.totalPemasukan)}
+                    </p>
+                    <p className="text-xs text-gray-500">{dateRange === "custom" && customStartDate && customEndDate
+                      ? `${formatDate(customStartDate)} - ${formatDate(customEndDate)}`
+                      : `${dateRange} Hari Terakhir`}
+                    </p>
+                  </div>
+                </div>
+                <div className="bg-white rounded-xl p-4 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="bg-red-100 p-3 rounded-full">
+                      <StockIcon className="text-red-500" />
+                    </div>
+                    <p className="font-medium">Total Kas Keluar</p>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <p className="text-xl font-bold text-red-600">
+                      Rp{formatCurrency(summary.totalPengeluaran)}
+                    </p>
+                    <p className="text-xs text-gray-500">{dateRange === "custom" && customStartDate && customEndDate
+                      ? `${formatDate(customStartDate)} - ${formatDate(customEndDate)}`
+                      : `${dateRange} Hari Terakhir`}
+                    </p>
                   </div>
                 </div>
               </>
             )}
           </div>
 
-          {/* Date Range Filter */}
+          {/* Date Range Filter - Now consistent across all report types */}
           <div className="bg-white rounded-xl p-4 shadow-sm mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Pilih Tanggal Laporan
@@ -634,16 +884,24 @@ const ReportPage = () => {
             </div>
           </div>
 
-          {/* Transactions List */}
+          {/* Transactions List with Pagination Info */}
           <div className="mb-6">
-            <h2 className="text-lg font-semibold mb-3">
-              {reportType === "utang" 
-                ? "Daftar Transaksi Belum Lunas" 
-                : "Daftar Transaksi"}
-            </h2>
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-lg font-semibold">
+                {reportType === "utang" 
+                  ? "Daftar Transaksi Belum Lunas" 
+                  : "Daftar Transaksi"}
+              </h2>
+              {/* {totalTransactionsCount > 0 && (
+                <p className="text-sm text-gray-500">
+                  Showing {(currentPage - 1) * itemsPerPage + 1}-
+                  {Math.min(currentPage * itemsPerPage, totalTransactionsCount)} of {totalTransactionsCount}
+                </p>
+              )} */}
+            </div>
 
             <div className="space-y-3">
-              {transactions.length === 0 ? (
+              {totalTransactionsCount === 0 ? (
                 <p className="text-center text-gray-500 py-4 bg-white rounded-lg shadow-sm">
                   {hasAccess 
                     ? (reportType === "utang"
@@ -651,8 +909,9 @@ const ReportPage = () => {
                       : "Tidak ada transaksi untuk periode ini.")
                     : "Tidak ada data yang dapat ditampilkan."}
                 </p>
-              ) : (
-                transactions.map((transaction) => (
+              ) : currentTransactions.length !== 0 && reportType !== "arus-kas" ? (
+                currentTransactions.map((transaction) => (
+                  console.log(transaction),
                   <div
                     key={transaction.id}
                     className={`bg-white rounded-xl p-3 shadow-sm ${hasAccess ? 'cursor-pointer' : 'cursor-not-allowed'}`}
@@ -663,49 +922,121 @@ const ReportPage = () => {
                         Transaksi #{transaction.id}
                       </span>
                       <span className="text-sm text-gray-500">
-                        {formatLocalDate(transaction.created_at)}
+                        {"created_at" in transaction ? formatLocalDate(transaction.created_at) : ""}
                       </span>
                     </div>
                     <div className="flex justify-between items-center mt-2">
                       <span
                         className={`px-2 py-1 rounded-full text-xs ${
-                          transaction.transaction_type === "pemasukan"
+                          "transaction_type" in transaction && transaction.transaction_type === "pemasukan"
                             ? "bg-green-100 text-green-800"
                             : "bg-red-100 text-red-800"
                         }`}
                       >
-                        {transaction.transaction_type === "pemasukan"
+                        {"transaction_type" in transaction && transaction.transaction_type === "pemasukan"
                           ? "Berikan"
                           : "Terima"}
                       </span>
                       <span className="font-semibold">
-                        Rp{formatCurrency(transaction.total_amount)}
+                        Rp{formatCurrency(
+                          "total_amount" in transaction ? transaction.total_amount : 0
+                        )}
                       </span>
                     </div>
                     {/* Status badge (shown for all transactions in financial report) */}
-                    {(reportType === "keuangan" || transaction.status === "Belum Lunas") && (
+                    {(reportType === "keuangan" || ('status' in transaction && transaction.status === "Belum Lunas")) && (
                       <div className="flex justify-end mt-1">
                         <span 
                           className={`px-2 py-0.5 rounded-full text-xs ${
-                            transaction.status === "Lunas"
+                            "status" in transaction && transaction.status === "Lunas"
                               ? "bg-green-50 text-green-700"
                               : "bg-yellow-50 text-yellow-700"
                           }`}
                         >
-                          {transaction.status}
+                          {"status" in transaction ? transaction.status : ""}
                         </span>
                       </div>
                     )}
                   </div>
                 ))
+              ) : reportType === "arus-kas" && currentTransactions.length > 0 ? (
+                currentTransactions.map((transaction) => (
+                  <div
+                    key={"transaksi_id" in transaction ? transaction.transaksi_id : transaction.id}
+                    className={`bg-white rounded-xl p-3 shadow-sm ${hasAccess ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                    onClick={() => {
+                      if (hasAccess) {
+                        if ("transaksi_id" in transaction) {
+                          router.push(`/transaksi/detail/${transaction.transaksi_id}`);
+                        } else {
+                          router.push(`/transaksi/detail/${transaction.id}`);
+                        }
+                      }
+                    }}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">
+                        Transaksi #{'transaksi_id' in transaction ? transaction.transaksi_id : transaction.id}
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        {"tanggal_transaksi" in transaction ? formatLocalDate(transaction.tanggal_transaksi) : ""}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          "jenis" in transaction && transaction.jenis === "inflow"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {"jenis" in transaction && transaction.jenis === "inflow"
+                          ? "Kas Masuk"
+                          : "Kas Keluar"}
+                      </span>
+                      <span className="font-semibold">
+                        Rp{formatCurrency(
+                          "nominal" in transaction ? Number(transaction.nominal) : 0
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center text-gray-500 py-4 bg-white rounded-lg shadow-sm">
+                  No transactions to display.
+                </p>
               )}
             </div>
           </div>
 
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center mb-6">
+              <button
+                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="rounded-md border border-slate-300 py-1 px-2 text-xs hover:bg-blue-100 disabled:opacity-50"
+              >
+                Prev
+              </button>
+              
+              {renderPaginationButtons()}
+              
+              <button
+                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="rounded-md border border-slate-300 py-1 px-2 text-xs hover:bg-blue-100 disabled:opacity-50 ml-1"
+              >
+                Next
+              </button>
+            </div>
+          )}
+
           {/* Download Button */}
           <button
             onClick={handleDownloadClick}
-            disabled={isGeneratingReport || transactions.length === 0 || !hasAccess}
+            disabled={isGeneratingReport || (transactions.length === 0 && arusKasTransactions.length === 0) || !hasAccess}
             className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium mb-20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center z-20"
           >
             {isGeneratingReport ? "Memproses..." : "Unduh Laporan"}
