@@ -28,7 +28,7 @@ export default function AddProductPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const { accessToken } = useAuth();
   const [loading, setLoading] = useState(false);
-  const { showModal } = useModal();
+  const { showModal, hideModal } = useModal();
 
   // State for managing custom options
   const [categoryOptions, setCategoryOptions] = useState([...initialCategoryOptions]);
@@ -178,12 +178,24 @@ export default function AddProductPage() {
       });
 
       if (response.status === 201) {
-        showModal("Berhasil", "Produk berhasil ditambahkan!", "success", {
-          label: "Lihat Semua Produk",
-          onClick: () => {
-            window.location.href = "/semuaBarang";
+        showModal(
+          "Berhasil",
+          "Produk berhasil ditambahkan!",
+          "success",
+          {
+            label: "Lihat Semua Produk",
+            onClick: () => {
+              window.location.href = "/semuaBarang";
+            },
           },
-        });
+          {
+            label: "Tambah Baru",
+            onClick: () => {
+              resetForm();
+              hideModal();
+            },
+          }
+        );
       } else {
         const errorData = await response.json();
         console.error("Error creating product:", errorData);
@@ -306,7 +318,7 @@ export default function AddProductPage() {
           id="priceSell"
           label="Harga Jual"
           value={priceSell}
-          onChange={(_, raw) => setPriceSell(raw)}
+          onChange={(value) => setPriceSell(value)}
           placeholder="13.000"
           type="number"
           currency
@@ -318,7 +330,7 @@ export default function AddProductPage() {
           id="priceCost"
           label="Harga Modal"
           value={priceCost}
-          onChange={(_, raw) => setPriceCost(raw)}
+          onChange={(value) => setPriceCost(value)}
           placeholder="9.000"
           type="number"
           currency
@@ -330,7 +342,7 @@ export default function AddProductPage() {
           id="currentStock"
           label="Stok"
           value={currentStock}
-          onChange={setCurrentStock}
+          onChange={(value) => setCurrentStock(value)}
           placeholder="450"
           type="number"
           error={errors.currentStock}

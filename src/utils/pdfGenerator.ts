@@ -11,88 +11,167 @@ export interface PDFReportData {
   utangPelanggan?: number;
   totalPemasukan?: number;
   totalPengeluaran?: number;
-  reportType: "keuangan" | "utang" | "arus-kas";
+  reportType: "laba-rugi" | "utang" | "arus-kas";
 }
 
 /**
- * Generates a PDF report from the provided data
+ * Generates a PDF report from the provided data with pagination
  */
 export const generateDebtReportPDF = async (reportData: PDFReportData): Promise<Blob> => {
-  // Create a temporary div to render the report
-  const reportContainer = document.createElement('div');
-  reportContainer.style.position = 'absolute';
-  reportContainer.style.left = '-9999px';
-  reportContainer.style.top = '-9999px';
-  reportContainer.style.width = '795px'; // A4 width at 96 DPI
-  document.body.appendChild(reportContainer);
+  // Create PDF document
+  const pdf = new jsPDF('p', 'pt', 'a4');
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  
+  // Configuration for pagination
+  const ROWS_PER_PAGE_FIRST = 10;  // Number of transactions to display on first page
+  const ROWS_PER_PAGE = 25;        // Number of transactions to display on subsequent pages
+  
+  // Determine report title and transaction title based on type
+  let reportTitle = "Laporan Keuangan"; // Default
+  
+  // Set specific report title based on report type
+  if (reportData.reportType === "utang") {
+    reportTitle = "Laporan Utang Piutang";
+  } else if (reportData.reportType === "arus-kas") {
+    reportTitle = "Laporan Arus Kas";
+  } else if (reportData.reportType === "laba-rugi") {
+    reportTitle = "Laporan Laba Rugi";
+  }
+  
+  const transactionTitle = reportData.reportType === "utang" 
+    ? "Detail Transaksi Belum Lunas" 
+    : "Detail Transaksi";
+  
+  // Helper function to add page footer and page numbers
+  interface PageFooterOptions {
+    currentPage: number;
+    totalPages: number;
+  }
 
-  // Determine report title based on type
-  const reportTitle = reportData.reportType === "utang" 
-    ? "Laporan Utang Piutang"
-    : "Laporan Keuangan";
-
-  // Render the report content
-  reportContainer.innerHTML = `
-    <div style="padding: 40px; font-family: Arial, sans-serif;">
-      <div style="text-align: center; margin-bottom: 30px;">
-        <h1 style="font-size: 24px; font-weight: bold;">${reportTitle}</h1>
-        <p style="color: #666;">
-          Periode: ${formatDate(reportData.startDate)} - ${formatDate(reportData.endDate)}
-        </p>
+  const addPageFooter = (currentPage: number, totalPages: number): void => {
+    const footer: string = `© LANCAR - Sistem POS untuk UMKM`;
+    const generatedDate: string = `Laporan dibuat pada ${formatDateWithTime(new Date().toISOString())}`;
+    
+    pdf.setFontSize(10);
+    pdf.setTextColor(107, 114, 128); // #6b7280
+    pdf.text(footer, pageWidth / 2, pageHeight - 30, { align: 'center' });
+    pdf.text(generatedDate, pageWidth / 2, pageHeight - 15, { align: 'center' });
+    // pdf.text(`Halaman ${currentPage} dari ${totalPages}`, pageWidth - 40, pageHeight - 15);
+  };
+  
+  // Function to create and render the header section
+  const createHeaderSection = async () => {
+    // Create a temporary div for the header section
+    const headerContainer = document.createElement('div');
+    headerContainer.style.position = 'absolute';
+    headerContainer.style.left = '-9999px';
+    headerContainer.style.width = '795px'; // A4 width at 96 DPI
+    document.body.appendChild(headerContainer);
+    
+    // Render the header section
+    headerContainer.innerHTML = `
+      <div style="padding: 40px; font-family: Arial, sans-serif;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="font-size: 24px; font-weight: bold;">${reportTitle}</h1>
+          <p style="color: #666;">
+            Periode: ${formatDate(reportData.startDate)} - ${formatDate(reportData.endDate)}
+          </p>
+        </div>
+        
+        <div style="margin-bottom: 30px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <h2 style="font-size: 18px; font-weight: 600;">Ringkasan</h2>
+          </div>
+          <div style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tbody>
+                ${reportData.reportType === "utang" ? `
+                  <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 12px; background-color: #f9fafb; font-weight: 500;">Utang Saya</td>
+                    <td style="padding: 12px; text-align: right; color: #dc2626; font-weight: 500;">
+                      Rp ${formatCurrency(reportData.utangSaya || 0)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 12px; background-color: #f9fafb; font-weight: 500;">Utang Pelanggan</td>
+                    <td style="padding: 12px; text-align: right; color: #16a34a; font-weight: 500;">
+                      Rp ${formatCurrency(reportData.utangPelanggan || 0)}
+                    </td>
+                  </tr>
+                ` : `
+                  <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 12px; background-color: #f9fafb; font-weight: 500;">Total Pemasukan</td>
+                    <td style="padding: 12px; text-align: right; color: #16a34a; font-weight: 500;">
+                      Rp ${formatCurrency(reportData.totalPemasukan || 0)}
+                    </td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 12px; background-color: #f9fafb; font-weight: 500;">Total Pengeluaran</td>
+                    <td style="padding: 12px; text-align: right; color: #dc2626; font-weight: 500;">
+                      Rp ${formatCurrency(reportData.totalPengeluaran || 0)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 12px; background-color: #f9fafb; font-weight: 500;">Saldo</td>
+                    <td style="padding: 12px; text-align: right; font-weight: 700; ${(reportData.totalPemasukan || 0) >= (reportData.totalPengeluaran || 0) ? 'color: #16a34a' : 'color: #dc2626'}">
+                      Rp ${formatCurrency(Math.abs((reportData.totalPemasukan || 0) - (reportData.totalPengeluaran || 0)))}
+                    </td>
+                  </tr>
+                `}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
+    `;
+    
+    try {
+      // Generate canvas from the header container
+      const canvas = await html2canvas(headerContainer);
+      
+      // Add to PDF
+      const imgData = canvas.toDataURL('image/png');
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      
+      // Clean up
+      document.body.removeChild(headerContainer);
+      
+      return pdfHeight; // Return the height of the header section
+    } catch (error) {
+      // Clean up on error
+      if (document.body.contains(headerContainer)) {
+        document.body.removeChild(headerContainer);
+      }
+      console.error('Error generating header:', error);
+      throw error;
+    }
+  };
+  
+  // Function to create and render the transaction table header
+  interface TableHeaderOptions {
+    yPosition: number;
+  }
 
-      <div style="margin-bottom: 30px;">
+  const createTableHeader = async ({ yPosition }: TableHeaderOptions): Promise<number> => {
+    // Create a temporary div for the table header
+    const tableHeaderContainer = document.createElement('div');
+    tableHeaderContainer.style.position = 'absolute';
+    tableHeaderContainer.style.left = '-9999px';
+    tableHeaderContainer.style.width = '795px'; // A4 width at 96 DPI
+    document.body.appendChild(tableHeaderContainer);
+    
+    // Render the table header
+    tableHeaderContainer.innerHTML = `
+      <div style="padding: 40px; padding-top: 0; padding-bottom: 0; font-family: Arial, sans-serif;">
         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-          <h2 style="font-size: 18px; font-weight: 600;">Ringkasan</h2>
+          <h2 style="font-size: 18px; font-weight: 600;">${transactionTitle}</h2>
         </div>
-        <div style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
-          <table style="width: 100%; border-collapse: collapse;">
-            <tbody>
-              ${reportData.reportType === "utang" ? `
-                <tr style="border-bottom: 1px solid #e5e7eb;">
-                  <td style="padding: 12px; background-color: #f9fafb; font-weight: 500;">Utang Saya</td>
-                  <td style="padding: 12px; text-align: right; color: #dc2626; font-weight: 500;">
-                    Rp ${formatCurrency(reportData.utangSaya || 0)}
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 12px; background-color: #f9fafb; font-weight: 500;">Utang Pelanggan</td>
-                  <td style="padding: 12px; text-align: right; color: #16a34a; font-weight: 500;">
-                    Rp ${formatCurrency(reportData.utangPelanggan || 0)}
-                  </td>
-                </tr>
-              ` : `
-                <tr style="border-bottom: 1px solid #e5e7eb;">
-                  <td style="padding: 12px; background-color: #f9fafb; font-weight: 500;">Total Pemasukan</td>
-                  <td style="padding: 12px; text-align: right; color: #16a34a; font-weight: 500;">
-                    Rp ${formatCurrency(reportData.totalPemasukan || 0)}
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 12px; background-color: #f9fafb; font-weight: 500;">Total Pengeluaran</td>
-                  <td style="padding: 12px; text-align: right; color: #dc2626; font-weight: 500;">
-                    Rp ${formatCurrency(reportData.totalPengeluaran || 0)}
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 12px; background-color: #f9fafb; font-weight: 500;">Saldo</td>
-                  <td style="padding: 12px; text-align: right; font-weight: 700; ${(reportData.totalPemasukan || 0) >= (reportData.totalPengeluaran || 0) ? 'color: #16a34a' : 'color: #dc2626'}">
-                    Rp ${formatCurrency(Math.abs((reportData.totalPemasukan || 0) - (reportData.totalPengeluaran || 0)))}
-                  </td>
-                </tr>
-              `}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-          <h2 style="font-size: 18px; font-weight: 600;">
-            ${reportData.reportType === "utang" ? "Detail Transaksi Belum Lunas" : "Detail Transaksi"}
-          </h2>
-        </div>
-        <div style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+        <div style="border: 1px solid #e5e7eb; border-radius: 8px 8px 0 0; overflow: hidden;">
           <table style="width: 100%; border-collapse: collapse;">
             <thead style="background-color: #f3f4f6;">
               <tr>
@@ -104,12 +183,70 @@ export const generateDebtReportPDF = async (reportData: PDFReportData): Promise<
                 <th style="padding: 12px; text-align: right; font-size: 14px;">Jumlah</th>
               </tr>
             </thead>
+          </table>
+        </div>
+      </div>
+    `;
+    
+    try {
+      // Generate canvas from the table header
+      const canvas = await html2canvas(tableHeaderContainer);
+      
+      // Add to PDF
+      const imgData = canvas.toDataURL('image/png');
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, yPosition, pdfWidth, pdfHeight);
+      
+      // Clean up
+      document.body.removeChild(tableHeaderContainer);
+      
+      return pdfHeight; // Return the height of the table header
+    } catch (error) {
+      // Clean up on error
+      if (document.body.contains(tableHeaderContainer)) {
+        document.body.removeChild(tableHeaderContainer);
+      }
+      console.error('Error generating table header:', error);
+      throw error;
+    }
+  };
+  
+  // Function to create and render transaction rows
+  interface TransactionRowOptions {
+    transactions: any[];
+    yPosition: number;
+    isLastPage: boolean;
+  }
+
+  const createTransactionRows = async (
+    transactions: any[],
+    yPosition: number,
+    isLastPage: boolean
+  ): Promise<number> => {
+    // Create a temporary div for the transaction rows
+    const rowsContainer = document.createElement('div');
+    rowsContainer.style.position = 'absolute';
+    rowsContainer.style.left = '-9999px';
+    rowsContainer.style.width = '795px'; // A4 width at 96 DPI
+    document.body.appendChild(rowsContainer);
+    
+    // Determine if we're working with specific report types
+    const isArusKas = reportData.reportType === "arus-kas";
+    const isLabaRugi = reportData.reportType === "laba-rugi";
+    
+    // Render the transaction rows
+    rowsContainer.innerHTML = `
+      <div style="padding: 40px; padding-top: 0; padding-bottom: 0; font-family: Arial, sans-serif;">
+        <div style="border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; overflow: hidden; margin-top: 0;">
+          <table style="width: 100%; border-collapse: collapse;">
             <tbody>
               ${
-                reportData.transactions.map((transaction, index) => {
-                  const isArusKas = reportData.reportType === "arus-kas";
+                transactions.map((transaction: any, index: number) => {
                   const bgColor = index % 2 === 0 ? '#ffffff' : '#f9fafb';
-
+                  
                   const id = isArusKas ? transaction.transaksi_id : transaction.id;
                   const tanggal = isArusKas
                     ? formatDateWithTime(transaction.tanggal_transaksi)
@@ -120,7 +257,7 @@ export const generateDebtReportPDF = async (reportData: PDFReportData): Promise<
                   const kategori = transaction.kategori || transaction.category;
                   const keterangan = transaction.keterangan || transaction.status;
                   const nominal = isArusKas ? transaction.nominal : transaction.total_amount;
-
+                  
                   return `
                     <tr style="background-color: ${bgColor};">
                       <td style="padding: 12px; font-size: 13px;">${id}</td>
@@ -139,37 +276,99 @@ export const generateDebtReportPDF = async (reportData: PDFReportData): Promise<
           </table>
         </div>
       </div>
-
-      <div style="margin-top: 30px; text-align: center; font-size: 14px; color: #6b7280;">
-        <p>© LANCAR - Sistem POS untuk UMKM</p>
-        <p>Laporan dibuat pada ${formatDateWithTime(new Date().toISOString())}</p>
-      </div>
-    </div>
-  `;
-
-  try {
-    // Generate canvas from the report container
-    const canvas = await html2canvas(reportContainer);
+    `;
     
-    // Create PDF document
-    const pdf = new jsPDF('p', 'pt', 'a4');
-    const imgData = canvas.toDataURL('image/png');
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    try {
+      // Generate canvas from the rows container
+      const canvas = await html2canvas(rowsContainer);
+      
+      // Add to PDF
+      const imgData = canvas.toDataURL('image/png');
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, yPosition, pdfWidth, pdfHeight);
+      
+      // Clean up
+      document.body.removeChild(rowsContainer);
+      
+      return pdfHeight; // Return the height of the rows section
+    } catch (error) {
+      // Clean up on error
+      if (document.body.contains(rowsContainer)) {
+        document.body.removeChild(rowsContainer);
+      }
+      console.error('Error generating transaction rows:', error);
+      throw error;
+    }
+  };
+  
+  // Split transactions into pages
+  const splitTransactionsIntoBatches = () => {
+    const batches = [];
+    const totalTransactions = reportData.transactions.length;
     
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    // First batch gets fewer transactions due to header
+    const firstBatch = reportData.transactions.slice(0, Math.min(ROWS_PER_PAGE_FIRST, totalTransactions));
+    batches.push(firstBatch);
     
-    // Clean up the temporary container
-    document.body.removeChild(reportContainer);
+    // Remaining batches
+    let currentIndex = firstBatch.length;
+    while (currentIndex < totalTransactions) {
+      const endIndex = Math.min(currentIndex + ROWS_PER_PAGE, totalTransactions);
+      batches.push(reportData.transactions.slice(currentIndex, endIndex));
+      currentIndex = endIndex;
+    }
+    
+    return batches;
+  };
+  
+  // Generate the PDF with all pages
+  const generatePDF = async () => {
+    const batches = splitTransactionsIntoBatches();
+    const totalPages = batches.length;
+    
+    // First page with header
+    let yPosition = 0;
+    const headerHeight = await createHeaderSection();
+    yPosition += headerHeight;
+    
+    const tableHeaderHeight = await createTableHeader({ yPosition });
+    yPosition += tableHeaderHeight;
+    
+    if (batches[0].length > 0) {
+      await createTransactionRows(batches[0], yPosition, totalPages === 1);
+    }
+    
+    addPageFooter(1, totalPages);
+    
+    // Generate subsequent pages
+    for (let i = 1; i < batches.length; i++) {
+      pdf.addPage();
+      
+      // Reset y-position for new page
+      yPosition = 0;
+      
+      // Add table header to each new page
+      const tableHeaderHeight = await createTableHeader({ yPosition });
+      yPosition += tableHeaderHeight;
+      
+      // Add transaction rows
+      await createTransactionRows(batches[i], yPosition, i === batches.length - 1);
+      
+      // Add page number
+      addPageFooter(i + 1, totalPages);
+    }
     
     // Return the PDF as a blob
     return pdf.output('blob');
+  };
+  
+  // Execute the PDF generation
+  try {
+    return await generatePDF();
   } catch (error) {
-    // Clean up on error
-    if (document.body.contains(reportContainer)) {
-      document.body.removeChild(reportContainer);
-    }
     console.error('Error generating PDF:', error);
     throw error;
   }
