@@ -36,14 +36,15 @@ export default function TransactionMainPage() {
   const [page, setPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [activeFilter, setActiveFilter] = useState<"all" | "paid" | "unpaid">(
-    "all"
-  );
+  const [activeFilter, setActiveFilter] = useState<"all" | "paid" | "unpaid">("all");
   const { accessToken } = useAuth();
-  const [viewMode, setViewMode] = useState<"transaksi" | "pembatalan">(
-    "transaksi"
-  );
+  const [viewMode, setViewMode] = useState<"transaksi" | "pembatalan">("transaksi");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1); // 1-12 for Jan-Dec
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [monthDropdownOpen, setMonthDropdownOpen] = useState(false);
+  const [yearDropdownOpen, setYearDropdownOpen] = useState(false);
 
   const fetchTransactions = async (pageNum: number, status?: string) => {
     if (!accessToken) {
@@ -57,6 +58,10 @@ export default function TransactionMainPage() {
 
     try {
       let url = `${config.apiUrl}/transaksi?page=${pageNum}&per_page=10`;
+      
+      // Add month and year filters - this is the key change
+      url += `&month=${selectedMonth}&year=${selectedYear}`;
+      
       if (status) {
         url += `&status=${status}`;
       }
@@ -97,7 +102,7 @@ export default function TransactionMainPage() {
         ? "Lunas"
         : "Belum Lunas";
     fetchTransactions(page, status);
-  }, [page, accessToken, activeFilter, viewMode]);
+  }, [page, accessToken, activeFilter, viewMode, selectedMonth, selectedYear]);
 
   const handleFilterChange = (filter: "all" | "paid" | "unpaid") => {
     setActiveFilter(filter);
@@ -203,6 +208,16 @@ export default function TransactionMainPage() {
     router.push(`/transaksi/detail/${transactionId}`);
   };
 
+  // Month names in Indonesian
+  const monthNames = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+  ];
+
+  // Get list of years (current year and 4 years back)
+  const currentYear = new Date().getFullYear();
+  const yearList = Array.from({ length: 5 }, (_, i) => currentYear - i);
+
   return (
     <div className="mt-8 flex flex-col gap-4">
       <div className="justify-between flex">
@@ -260,9 +275,115 @@ export default function TransactionMainPage() {
             </div>
           )}
         </div>
+        
+        {/* Month and Year Filter */}
+        <div className="flex gap-2">
+          {/* Month Dropdown */}
+          <div className="relative">
+            <div
+              className="flex p-2 bg-white rounded-lg items-center gap-2 cursor-pointer border border-gray-200"
+              onClick={() => {
+                setMonthDropdownOpen(!monthDropdownOpen);
+                setYearDropdownOpen(false);
+              }}
+            >
+              <span className="text-sm font-medium">{monthNames[selectedMonth - 1]}</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </div>
+
+            {monthDropdownOpen && (
+              <div className="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-lg z-10 w-[160px] max-h-56 overflow-y-auto">
+                {monthNames.map((month, index) => (
+                  <div
+                    key={index}
+                    className={`p-2 cursor-pointer hover:bg-gray-100 ${
+                      selectedMonth === index + 1
+                        ? "font-semibold text-primary-indigo bg-indigo-50"
+                        : ""
+                    }`}
+                    onClick={() => {
+                      setSelectedMonth(index + 1);
+                      setMonthDropdownOpen(false);
+                      setPage(1);
+                    }}
+                  >
+                    {month}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Year Dropdown */}
+          <div className="relative">
+            <div
+              className="flex p-2 bg-white rounded-lg items-center gap-2 cursor-pointer border border-gray-200"
+              onClick={() => {
+                setYearDropdownOpen(!yearDropdownOpen);
+                setMonthDropdownOpen(false);
+              }}
+            >
+              <span className="text-sm font-medium">{selectedYear}</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </div>
+
+            {yearDropdownOpen && (
+              <div className="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-lg z-10 w-[100px]">
+                {yearList.map((year) => (
+                  <div
+                    key={year}
+                    className={`p-2 cursor-pointer hover:bg-gray-100 ${
+                      selectedYear === year
+                        ? "font-semibold text-primary-indigo bg-indigo-50"
+                        : ""
+                    }`}
+                    onClick={() => {
+                      setSelectedYear(year);
+                      setYearDropdownOpen(false);
+                      setPage(1);
+                    }}
+                  >
+                    {year}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {viewMode === "transaksi" && <TransactionSummary />}
+      {viewMode === "transaksi" && (
+        <TransactionSummary 
+          selectedMonth={selectedMonth} 
+          selectedYear={selectedYear}
+        />
+      )}
 
       {/* Filter Buttons */}
       <div className="flex gap-2">
