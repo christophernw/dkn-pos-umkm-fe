@@ -356,8 +356,7 @@ const ReportPage = () => {
             const totalPengeluaran = transactionsData
               .filter(t => t.jenis === "outflow")
               .reduce((sum, t) => sum + Number(t.nominal), 0);
-            
-            // Add this line to always update summary for arus kas, even when there are no transactions
+
             setSummary(prev => ({
               ...prev,
               totalPemasukan,
