@@ -359,14 +359,15 @@ const ReportPage = () => {
           } else {
             const data : ArusKasReportResponse = await response.json();
             setArusKasTransactions(data.transactions || []);
-
+            
+            // Add this line to always update summary for arus kas, even when there are no transactions
             setSummary(prev => ({
               ...prev,
               totalPemasukan: Number(data.total_inflow) || 0,
               totalPengeluaran: Number(data.total_outflow) || 0
             }));
           }
-        }    
+        }
       } catch (error) {
         console.error(`Error fetching ${reportType} report:`, error);
       } finally {
