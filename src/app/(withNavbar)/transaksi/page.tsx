@@ -436,7 +436,7 @@ export default function TransactionMainPage() {
           </div>
         ) : transactions.length === 0 ? (
           <div className="py-10 text-center">
-            <p>No transactions found.</p>
+            <p>Tidak ada transaksi ditemukan</p>
           </div>
         ) : (
           transactions.map((transaction) => (
