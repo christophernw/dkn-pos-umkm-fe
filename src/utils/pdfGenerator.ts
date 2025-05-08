@@ -26,6 +26,7 @@ export const generateDebtReportPDF = async (reportData: PDFReportData): Promise<
   // Configuration for pagination
   const ROWS_PER_PAGE_FIRST = 10;  // Number of transactions to display on first page
   const ROWS_PER_PAGE = 25;        // Number of transactions to display on subsequent pages
+  const FOOTER_HEIGHT = 60;        // Height reserved for footer (in points)
   
   // Determine report title and transaction title based on type
   let reportTitle = "Laporan Keuangan"; // Default
@@ -44,11 +45,6 @@ export const generateDebtReportPDF = async (reportData: PDFReportData): Promise<
     : "Detail Transaksi";
   
   // Helper function to add page footer and page numbers
-  interface PageFooterOptions {
-    currentPage: number;
-    totalPages: number;
-  }
-
   const addPageFooter = (currentPage: number, totalPages: number): void => {
     const footer: string = `© LANCAR - Sistem POS untuk UMKM`;
     const generatedDate: string = `Laporan dibuat pada ${formatDateWithTime(new Date().toISOString())}`;
@@ -57,7 +53,7 @@ export const generateDebtReportPDF = async (reportData: PDFReportData): Promise<
     pdf.setTextColor(107, 114, 128); // #6b7280
     pdf.text(footer, pageWidth / 2, pageHeight - 30, { align: 'center' });
     pdf.text(generatedDate, pageWidth / 2, pageHeight - 15, { align: 'center' });
-    // pdf.text(`Halaman ${currentPage} dari ${totalPages}`, pageWidth - 40, pageHeight - 15);
+    pdf.text(`Halaman ${currentPage} dari ${totalPages}`, pageWidth - 110, pageHeight - 15);
   };
   
   // Function to create and render the header section
@@ -219,13 +215,99 @@ export const generateDebtReportPDF = async (reportData: PDFReportData): Promise<
     transactions: any[];
     yPosition: number;
     isLastPage: boolean;
+    maxHeight?: number; // Maximum height available for rows on the page
   }
 
   const createTransactionRows = async (
     transactions: any[],
     yPosition: number,
-    isLastPage: boolean
-  ): Promise<number> => {
+    isLastPage: boolean,
+    maxHeight?: number
+  ): Promise<{height: number, renderedTransactions: number}> => {
+    // No transactions to render
+    if (transactions.length === 0) {
+      return { height: 0, renderedTransactions: 0 };
+    }
+    
+    let transactionsToRender = [...transactions];
+    let rowsHeight = 0;
+    let renderedTransactions = 0;
+    
+    // If we have a max height constraint, we need to determine how many transactions will fit
+    if (maxHeight) {
+      // First, try with all transactions
+      const allTransactionsHeight = await measureTransactionRowsHeight(transactionsToRender);
+      
+      // If they fit, render them all
+      if (allTransactionsHeight <= maxHeight) {
+        rowsHeight = await renderTransactionRows(transactionsToRender, yPosition);
+        renderedTransactions = transactionsToRender.length;
+      } else {
+        // If they don't fit, find how many will fit using binary search
+        let low = 1;  // At least render one transaction
+        let high = transactionsToRender.length;
+        
+        while (low <= high) {
+          const mid = Math.floor((low + high) / 2);
+          const subset = transactionsToRender.slice(0, mid);
+          const subsetHeight = await measureTransactionRowsHeight(subset);
+          
+          if (subsetHeight <= maxHeight) {
+            low = mid + 1;
+          } else {
+            high = mid - 1;
+          }
+        }
+        
+        // high is now the maximum number of transactions that will fit
+        const subset = transactionsToRender.slice(0, high);
+        rowsHeight = await renderTransactionRows(subset, yPosition);
+        renderedTransactions = high;
+      }
+    } else {
+      // No height constraint, render all transactions
+      rowsHeight = await renderTransactionRows(transactionsToRender, yPosition);
+      renderedTransactions = transactionsToRender.length;
+    }
+    
+    return { height: rowsHeight, renderedTransactions };
+  };
+  
+  // Helper function to measure transaction rows height without rendering to PDF
+  const measureTransactionRowsHeight = async (transactions: any[]): Promise<number> => {
+    // Create a temporary div for measuring
+    const measuringContainer = document.createElement('div');
+    measuringContainer.style.position = 'absolute';
+    measuringContainer.style.left = '-9999px';
+    measuringContainer.style.width = '795px'; // A4 width at 96 DPI
+    document.body.appendChild(measuringContainer);
+    
+    // Fill with transaction row content
+    measuringContainer.innerHTML = createTransactionRowsHTML(transactions);
+    
+    try {
+      // Generate canvas to measure height
+      const canvas = await html2canvas(measuringContainer);
+      const imgProps = pdf.getImageProperties(canvas.toDataURL('image/png'));
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      // Clean up
+      document.body.removeChild(measuringContainer);
+      
+      return pdfHeight;
+    } catch (error) {
+      // Clean up on error
+      if (document.body.contains(measuringContainer)) {
+        document.body.removeChild(measuringContainer);
+      }
+      console.error('Error measuring transaction rows height:', error);
+      throw error;
+    }
+  };
+  
+  // Helper function to render transaction rows to PDF
+  const renderTransactionRows = async (transactions: any[], yPosition: number): Promise<number> => {
     // Create a temporary div for the transaction rows
     const rowsContainer = document.createElement('div');
     rowsContainer.style.position = 'absolute';
@@ -233,12 +315,43 @@ export const generateDebtReportPDF = async (reportData: PDFReportData): Promise<
     rowsContainer.style.width = '795px'; // A4 width at 96 DPI
     document.body.appendChild(rowsContainer);
     
+    // Fill with transaction row content
+    rowsContainer.innerHTML = createTransactionRowsHTML(transactions);
+    
+    try {
+      // Generate canvas from the rows container
+      const canvas = await html2canvas(rowsContainer);
+      
+      // Add to PDF
+      const imgData = canvas.toDataURL('image/png');
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, yPosition, pdfWidth, pdfHeight);
+      
+      // Clean up
+      document.body.removeChild(rowsContainer);
+      
+      return pdfHeight; // Return the height of the rows section
+    } catch (error) {
+      // Clean up on error
+      if (document.body.contains(rowsContainer)) {
+        document.body.removeChild(rowsContainer);
+      }
+      console.error('Error generating transaction rows:', error);
+      throw error;
+    }
+  };
+  
+  // Helper function to create transaction rows HTML
+  const createTransactionRowsHTML = (transactions: any[]): string => {
     // Determine if we're working with specific report types
     const isArusKas = reportData.reportType === "arus-kas";
     const isLabaRugi = reportData.reportType === "laba-rugi";
     
-    // Render the transaction rows
-    rowsContainer.innerHTML = `
+    // Create HTML for transaction rows
+    return `
       <div style="padding: 40px; padding-top: 0; padding-bottom: 0; font-family: Arial, sans-serif;">
         <div style="border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; overflow: hidden; margin-top: 0;">
           <table style="width: 100%; border-collapse: collapse;">
@@ -277,88 +390,77 @@ export const generateDebtReportPDF = async (reportData: PDFReportData): Promise<
         </div>
       </div>
     `;
-    
-    try {
-      // Generate canvas from the rows container
-      const canvas = await html2canvas(rowsContainer);
-      
-      // Add to PDF
-      const imgData = canvas.toDataURL('image/png');
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      
-      pdf.addImage(imgData, 'PNG', 0, yPosition, pdfWidth, pdfHeight);
-      
-      // Clean up
-      document.body.removeChild(rowsContainer);
-      
-      return pdfHeight; // Return the height of the rows section
-    } catch (error) {
-      // Clean up on error
-      if (document.body.contains(rowsContainer)) {
-        document.body.removeChild(rowsContainer);
-      }
-      console.error('Error generating transaction rows:', error);
-      throw error;
-    }
-  };
-  
-  // Split transactions into pages
-  const splitTransactionsIntoBatches = () => {
-    const batches = [];
-    const totalTransactions = reportData.transactions.length;
-    
-    // First batch gets fewer transactions due to header
-    const firstBatch = reportData.transactions.slice(0, Math.min(ROWS_PER_PAGE_FIRST, totalTransactions));
-    batches.push(firstBatch);
-    
-    // Remaining batches
-    let currentIndex = firstBatch.length;
-    while (currentIndex < totalTransactions) {
-      const endIndex = Math.min(currentIndex + ROWS_PER_PAGE, totalTransactions);
-      batches.push(reportData.transactions.slice(currentIndex, endIndex));
-      currentIndex = endIndex;
-    }
-    
-    return batches;
   };
   
   // Generate the PDF with all pages
   const generatePDF = async () => {
-    const batches = splitTransactionsIntoBatches();
-    const totalPages = batches.length;
+    const totalTransactions = reportData.transactions.length;
     
     // First page with header
     let yPosition = 0;
     const headerHeight = await createHeaderSection();
     yPosition += headerHeight;
     
+    // Add table header
     const tableHeaderHeight = await createTableHeader({ yPosition });
     yPosition += tableHeaderHeight;
     
-    if (batches[0].length > 0) {
-      await createTransactionRows(batches[0], yPosition, totalPages === 1);
-    }
+    // Calculate available space for transaction rows on the first page
+    const availableHeight = pageHeight - yPosition - FOOTER_HEIGHT;
     
-    addPageFooter(1, totalPages);
+    // Render as many transactions as possible on the first page
+    const { renderedTransactions } = await createTransactionRows(
+      reportData.transactions,
+      yPosition,
+      totalTransactions <= ROWS_PER_PAGE_FIRST,
+      availableHeight
+    );
     
-    // Generate subsequent pages
-    for (let i = 1; i < batches.length; i++) {
+    // Add footer to the first page
+    let currentPage = 1;
+    
+    // Determine how many total pages we'll need
+    let remainingTransactions = totalTransactions - renderedTransactions;
+    const estimatedRemainingPages = Math.ceil(remainingTransactions / ROWS_PER_PAGE);
+    const totalPages = 1 + estimatedRemainingPages;
+    
+    // Add footer to first page
+    addPageFooter(currentPage, totalPages);
+    
+    // Process remaining transactions on subsequent pages
+    let transactionIndex = renderedTransactions;
+    
+    while (transactionIndex < totalTransactions) {
+      // Add a new page
       pdf.addPage();
+      currentPage++;
       
       // Reset y-position for new page
       yPosition = 0;
       
-      // Add table header to each new page
+      // Add table header to the new page
       const tableHeaderHeight = await createTableHeader({ yPosition });
       yPosition += tableHeaderHeight;
       
-      // Add transaction rows
-      await createTransactionRows(batches[i], yPosition, i === batches.length - 1);
+      // Calculate available space for transaction rows on this page
+      const availableHeight = pageHeight - yPosition - FOOTER_HEIGHT;
       
-      // Add page number
-      addPageFooter(i + 1, totalPages);
+      // Get remaining transactions
+      const remainingTransactions = reportData.transactions.slice(transactionIndex);
+      
+      // Render as many transactions as possible on this page
+      const { renderedTransactions: transactionsRendered } = await createTransactionRows(
+        remainingTransactions,
+        yPosition,
+        transactionIndex + ROWS_PER_PAGE >= totalTransactions,
+        availableHeight
+      );
+      
+      // Update transaction index for next iteration
+      transactionIndex += transactionsRendered;
+      
+      // Add footer to this page
+      addPageFooter(currentPage, totalPages);
     }
     
     // Return the PDF as a blob

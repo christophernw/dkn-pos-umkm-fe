@@ -63,6 +63,8 @@ export class NotificationEmailService extends EmailService<NotificationEmailData
   });
 }
 
+
+
 // Factory function
 export function createEmailService(type: EmailType): EmailService<any> {
   const services = {
@@ -81,3 +83,4 @@ export const sendInvitationEmail = (data: InvitationEmailData) =>
 
 export const sendRemovalNotificationEmail = (data: NotificationEmailData) => 
   createEmailService(EmailType.NOTIFICATION).sendEmail(data);
+
