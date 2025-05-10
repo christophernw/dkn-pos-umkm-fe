@@ -1,13 +1,22 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 
 interface TextInputProps {
   id: string;
   label: string;
   value: string;
-  onChange: (value: string) => void;
+  onChange: (formatted: string, raw: string) => void;
   placeholder?: string;
   type?: React.InputHTMLAttributes<HTMLInputElement>["type"];
+  currency?: boolean;
+  disabled?: boolean;
+  className?: string;
+  required?: boolean;
+}
+
+function formatHarga(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 export default function TextInput({
@@ -17,26 +26,23 @@ export default function TextInput({
   onChange,
   placeholder = "",
   type = "text",
+  currency = false,
 }: TextInputProps) {
-  const actualType = type === "number" ? "text" : type;
+  const [inputValue, setInputValue] = useState(value);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value: newValue } = e.target;
+    let newValue = e.target.value;
 
-    if (type === "number") {
-      const numericValue = parseFloat(newValue);
-
-      if (Number.isNaN(numericValue)) {
-        onChange(newValue);
-        return;
-      }
-      if (numericValue < 0) {
-        onChange("0");
-        return;
-      }
+    if (type === "number" && currency) {
+      newValue = newValue.replace(/\D/g, "");
+      const formattedValue = formatHarga(newValue);
+      setInputValue(formattedValue);
+      onChange(formattedValue, newValue);
+      return;
     }
 
-    onChange(newValue);
+    setInputValue(newValue);
+    onChange(newValue, newValue);
   };
 
   return (
@@ -46,8 +52,9 @@ export default function TextInput({
       </label>
       <input
         id={id}
-        type={actualType}
-        value={value}
+        type={type === "number" ? "text" : type}
+        inputMode={type === "number" ? "numeric" : "text"}
+        value={inputValue}
         placeholder={placeholder}
         onChange={handleChange}
         className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"

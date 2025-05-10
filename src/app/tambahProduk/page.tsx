@@ -3,7 +3,6 @@ import { useState, ChangeEvent } from "react";
 import TextInput from "./components/textInput";
 import { useAuth } from "@/contexts/AuthContext";
 import config from "@/src/config";
-import { useRouter } from 'next/navigation';
 
 export default function AddProductPage() {
   const [productName, setProductName] = useState("");
@@ -16,11 +15,25 @@ export default function AddProductPage() {
   const [previewImg, setPreviewImg] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const { accessToken } = useAuth();
-  const router = useRouter();
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
     const file = e.target.files[0];
+
+    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+    const maxSizeMB = 3;
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+
+    if (!allowedTypes.includes(file.type)) {
+      alert("Format file tidak didukung! Silakan unggah PNG, JPG, atau JPEG.");
+      return;
+    }
+
+    if (file.size > maxSizeBytes) {
+      alert(`Ukuran file terlalu besar! Maksimal ${maxSizeMB}MB.`);
+      return;
+    }
+  
     setImageFile(file);
 
     const reader = new FileReader();
@@ -28,7 +41,7 @@ export default function AddProductPage() {
       setPreviewImg(reader.result as string);
     };
     reader.readAsDataURL(file);
-  };
+  };  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,27 +89,13 @@ export default function AddProductPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto p-4 mt-8">
-      <header className="flex items-center mb-5">
+    <div className="max-w-md mx-auto p-4">
+      <header className="flex items-center mb-4">
         <button
-          onClick={() => router.back()}
-          className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2"
+          onClick={() => window.history.back()}
+          className="mr-2 text-gray-600 hover:text-gray-800"
         >
-          <svg
-            className="w-4 h-4 transform scale-x-[-1]"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 14 10"
-          >
-            <path
-              stroke="black"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M1 5h12m0 0L9 1m4 4L9 9"
-            />
-          </svg>
+          ←
         </button>
         <h1 className="text-xl font-semibold">Tambah Produk Baru</h1>
       </header>
@@ -152,7 +151,7 @@ export default function AddProductPage() {
           id="productName"
           label="Nama Produk"
           value={productName}
-          onChange={setProductName}
+          onChange={(value) => setProductName(value)}
           placeholder="Pie Jeruk"
         />
 
@@ -162,7 +161,7 @@ export default function AddProductPage() {
           id="category"
           label="Kategori"
           value={category}
-          onChange={setCategory}
+          onChange={(value) => setCategory(value)}
           placeholder="Makanan"
         />
 
@@ -170,18 +169,20 @@ export default function AddProductPage() {
           id="priceSell"
           label="Harga Jual"
           value={priceSell}
-          onChange={setPriceSell}
-          placeholder="Rp 13.000"
+          onChange={(_, raw) => setPriceSell(raw)}
+          placeholder="13.000"
           type="number"
+          currency
         />
 
         <TextInput
           id="priceCost"
           label="Harga Modal"
           value={priceCost}
-          onChange={setPriceCost}
-          placeholder="Rp 9.000"
+          onChange={(_, raw) => setPriceCost(raw)}
+          placeholder="9.000"
           type="number"
+          currency
         />
 
         {/* Satuan (Unit) dan Stok */}

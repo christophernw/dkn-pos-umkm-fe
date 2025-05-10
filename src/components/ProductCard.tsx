@@ -25,6 +25,10 @@ interface PaginatedResponse {
   total_pages: number;
 }
 
+function formatHarga(num: number): string {
+  return String(num).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
 export default function ProductCard() {
   const searchParams = useSearchParams();
   const [data, setData] = useState<ProductCardProps[]>([]);
@@ -38,6 +42,10 @@ export default function ProductCard() {
   const [selectedProduct, setSelectedProduct] =
     useState<ProductCardProps | null>(null);
   const [newStockValue, setNewStockValue] = useState(0);
+  
+  const handleEdit = (id: number) => {
+    window.location.href = `/editProduk/${id}`
+  }
 
   useEffect(() => {
     async function fetchData() {
@@ -234,7 +242,7 @@ export default function ProductCard() {
           </div>
           <p className="text-gray-500 text-sm mt-2">Harga Jual</p>
           <p className="font-medium text-sm text-blue-700 mt-1">
-            Rp {product.harga_jual} / {product.satuan}
+            Rp {formatHarga(product.harga_jual)} / {product.satuan}
           </p>
           <div className="flex justify-between items-center mt-2">
             <span className="text-sm text-green-700 bg-green-100 px-2 py-1 rounded-lg">
@@ -245,6 +253,12 @@ export default function ProductCard() {
               onClick={() => handleOpenStockModal(product)}
             >
               Perbarui Produk
+            </button>
+            <button 
+                className="text-xs h-8 px-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
+                onClick={() => handleEdit(product.id)}
+              >
+                Edit Produk
             </button>
           </div>
         </div>
