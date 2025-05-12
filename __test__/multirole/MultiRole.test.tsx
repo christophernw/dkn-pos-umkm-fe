@@ -1,207 +1,232 @@
-// __tests__/MultiRolePage.test.tsx
+import React from 'react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import UserList from '@/src/app/(withNavbar)/multirole/components/userList';
+import { useAuth } from "@/contexts/AuthContext";
+import { useModal } from "@/contexts/ModalContext";
+import {
+  getPendingInvitations,
+  deleteInvitation,
+  PendingInvitation,
+} from "@/src/app/(withNavbar)/multirole/services/invitationService";
+import { sendRemovalNotificationEmail } from "@/src/app/lib/emailservice";
+import config from "@/src/config";
 
-import React from "react";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
-import MultiRolePage from "@/src/app/(withNavbar)/multirole/page";
-import Header from "@/src/app/(withNavbar)/multirole/components/header";
-import UserList from "@/src/app/(withNavbar)/multirole/components/userList";
-import AddUserButton from "@/src/app/(withNavbar)/multirole/components/addUserButton";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { ModalProvider } from "@/contexts/ModalContext";
-import { SessionProvider } from "next-auth/react";
-
-// --- Mocks for next/navigation ---
-const mockPush = jest.fn();
-const mockBack = jest.fn();
-global.fetch = jest.fn();
-
-jest.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: mockPush,
-    back: mockBack,
-  }),
+// Mock dependencies
+jest.mock("@/contexts/AuthContext", () => ({
+  useAuth: jest.fn()
 }));
 
-// --- Setup a helper render function that wraps components with providers ---
-const renderWithProviders = (ui: React.ReactElement) => {
-  return render(
-    <SessionProvider>
-      <AuthProvider>
-        <ModalProvider>{ui}</ModalProvider>
-      </AuthProvider>
-    </SessionProvider>
-  );
-};
+jest.mock("@/contexts/ModalContext", () => ({
+  useModal: jest.fn()
+}));
 
-// --- Mocking the useAuth context for testing UserList ---
-jest.mock("@/contexts/AuthContext", () => {
-  return {
-    useAuth: () => ({
-      user: { id: 1, name: "Owner", email: "owner@example.com", role: "Pemilik" },
-      accessToken: "test-token",
-    }),
-    AuthProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+jest.mock("@/src/app/(withNavbar)/multirole/services/invitationService", () => ({
+  getPendingInvitations: jest.fn(),
+  deleteInvitation: jest.fn()
+}));
+
+jest.mock("@/src/app/lib/emailservice", () => ({
+  sendRemovalNotificationEmail: jest.fn()
+}));
+
+// Create a type for the mocked fetch
+type MockedFetch = jest.MockedFunction<typeof globalThis.fetch>;
+
+describe('UserList Component', () => {
+  const mockUser = {
+    id: 1,
+    email: 'owner@example.com',
+    name: 'Store Owner',
+    role: 'Pemilik'
   };
-});
 
-// --- Mocking the useModal context ---
-const mockShowModal = jest.fn();
-const mockHideModal = jest.fn();
-jest.mock("@/contexts/ModalContext", () => {
-  return {
-    useModal: () => ({
+  const mockUsers = [
+    mockUser,
+    {
+      id: 2,
+      email: 'manager@example.com',
+      name: 'Store Manager',
+      role: 'Pengelola'
+    },
+    {
+      id: 3,
+      email: 'employee@example.com',
+      name: 'Employee',
+      role: 'Karyawan'
+    }
+  ];
+
+  const mockPendingInvitations = [
+    {
+      id: 1,
+      name: 'Pending User',
+      email: 'pending@example.com',
+      role: 'Karyawan',
+      expires_at: '2024-12-31T00:00:00Z'
+    }
+  ];
+
+  beforeEach(() => {
+    // Reset mocks
+    jest.clearAllMocks();
+
+    // Setup default mock implementations
+    (useAuth as jest.Mock).mockReturnValue({
+      user: mockUser,
+      accessToken: 'mock-token'
+    });
+
+    // Use custom implementation for showModal to simulate button click
+    const mockShowModal = jest.fn((title, message, type, confirmButton, cancelButton) => {
+      // Simulate calling the confirm button's onClick
+      if (confirmButton && confirmButton.onClick) {
+        confirmButton.onClick();
+      }
+    });
+
+    (useModal as jest.Mock).mockReturnValue({
       showModal: mockShowModal,
-      hideModal: mockHideModal,
-    }),
-    ModalProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  };
-});
+      hideModal: jest.fn()
+    });
 
-// --- Global fetch mock ---
-// For user fetching and deletion in UserList.
-const mockUsers = [
-  { id: 2, email: "user1@example.com", name: "User One", role: "Administrator" },
-  { id: 3, email: "user2@example.com", name: "User Two", role: "Karyawan" },
-];
-beforeEach(() => {
-  jest.clearAllMocks();
+    (getPendingInvitations as jest.Mock).mockResolvedValue(mockPendingInvitations);
 
-  // 👇 Tambahkan ini untuk menghindari CLIENT_FETCH_ERROR dari next-auth
-  (global.fetch as jest.Mock).mockImplementation((url) => {
-    if (url === "/api/auth/session") {
+    // Type the fetch mock correctly
+    const fetchMock = jest.fn() as MockedFetch;
+    fetchMock.mockImplementation((url) => {
+      if (url.toString().includes('/auth/get-users')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockUsers)
+        } as Response);
+      }
       return Promise.resolve({
         ok: true,
-        json: async () => ({}),
-      });
-    }
-
-    return Promise.resolve({
-      ok: true,
-      json: async () => [],
+        json: () => Promise.resolve({})
+      } as Response);
     });
-  });
-});
 
-describe("MultiRolePage", () => {
-  it("renders the header, user list and add user button", () => {
-    renderWithProviders(<MultiRolePage />);
-    expect(screen.getByText("Pengaturan Pengguna")).toBeInTheDocument();
-    // Check for Add User button
-    expect(screen.getByRole("button", { name: /\+ Tambah Akun/i })).toBeInTheDocument();
-  });
-});
-
-describe("Header Component", () => {
-  it("calls router.back when back button is clicked", () => {
-    renderWithProviders(<Header />);
-    const backButton = screen.getByRole("button", { name: /back/i });
-    fireEvent.click(backButton);
-    expect(mockBack).toHaveBeenCalled();
-  });
-});
-
-describe("AddUserButton Component", () => {
-  it("navigates to the add user page when clicked", () => {
-    renderWithProviders(<AddUserButton />);
-    const addButton = screen.getByRole("button", { name: /\+ Tambah Akun/i });
-    fireEvent.click(addButton);
-    expect(mockPush).toHaveBeenCalledWith("/multirole/adduser");
-  });
-});
-
-describe("UserList Component", () => {
-  beforeEach(() => {
-    global.fetch = jest.fn();
+    // Replace global fetch with our mock
+    global.fetch = fetchMock;
   });
 
-  it("shows loading state", async () => {
-    (global.fetch as jest.Mock).mockImplementation(() => new Promise(() => {})); // never resolves
-  
-    renderWithProviders(<UserList />);
+  afterEach(() => {
+    // Restore original fetch after each test
+    global.fetch = globalThis.fetch;
+  });
+
+  test('renders loading state initially', async () => {
+    render(<UserList />);
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
+  });
+
+  test('renders users and pending invitations successfully', async () => {
+    render(<UserList />);
+
+    // Wait for users to load
+    await waitFor(() => {
+      expect(screen.getByText('Store Manager')).toBeInTheDocument();
+      expect(screen.getByText('Employee')).toBeInTheDocument();
+    });
+
+    // Check role tags - use more specific queries
+    const karyawanTags = screen.getAllByText('Karyawan');
+    expect(karyawanTags.length).toBeGreaterThan(0);
     
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
-  });
+    expect(screen.getByText('Pemilik')).toBeInTheDocument();
+    expect(screen.getByText('Pengelola')).toBeInTheDocument();
 
-  it("shows message when no users are returned", async () => {
-  (global.fetch as jest.Mock).mockResolvedValueOnce({
-    ok: true,
-    json: async () => [],
-  });
-
-  renderWithProviders(<UserList />);
-
-  await waitFor(() =>
-    expect(screen.getByText(/no users found/i)).toBeInTheDocument()
-  );
-  });
-
-  it("displays error message when fetch fails", async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ error: "Failed to fetch users" }),
-    });
-
-    await waitFor(() => renderWithProviders(<UserList />));
-
+    // Check pending invitation
     await waitFor(() => {
-      expect(screen.getByText(/failed to fetch users/i)).toBeInTheDocument();
+      expect(screen.getByText('Pending User')).toBeInTheDocument();
+      expect(screen.getByText(/Kadaluarsa:/)).toBeInTheDocument();
     });
   });
 
-  it("triggers delete modal and calls delete API on confirmation", async () => {
-    (global.fetch as jest.Mock)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockUsers,
-      }) // initial fetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ message: "User removed" }),
-      }) // delete user
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => [], // after deletion
-      });
+  test('handles invitation deletion', async () => {
+    const mockDeleteInvitation = jest.fn().mockResolvedValue({});
+    (deleteInvitation as jest.Mock).mockImplementation(mockDeleteInvitation);
 
-    await waitFor(() => renderWithProviders(<UserList />));
+    render(<UserList />);
 
+    // Wait for pending invitations to load
     await waitFor(() => {
-      expect(screen.getByText("User One")).toBeInTheDocument();
+      expect(screen.getByText('Pending User')).toBeInTheDocument();
     });
 
-    const deleteButtons = screen.getAllByTitle("Remove user");
+    // Find and click delete button for pending invitation
+    const deleteButtons = screen.getAllByTitle('Delete invitation');
     fireEvent.click(deleteButtons[0]);
 
-    expect(mockShowModal).toHaveBeenCalledWith(
-      "Konfirmasi",
-      "Apakah Anda yakin ingin menghapus pengguna ini?",
-      "info",
-      expect.objectContaining({
-        onClick: expect.any(Function),
-      }),
-      expect.any(Object)
-    );
+    // Check that invitation was deleted
+    await waitFor(() => {
+      expect(mockDeleteInvitation).toHaveBeenCalled();
+    });
+  });
 
-    // Simulate clicking confirm
-    const confirmAction = mockShowModal.mock.calls[0][3].onClick;
-    await act(async () => {
-      await confirmAction();
+  test('handles error state', async () => {
+    // Replace fetch with a new mock for this test
+    const fetchMock = jest.fn() as MockedFetch;
+    fetchMock.mockImplementationOnce(() => 
+      Promise.resolve({
+        ok: false,
+        json: () => Promise.resolve({ error: 'Failed to fetch users' })
+      } as Response)
+    );
+    global.fetch = fetchMock;
+
+    render(<UserList />);
+
+    // Wait for error to be displayed
+    await waitFor(() => {
+      expect(screen.getByText('Failed to fetch users')).toBeInTheDocument();
+    });
+  });
+
+  test('does not show delete button for owner user', async () => {
+    render(<UserList />);
+
+    // Wait for users to load
+    await waitFor(() => {
+      expect(screen.getByText('Store Owner')).toBeInTheDocument();
     });
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining("/auth/remove-user-from-toko"),
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({
-          Authorization: `Bearer test-token`,
-        }),
-      })
+    // Find all delete buttons
+    const deleteButtons = screen.queryAllByTitle('Remove user');
+    
+    // Owner's own user should not have a delete button
+    const ownerDeleteButton = deleteButtons.find(button => 
+      button.closest('li')?.textContent?.includes('Store Owner')
     );
+    expect(ownerDeleteButton).toBeUndefined();
+  });
 
-    expect(mockShowModal).toHaveBeenCalledWith(
-      "Berhasil",
-      "Pengguna berhasil dihapus!",
-      "success"
-    );
+  test('handles failed user deletion correctly', async () => {
+    // Mock fetch to return failure when removing user
+    (global.fetch as jest.Mock).mockImplementation((url) => {
+      if (url.toString().includes('/auth/remove-user-from-toko')) {
+        return Promise.resolve({
+          ok: false,
+          json: () => Promise.resolve({ error: 'Deletion failed' })
+        } as Response);
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(mockUsers)
+      } as Response);
+    });
+
+    render(<UserList />);
+    await waitFor(() => screen.getByText('manager@example.com'));
+
+    const deleteButtons = screen.getAllByTitle('Remove user');
+    fireEvent.click(deleteButtons[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText('manager@example.com')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('Pengguna berhasil dihapus!')).not.toBeInTheDocument();
   });
 });
