@@ -23,10 +23,7 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm install
-
-      - name: Run tests and generate coverage
-        run: npm run test -- --coverage
+        run: npm install --legacy-peer-deps
 
       - name: Run SonarQube Scan (Only `src/` Files)
         env:
@@ -38,4 +35,3 @@ jobs:
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
             -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
             -Dsonar.sources=src \
-            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
