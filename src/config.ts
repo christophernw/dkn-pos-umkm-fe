@@ -19,7 +19,7 @@ type Config = {
   
 const config: Config = {
   development: {
-    apiUrl: "http://103.177.95.190:8001/api",
+    apiUrl: "http://127.0.0.1:8000//api",
     hostname: "http://localhost:3000/",
   },
   production: {
