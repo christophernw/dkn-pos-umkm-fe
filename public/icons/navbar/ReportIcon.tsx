@@ -1,11 +1,14 @@
 import { IconInterface } from "../type"
 
-const TransactionIcon = ({ width = 25, height = 25, stroke }: IconInterface) => {
+const ReportIcon = ({ width = 25, height = 25, stroke }: IconInterface) => {
     return <svg width={width} height={height} viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M7.99984 18.3332H12.9998C17.1665 18.3332 18.8332 16.6665 18.8332 12.4998V7.49984C18.8332 3.33317 17.1665 1.6665 12.9998 1.6665H7.99984C3.83317 1.6665 2.1665 3.33317 2.1665 7.49984V12.4998C2.1665 16.6665 3.83317 18.3332 7.99984 18.3332Z" stroke={ stroke || "#818898"} strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M13.4167 15.4168C14.3333 15.4168 15.0833 14.6668 15.0833 13.7502V6.25016C15.0833 5.3335 14.3333 4.5835 13.4167 4.5835C12.5 4.5835 11.75 5.3335 11.75 6.25016V13.7502C11.75 14.6668 12.4917 15.4168 13.4167 15.4168Z" stroke={ stroke || "#818898"} strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M7.58317 15.4165C8.49984 15.4165 9.24984 14.6665 9.24984 13.7498V10.8332C9.24984 9.9165 8.49984 9.1665 7.58317 9.1665C6.6665 9.1665 5.9165 9.9165 5.9165 10.8332V13.7498C5.9165 14.6665 6.65817 15.4165 7.58317 15.4165Z" stroke={ stroke || "#818898"} strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
+    <path d="M18.8335 4.99984V7.0165C18.8335 8.33317 18.0002 9.1665 16.6835 9.1665H13.8335V3.3415C13.8335 2.4165 14.5918 1.6665 15.5168 1.6665C16.4252 1.67484 17.2585 2.0415 17.8585 2.6415C18.4585 3.24984 18.8335 4.08317 18.8335 4.99984Z" stroke={ stroke || "#818898"} strokeWidth="1.25" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M2.1665 5.83317V17.4998C2.1665 18.1915 2.94984 18.5832 3.49984 18.1665L4.92484 17.0998C5.25817 16.8498 5.72484 16.8832 6.02484 17.1832L7.40817 18.5748C7.73317 18.8998 8.2665 18.8998 8.5915 18.5748L9.9915 17.1748C10.2832 16.8832 10.7498 16.8498 11.0748 17.0998L12.4998 18.1665C13.0498 18.5748 13.8332 18.1832 13.8332 17.4998V3.33317C13.8332 2.4165 14.5832 1.6665 15.4998 1.6665H6.33317H5.49984C2.99984 1.6665 2.1665 3.15817 2.1665 4.99984V5.83317Z" stroke={ stroke || "#818898"} strokeWidth="1.25" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M8 10.8418H10.5" stroke={ stroke || "#818898"} strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M8 7.5083H10.5" stroke={ stroke || "#818898"} strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M5.49609 10.8335H5.50358" stroke={ stroke || "#818898"} strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M5.49609 7.5H5.50358" stroke={ stroke || "#818898"} strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>   
 }
 
-export default TransactionIcon
+export default ReportIcon

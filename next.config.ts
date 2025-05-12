@@ -5,7 +5,8 @@ const nextConfig = {
           "lancar.s3.amazonaws.com",
           "localhost",
           "103.177.95.190",
-          "placehold.co"
+          "placehold.co",
+          "127.0.0.1"
       ],
   },
 };

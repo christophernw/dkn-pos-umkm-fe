@@ -184,8 +184,11 @@ export default function TransaksiDetailPage() {
               "Status transaksi berhasil diubah menjadi Lunas!",
               "success",
               {
-                label: "Kembali ke Daftar Transaksi",
-                onClick: () => (window.location.href = "/transaksi"),
+                label: "Kembali",
+                onClick: () => {
+                  hideModal(); // First close the modal
+                  window.history.back(); // Then navigate back
+                }
               }
             );
           } catch (err) {

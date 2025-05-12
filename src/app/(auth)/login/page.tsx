@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react'
-import { signIn } from 'next-auth/react'
+import { signIn, signOut } from 'next-auth/react'
 import { GoogleIcon } from '@/public/icons/GoogleIcon'
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -13,7 +13,7 @@ export default function LoginPage() {
     const { data: session } = useSession();
     const [loading, setLoading] = useState(false);
     const router = useRouter();
-    const { setAuthData } = useAuth();
+    const { setAuthData, logout } = useAuth();
 
     
     useEffect(() => {
@@ -29,12 +29,27 @@ export default function LoginPage() {
             })
             .then(response => response.json())
             .then(data => {
-                setAuthData({
-                    user: data.user,
-                    access: data.access,
-                    refresh: data.refresh
-                });
-                router.push('/');
+                // Check if user has a toko (was not removed)
+                if (data.user && data.user.toko_id) {
+                    // Normal user with a toko - proceed with login
+                    setAuthData({
+                        user: data.user,
+                        access: data.access,
+                        refresh: data.refresh
+                    });
+                    router.push('/');
+                } else {
+                    // User without a toko (removed or brand new)
+                    // First set auth data so they have a valid token
+                    setAuthData({
+                        user: data.user,
+                        access: data.access,
+                        refresh: data.refresh
+                    });
+                    
+                    // Redirect to home page - they'll be treated like a new user
+                    router.push('/');
+                }
             })
             .catch(error => {
                 console.error('Authentication error:', error);
