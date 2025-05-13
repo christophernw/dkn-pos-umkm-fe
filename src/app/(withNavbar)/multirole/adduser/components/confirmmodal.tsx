@@ -1,8 +1,8 @@
-import React from "react";
+export type RoleType = "Pengelola" | "Karyawan";
 
 interface ConfirmModalProps {
   name: string;
-  role: string;
+  role: RoleType;
   email: string;
   onClose: () => void;
   onConfirm: (e: React.FormEvent<HTMLFormElement>) => void;
@@ -17,14 +17,9 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 }) => {
   return (
     <div className="w-full max-w-md">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          onConfirm(e);
-        }}
-      >
-        <div role="dialog">
-          <h2 className="text-base font-semibold text-center mb-4">
+      <form onSubmit={onConfirm}>
+        <div role="dialog" aria-modal="true" aria-labelledby="modal-title">
+          <h2 id="modal-title" className="text-base font-semibold text-center mb-4">
             Ringkasan Pengguna Baru
           </h2>
 
@@ -39,7 +34,9 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             </div>
             <div>
               <p className="text-gray-500">Email</p>
-              <p className="font-semibold break-words">{email}</p>
+              <p className="font-semibold break-words truncate" title={email}>
+                {email}
+              </p>
             </div>
           </div>
 
