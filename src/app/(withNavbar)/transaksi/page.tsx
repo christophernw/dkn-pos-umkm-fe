@@ -391,6 +391,7 @@ export default function TransactionMainPage() {
       <Link 
         href="/tambahTransaksi"
         className="bg-primary-indigo rounded-full w-fit fixed bottom-4 right-4 sm:right-[calc(50%-(420px/2)+1rem)] p-4 mb-24"
+        aria-label="Tambah Transaksi Baru"
       >
         <PlusIcon />
       </Link>

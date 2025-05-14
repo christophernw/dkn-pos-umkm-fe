@@ -22,7 +22,9 @@ describe('SummaryCard Component', () => {
     
     // Verifikasi teks utama
     expect(screen.getByText('Total Pendapatan')).toBeInTheDocument()
-    expect(screen.getByText('Rp5000000')).toBeInTheDocument()
+    expect(
+      screen.getByText((content) => content.includes('Rp') && content.includes('5.000.000'))
+    ).toBeInTheDocument();
     expect(screen.getByText('12.5%')).toBeInTheDocument()
     expect(screen.getByText('vs bulan lalu.')).toBeInTheDocument()
     
@@ -45,7 +47,9 @@ describe('SummaryCard Component', () => {
   it('should format nominal correctly', () => {
     render(<SummaryCard {...defaultProps} nominal={7500000} />)
     
-    expect(screen.getByText('Rp7500000')).toBeInTheDocument()
+    expect(
+      screen.getByText((content) => content.includes('Rp') && content.includes('7.500.000'))
+    ).toBeInTheDocument();
   })
 
   it('should display percentage with correct styling', () => {

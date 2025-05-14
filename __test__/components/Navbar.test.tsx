@@ -39,12 +39,12 @@ describe('Navbar Component', () => {
     render(<Navbar />);
 
     // Check that the Product button is active
-    const productButton = screen.getByTestId('navbar-button-Product');
+    const productButton = screen.getByTestId('navbar-button-Produk');
     expect(productButton).toHaveAttribute('data-active', 'true');
     
     // And other buttons should not be active
-    const homeButton = screen.getByTestId('navbar-button-Home');
-    const transactionButton = screen.getByTestId('navbar-button-Transaction');
+    const homeButton = screen.getByTestId('navbar-button-Beranda');
+    const transactionButton = screen.getByTestId('navbar-button-Transaksi');
     expect(homeButton).toHaveAttribute('data-active', 'false');
     expect(transactionButton).toHaveAttribute('data-active', 'false');
   });
@@ -56,8 +56,8 @@ describe('Navbar Component', () => {
     render(<Navbar />);
 
     // All buttons should be inactive
-    const homeButton = screen.getByTestId('navbar-button-Home');
-    const productButton = screen.getByTestId('navbar-button-Product');
+    const homeButton = screen.getByTestId('navbar-button-Beranda');
+    const productButton = screen.getByTestId('navbar-button-Produk');
     expect(homeButton).toHaveAttribute('data-active', 'false');
     expect(productButton).toHaveAttribute('data-active', 'false');
   });
