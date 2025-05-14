@@ -1,5 +1,5 @@
 "use client";
-import { useState, ChangeEvent } from "react";
+import { useState, ChangeEvent, useEffect } from "react";
 import TextInput from "./components/textInput";
 import { useAuth } from "@/contexts/AuthContext";
 import config from "@/src/config";
@@ -31,8 +31,8 @@ export default function AddProductPage() {
   const { showModal, hideModal } = useModal();
 
   // State for managing custom options
-  const [categoryOptions, setCategoryOptions] = useState([...initialCategoryOptions]);
-  const [unitOptions, setUnitOptions] = useState([...initialUnitOptions]);
+  const [categoryOptions, setCategoryOptions] = useState<string[]>([...initialCategoryOptions]);
+  const [unitOptions, setUnitOptions] = useState<string[]>([...initialUnitOptions]);
 
   // Add state for field errors
   const [errors, setErrors] = useState({
@@ -68,11 +68,11 @@ export default function AddProductPage() {
     if (fileInput) {
       fileInput.value = "";
     }
-  }; // Missing closing bracket was here
+  };
 
   const handleAddCustomCategory = (newCategory: string) => {
     if (!categoryOptions.includes(newCategory)) {
-      setCategoryOptions([...categoryOptions, newCategory]);
+      setCategoryOptions(prevOptions => [...prevOptions, newCategory]);
     }
     setCategory(newCategory);
     
@@ -84,9 +84,51 @@ export default function AddProductPage() {
     );
   };
 
+  useEffect(() => {
+    const fetchCategoriesAndUnits = async () => {
+      if (!accessToken) return;
+
+      try {
+        // Categories
+        const catRes = await fetch(`${config.apiUrl}/produk/categories`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (catRes.ok) {
+          const cats = await catRes.json();
+          if (cats && cats.length > 0) {
+            setCategoryOptions(prevOptions => {
+              // Create a Set to remove duplicates, then spread back to array
+              const mergedOptions = [...new Set([...initialCategoryOptions, ...prevOptions, ...cats])];
+              return mergedOptions;
+            });
+          }
+        }
+
+        // Units
+        const unitRes = await fetch(`${config.apiUrl}/produk/units`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (unitRes.ok) {
+          const units = await unitRes.json();
+          if (units && units.length > 0) {
+            setUnitOptions(prevOptions => {
+              // Create a Set to remove duplicates, then spread back to array
+              const mergedOptions = [...new Set([...initialUnitOptions, ...prevOptions, ...units])];
+              return mergedOptions;
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Fetch kategori/satuan gagal:", err);
+      }
+    };
+
+    fetchCategoriesAndUnits();
+  }, [accessToken]);
+  
   const handleAddCustomUnit = (newUnit: string) => {
     if (!unitOptions.includes(newUnit)) {
-      setUnitOptions([...unitOptions, newUnit]);
+      setUnitOptions(prevOptions => [...prevOptions, newUnit]);
     }
     setUnit(newUnit);
     
@@ -196,6 +238,37 @@ export default function AddProductPage() {
             },
           }
         );
+
+        // Re-sync kategori & satuan after adding product
+        try {
+          const catRes = await fetch(`${config.apiUrl}/produk/categories`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          if (catRes.ok) {
+            const cats = await catRes.json();
+            if (cats && cats.length > 0) {
+              setCategoryOptions(prevOptions => {
+                // Merge new categories with existing ones
+                return [...new Set([...initialCategoryOptions, ...prevOptions, ...cats])];
+              });
+            }
+          }
+
+          const unitRes = await fetch(`${config.apiUrl}/produk/units`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          if (unitRes.ok) {
+            const units = await unitRes.json();
+            if (units && units.length > 0) {
+              setUnitOptions(prevOptions => {
+                // Merge new units with existing ones
+                return [...new Set([...initialUnitOptions, ...prevOptions, ...units])];
+              });
+            }
+          }
+        } catch (err) {
+          console.error("Re-fetch kategori/satuan gagal:", err);
+        }
       } else {
         const errorData = await response.json();
         console.error("Error creating product:", errorData);

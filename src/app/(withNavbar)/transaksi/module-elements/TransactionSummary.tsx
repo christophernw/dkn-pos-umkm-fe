@@ -17,7 +17,12 @@ interface SummaryData {
 	amount: number;
 }
 
-export const TransactionSummary = () => {
+interface TransactionSummaryProps {
+  selectedMonth: number;
+  selectedYear: number;
+}
+
+export const TransactionSummary = ({ selectedMonth, selectedYear }: TransactionSummaryProps) => {
 	const [summaryData, setSummaryData] = useState<SummaryData | null>(null)
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState<string | null>(null)
@@ -40,8 +45,7 @@ export const TransactionSummary = () => {
 			setError(null);
 
 			try {
-				// Use fetchPriority=high for critical requests
-				const response = await fetch(`${config.apiUrl}/transaksi/summary/monthly`, {
+				const response = await fetch(`${config.apiUrl}/transaksi/summary/monthly?month=${selectedMonth}&year=${selectedYear}`, {
 					headers: {
 						Authorization: `Bearer ${accessToken}`,
 					},
@@ -63,7 +67,7 @@ export const TransactionSummary = () => {
 		}
 
 		fetchSummaryData()
-	}, [accessToken])
+	}, [accessToken, selectedMonth, selectedYear])
 
 	// Preload resources and optimize rendering
 	useEffect(() => {
@@ -123,6 +127,15 @@ export const TransactionSummary = () => {
 			{error || "Failed to load financial summary"}
 		</div>
 	}
+  
+	// Get month name in Indonesian
+	const getMonthName = (month: number) => {
+		const monthNames = [
+		"Januari", "Februari", "Maret", "April", "Mei", "Juni",
+		"Juli", "Agustus", "September", "Oktober", "November", "Desember"
+		];
+		return monthNames[month - 1];
+	};
 
 	return (
 		<>

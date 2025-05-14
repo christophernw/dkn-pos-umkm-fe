@@ -118,8 +118,6 @@ const ReportPage = () => {
   const handleReportTypeChange = (type: "keuangan" | "utang" | "arus-kas") => {
     setReportType(type);
     setDropdownOpen(false);
-    // Clear current transactions
-    setTransactions([]);
     // Reset pagination
     setCurrentPage(1);
     // Reset dates and fetch new data
@@ -171,7 +169,7 @@ const ReportPage = () => {
     // Get current date in Asia/Jakarta timezone (UTC+7)
     const now = new Date();
     // Adjust for UTC+7
-    const jakartaTime = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+    const jakartaTime = new Date(now.getTime());
 
     // Set time to end of day (23:59:59) in local timezone
     const endDate = new Date(jakartaTime);
@@ -179,7 +177,15 @@ const ReportPage = () => {
 
     let startDate = new Date(jakartaTime);
 
-    if (dateRange === "all") {
+    if (dateRange === "this_month") {
+      // Set to first day of current month - fixing the issue
+      const currentYear = jakartaTime.getFullYear()
+      const currentMonth = jakartaTime.getMonth()
+      // Create a new date object for the 1st day of current month
+      startDate = new Date(currentYear, currentMonth, 2)
+      // Set time to start of day (00:00:00)
+      startDate.setHours(0, 0, 0, 0)
+    } else if (dateRange === "all") {
       // Use first transaction date for "Semua"
       if (firstTransactionDate) {
         startDate = new Date(firstTransactionDate + "T00:00:00+07:00");
@@ -189,7 +195,7 @@ const ReportPage = () => {
       }
     } else {
       // Convert dateRange to number of days and set the start date
-      const days = parseInt(dateRange);
+      const days = Number.parseInt(dateRange);
       startDate.setDate(startDate.getDate() - days);
       // Set time to start of day (00:00:00) in local timezone
       startDate.setHours(0, 0, 0, 0);
@@ -198,7 +204,7 @@ const ReportPage = () => {
     // Format dates as YYYY-MM-DD
     setCustomStartDate(startDate.toISOString().split("T")[0]);
     setCustomEndDate(endDate.toISOString().split("T")[0]);
-  };
+  }
 
   // Update custom dates when date range changes
   useEffect(() => {
@@ -777,8 +783,9 @@ const ReportPage = () => {
               className={`w-full p-2 border border-gray-300 rounded-md mb-3 ${!hasAccess ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               disabled={!hasAccess}
             >
+              <option value="this_month">Bulan Ini</option>
               <option value="7">7 Hari Terakhir</option>
-              <option value="30">Bulan Ini</option>
+              <option value="30">30 Hari Terakhir</option>
               <option value="90">3 Bulan Terakhir</option>
               <option value="180">6 Bulan Terakhir</option>
               <option value="365">1 Tahun Terakhir</option>
