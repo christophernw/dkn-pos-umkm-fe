@@ -6,6 +6,7 @@ import { useModal } from "@/contexts/ModalContext";
 import config from "@/src/config";
 import TextInput from "../../tambahProduk/components/textInput";
 import EnhancedDropdown from "@/src/components/elements/modal/EnhancedDropdown";
+import Head from "next/head";
 
 // Initial dropdown options
 const initialUnitOptions = ["Pcs", "Kg", "Botol", "Liter"];
@@ -274,6 +275,34 @@ export default function EditProductPage() {
   }
 
   return (
+    <>
+        <Head>
+            <script
+                dangerouslySetInnerHTML={{
+                __html: `
+                    (function (m, a, z, e) {
+                    var s, t;
+                    try {
+                        t = m.sessionStorage.getItem('maze-us');
+                    } catch (err) {}
+
+                    if (!t) {
+                        t = new Date().getTime();
+                        try {
+                        m.sessionStorage.setItem('maze-us', t);
+                        } catch (err) {}
+                    }
+
+                    s = a.createElement('script');
+                    s.src = z + '?apiKey=' + e;
+                    s.async = true;
+                    a.getElementsByTagName('head')[0].appendChild(s);
+                    m.mazeUniversalSnippetApiKey = e;
+                    })(window, document, 'https://snippet.maze.co/maze-universal-loader.js', 'e31b53f6-c7fd-47f2-85df-d3c285f18b33');
+                `,
+                }}
+            />
+            </Head>
     <div className="max-w-md mx-auto p-4">
       <header className="flex items-center mb-4">
         <button
@@ -431,5 +460,6 @@ export default function EditProductPage() {
         </div>
       </form>
     </div>
+    </>
   );
 }
