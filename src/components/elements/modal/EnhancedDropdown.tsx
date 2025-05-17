@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDown, Check, Plus } from "lucide-react";
 import { Modal } from "@/src/components/elements/modal/Modal";
 
@@ -22,6 +22,13 @@ export default function EnhancedDropdown({
   const [open, setOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [customValue, setCustomValue] = useState("");
+  
+  const [internalOptions, setInternalOptions] = useState<string[]>(options);
+
+  useEffect(() => {
+    const mergedOptions = [...new Set([...internalOptions, ...options])];
+    setInternalOptions(mergedOptions);
+  }, [options]);
 
   const handleAddCustom = () => {
     setOpen(false);
@@ -30,6 +37,11 @@ export default function EnhancedDropdown({
 
   const handleSubmitCustom = () => {
     if (customValue.trim() && onAddCustom) {
+      // Add the new value to internal options first
+      if (!internalOptions.includes(customValue.trim())) {
+        setInternalOptions([...internalOptions, customValue.trim()]);
+      }
+      // Then call the parent handler
       onAddCustom(customValue.trim());
       setCustomValue("");
       setIsModalOpen(false);
@@ -55,7 +67,8 @@ export default function EnhancedDropdown({
       </button>
       {open && (
         <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
-          {options.map((option) => (
+          {/* Use internalOptions instead of options from props */}
+          {internalOptions.map((option) => (
             <li
               key={option}
               onClick={() => {

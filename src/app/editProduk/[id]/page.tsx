@@ -40,7 +40,7 @@ export default function EditProductPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   
-  // State for managing custom options
+  // State for managing custom options - initialize with default options
   const [categoryOptions, setCategoryOptions] = useState([...initialCategoryOptions]);
   const [unitOptions, setUnitOptions] = useState([...initialUnitOptions]);
   
@@ -68,10 +68,13 @@ export default function EditProductPage() {
         
         if (categoryResponse.ok) {
           const categories = await categoryResponse.json();
-          if (categories.length > 0) {
-            // Combine fetched categories with initial ones, removing duplicates
-            const uniqueCategories = [...new Set([...initialCategoryOptions, ...categories])];
-            setCategoryOptions(uniqueCategories);
+          // Merge API categories with initial categories
+          if (categories && categories.length > 0) {
+            setCategoryOptions(prevOptions => {
+              // Create a Set to remove duplicates, then spread back to array
+              const mergedOptions = [...new Set([...prevOptions, ...categories])];
+              return mergedOptions;
+            });
           }
         }
         
@@ -84,10 +87,13 @@ export default function EditProductPage() {
         
         if (unitResponse.ok) {
           const units = await unitResponse.json();
-          if (units.length > 0) {
-            // Combine fetched units with initial ones, removing duplicates
-            const uniqueUnits = [...new Set([...initialUnitOptions, ...units])];
-            setUnitOptions(uniqueUnits);
+          // Merge API units with initial units
+          if (units && units.length > 0) {
+            setUnitOptions(prevOptions => {
+              // Create a Set to remove duplicates, then spread back to array
+              const mergedOptions = [...new Set([...prevOptions, ...units])];
+              return mergedOptions;
+            });
           }
         }
       } catch (error) {
@@ -115,10 +121,15 @@ export default function EditProductPage() {
           
           // Check if category exists in options, if not add it
           const productCategory = product.kategori || "";
-          if (productCategory && !categoryOptions.includes(productCategory)) {
-            setCategoryOptions([...categoryOptions, productCategory]);
+          if (productCategory) {
+            setCategory(productCategory);
+            setCategoryOptions(prevOptions => {
+              if (!prevOptions.includes(productCategory)) {
+                return [...prevOptions, productCategory];
+              }
+              return prevOptions;
+            });
           }
-          setCategory(productCategory);
           
           setPriceSell(formatHarga(product.harga_jual?.toString()) || "");
           setPriceCost(formatHarga(product.harga_modal?.toString()) || "");
@@ -126,10 +137,15 @@ export default function EditProductPage() {
           
           // Check if unit exists in options, if not add it
           const productUnit = product.satuan || "";
-          if (productUnit && !unitOptions.includes(productUnit)) {
-            setUnitOptions([...unitOptions, productUnit]);
+          if (productUnit) {
+            setUnit(productUnit);
+            setUnitOptions(prevOptions => {
+              if (!prevOptions.includes(productUnit)) {
+                return [...prevOptions, productUnit];
+              }
+              return prevOptions;
+            });
           }
-          setUnit(productUnit);
           
           if (product.foto) {
             setPreviewImg(`${config.apiUrl}${product.foto.slice(4)}`);
@@ -146,11 +162,11 @@ export default function EditProductPage() {
     }
 
     fetchProduct();
-  }, [id, accessToken, showModal, categoryOptions, unitOptions]);
+  }, [id, accessToken, showModal]);
 
   const handleAddCustomCategory = (newCategory: string) => {
     if (!categoryOptions.includes(newCategory)) {
-      setCategoryOptions([...categoryOptions, newCategory]);
+      setCategoryOptions(prevOptions => [...prevOptions, newCategory]);
     }
     setCategory(newCategory);
     
@@ -164,7 +180,7 @@ export default function EditProductPage() {
 
   const handleAddCustomUnit = (newUnit: string) => {
     if (!unitOptions.includes(newUnit)) {
-      setUnitOptions([...unitOptions, newUnit]);
+      setUnitOptions(prevOptions => [...prevOptions, newUnit]);
     }
     setUnit(newUnit);
     
@@ -249,6 +265,37 @@ export default function EditProductPage() {
       });
 
       if (response.ok) {
+        // Re-sync kategori & satuan toko sebelum redirect
+        try {
+          const catRes = await fetch(`${config.apiUrl}/produk/categories`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          if (catRes.ok) {
+            const cats = await catRes.json();
+            if (cats && cats.length > 0) {
+              setCategoryOptions(prevOptions => {
+                // Merge new categories with existing ones
+                return [...new Set([...prevOptions, ...cats])];
+              });
+            }
+          }
+
+          const unitRes = await fetch(`${config.apiUrl}/produk/units`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          if (unitRes.ok) {
+            const units = await unitRes.json();
+            if (units && units.length > 0) {
+              setUnitOptions(prevOptions => {
+                // Merge new units with existing ones
+                return [...new Set([...prevOptions, ...units])];
+              });
+            }
+          }
+        } catch (err) {
+          console.error("Re-fetch kategori/satuan setelah update gagal:", err);
+        }
+
         // Langsung redirect ke halaman semuaBarang tanpa menampilkan modal
         router.push("/semuaBarang");
       } else {
@@ -383,7 +430,7 @@ export default function EditProductPage() {
           errorMessage="Nama produk tidak boleh kosong"
         />
 
-        {/* Replace with EnhancedDropdown for category */}
+        {/* Enhanced Dropdown for category */}
         <div>
           <EnhancedDropdown
             selected={category}
@@ -433,7 +480,7 @@ export default function EditProductPage() {
           errorMessage="Stok tidak boleh kosong"
         />
 
-        {/* Replace with EnhancedDropdown for unit */}
+        {/* Enhanced Dropdown for unit */}
         <div>
           <EnhancedDropdown
             selected={unit}

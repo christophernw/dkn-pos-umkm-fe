@@ -14,6 +14,7 @@ import { StockIcon } from "@/public/icons/StockIcon";
 import { NotesIcon } from "@/public/icons/notesIcon";
 import { report } from "process";
 import Head from "next/head";
+import { formatDate } from "@/src/utils/formatDate";
 
 // Define types
 interface Transaction {
@@ -131,68 +132,68 @@ const ReportPage = () => {
   };
 
   // Fetch summary data - only if user has access
-  useEffect(() => {
-    if (!accessToken || !hasAccess) {
-      setIsLoading(false);
-      return;
-    }
+  // useEffect(() => {
+  //   if (!accessToken || !hasAccess || reportType !== "utang") {
+  //     setIsLoading(false);
+  //     return;
+  //   }
 
-    const fetchSummary = async () => {
-      if (!accessToken || !hasAccess || reportType === "arus-kas") {
-        return;
-      }
+  //   const fetchSummary = async () => {
+  //     if (!accessToken || !hasAccess || reportType === "arus-kas") {
+  //       return;
+  //     }
 
-      setIsLoading(true);
-      try {
-        // Fetch debt summary (for both report types)
-        const debtResponse = await fetch(
-          `${config.apiUrl}/transaksi/debt-summary`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
+  //     setIsLoading(true);
+  //     try {
+  //       // Fetch debt summary (for both report types)
+  //       const debtResponse = await fetch(
+  //         `${config.apiUrl}/transaksi/debt-summary`,
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${accessToken}`,
+  //           },
+  //         }
+  //       );
 
-        // If we're in financial report mode, also fetch total transactions summary
-        let totalPemasukan = 0;
-        let totalPengeluaran = 0;
+  //       // If we're in financial report mode, also fetch total transactions summary
+  //       let totalPemasukan = 0;
+  //       let totalPengeluaran = 0;
         
-        if (reportType === "keuangan") {
-          const financialResponse = await fetch(
-            `${config.apiUrl}/transaksi/summary/monthly`,
-            {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-            }
-          );
+  //       if (reportType === "keuangan") {
+  //         const financialResponse = await fetch(
+  //           `${config.apiUrl}/transaksi/summary/monthly`,
+  //           {
+  //             headers: {
+  //               Authorization: `Bearer ${accessToken}`,
+  //             },
+  //           }
+  //         );
           
-          if (financialResponse.ok) {
-            const financialData = await financialResponse.json();
-            totalPemasukan = financialData.pemasukan.amount || 0;
-            totalPengeluaran = financialData.pengeluaran.amount || 0;
-          }
-        }
+  //         if (financialResponse.ok) {
+  //           const financialData = await financialResponse.json();
+  //           totalPemasukan = financialData.pemasukan.amount || 0;
+  //           totalPengeluaran = financialData.pengeluaran.amount || 0;
+  //         }
+  //       }
 
-        if (debtResponse.ok) {
-          const debtData = await debtResponse.json();
-          setSummary({
-            utangSaya: debtData.utang_saya || 0,
-            utangPelanggan: debtData.utang_pelanggan || 0,
-            totalPemasukan: totalPemasukan,
-            totalPengeluaran: totalPengeluaran
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching summary data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  //       if (debtResponse.ok) {
+  //         const debtData = await debtResponse.json();
+  //         setSummary({
+  //           utangSaya: debtData.utang_saya || 0,
+  //           utangPelanggan: debtData.utang_pelanggan || 0,
+  //           totalPemasukan: totalPemasukan,
+  //           totalPengeluaran: totalPengeluaran
+  //         });
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching summary data:", error);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
 
-    fetchSummary();
-  }, [accessToken, reportType, hasAccess]);
+  //   fetchSummary();
+  // }, [accessToken, reportType, hasAccess]);
 
   // Fetch first transaction date - only if user has access
   useEffect(() => {
@@ -326,19 +327,47 @@ const ReportPage = () => {
         if (response.ok) {
           if (reportType !== "arus-kas") {
             const data = await response.json();
-            setTransactions(data.transactions || []);
+            const transactionsData = data.transactions as Transaction[] || [];
+            setTransactions(transactionsData || []);
             setReportDateRange({
               startDate: data.start_date,
               endDate: data.end_date,
             });
+
+            const totalPemasukan = transactionsData
+              .filter(t => t.transaction_type === "pemasukan")
+              .reduce((sum, t) => sum + Number(t.total_amount), 0);
+
+            const totalPengeluaran = transactionsData
+              .filter(t => t.transaction_type === "pengeluaran")
+              .reduce((sum, t) => sum + Number(t.total_amount), 0);
+
+            setSummary(prev => ({
+              ...prev,
+              utangSaya: totalPemasukan,
+              utangPelanggan: totalPengeluaran,
+              totalPemasukan,
+              totalPengeluaran
+            }));
+
             setArusKasTransactions([]);
           } else {
             const data: ArusKasReportResponse = await response.json();
-            setArusKasTransactions(data.transactions || []);
+            const transactionsData = data.transactions as ArusKasTransaction[] || [];
+            setArusKasTransactions(transactionsData || []);
+
+            const totalPemasukan = transactionsData
+              .filter(t => t.jenis === "inflow")
+              .reduce((sum, t) => sum + Number(t.nominal), 0);
+
+            const totalPengeluaran = transactionsData
+              .filter(t => t.jenis === "outflow")
+              .reduce((sum, t) => sum + Number(t.nominal), 0);
+
             setSummary(prev => ({
               ...prev,
-              totalPemasukan: Number(data.total_inflow) || 0,
-              totalPengeluaran: Number(data.total_outflow) || 0
+              totalPemasukan,
+              totalPengeluaran
             }));
             setTransactions([]);
           }
@@ -776,7 +805,10 @@ const ReportPage = () => {
                     <p className="text-xl font-bold text-green-600">
                       Rp{formatCurrency(summary.totalPemasukan)}
                     </p>
-                    <p className="text-xs text-gray-500">Bulan ini</p>
+                    <p className="text-xs text-gray-500">{dateRange === "custom" && customStartDate && customEndDate
+                      ? `${formatDate(customStartDate)} - ${formatDate(customEndDate)}`
+                      : `${dateRange} Hari Terakhir`}
+                    </p>
                   </div>
                 </div>
                 <div className="bg-white rounded-xl p-4 shadow-sm">
@@ -790,7 +822,10 @@ const ReportPage = () => {
                     <p className="text-xl font-bold text-red-600">
                       Rp{formatCurrency(summary.totalPengeluaran)}
                     </p>
-                    <p className="text-xs text-gray-500">Bulan ini</p>
+                    <p className="text-xs text-gray-500">{dateRange === "custom" && customStartDate && customEndDate
+                      ? `${formatDate(customStartDate)} - ${formatDate(customEndDate)}`
+                      : `${dateRange} Hari Terakhir`}
+                    </p>
                   </div>
                 </div>
               </>
@@ -807,7 +842,10 @@ const ReportPage = () => {
                     <p className="text-xl font-bold text-green-600">
                       Rp{formatCurrency(summary.totalPemasukan)}
                     </p>
-                    <p className="text-xs text-gray-500">Bulan ini</p>
+                    <p className="text-xs text-gray-500">{dateRange === "custom" && customStartDate && customEndDate
+                      ? `${formatDate(customStartDate)} - ${formatDate(customEndDate)}`
+                      : `${dateRange} Hari Terakhir`}
+                    </p>
                   </div>
                 </div>
                 <div className="bg-white rounded-xl p-4 shadow-sm">
@@ -821,7 +859,10 @@ const ReportPage = () => {
                     <p className="text-xl font-bold text-red-600">
                       Rp{formatCurrency(summary.totalPengeluaran)}
                     </p>
-                    <p className="text-xs text-gray-500">Bulan ini</p>
+                    <p className="text-xs text-gray-500">{dateRange === "custom" && customStartDate && customEndDate
+                      ? `${formatDate(customStartDate)} - ${formatDate(customEndDate)}`
+                      : `${dateRange} Hari Terakhir`}
+                    </p>
                   </div>
                 </div>
               </>
