@@ -49,7 +49,6 @@ export default function InvitePage() {
           await signOut({ redirect: false });
         } else {
           setStatus('error');
-          // Check if the error indicates the invitation doesn't exist or was deleted
           if (data.error === "Invalid invitation") {
             setMessage("Undangan tidak valid atau telah dihapus oleh pemilik. Silakan minta undangan baru.");
           } else {
