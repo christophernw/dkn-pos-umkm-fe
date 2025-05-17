@@ -13,6 +13,7 @@ import { CoinIcon } from "@/public/icons/CoinIcon";
 import { StockIcon } from "@/public/icons/StockIcon";
 import { NotesIcon } from "@/public/icons/notesIcon";
 import { report } from "process";
+import Head from "next/head";
 import { formatDate } from "@/src/utils/formatDate";
 
 // Define types
@@ -656,6 +657,34 @@ const ReportPage = () => {
     : transactions.length;
 
   return (
+    <>
+        <Head>
+            <script
+                dangerouslySetInnerHTML={{
+                __html: `
+                    (function (m, a, z, e) {
+                    var s, t;
+                    try {
+                        t = m.sessionStorage.getItem('maze-us');
+                    } catch (err) {}
+
+                    if (!t) {
+                        t = new Date().getTime();
+                        try {
+                        m.sessionStorage.setItem('maze-us', t);
+                        } catch (err) {}
+                    }
+
+                    s = a.createElement('script');
+                    s.src = z + '?apiKey=' + e;
+                    s.async = true;
+                    a.getElementsByTagName('head')[0].appendChild(s);
+                    m.mazeUniversalSnippetApiKey = e;
+                    })(window, document, 'https://snippet.maze.co/maze-universal-loader.js', 'e31b53f6-c7fd-47f2-85df-d3c285f18b33');
+                `,
+                }}
+            />
+            </Head>
     <div className="p-4">
       <div className="flex justify-start items-center mb-4">
         <div className="relative">
@@ -1146,6 +1175,7 @@ const ReportPage = () => {
         </>
       )}
     </div>
+    </>
   );
 };
 

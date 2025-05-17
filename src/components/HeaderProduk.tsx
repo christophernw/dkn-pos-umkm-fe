@@ -51,7 +51,8 @@ const HeaderProduk = () => {
           <Link href="/" aria-label="back">
             <button
               type="button"
-              className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2"
+              aria-label="back"
+              className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center"
             >
               <svg
                 className="w-4 h-4 transform scale-x-[-1]"
@@ -85,6 +86,7 @@ const HeaderProduk = () => {
           <div className="relative">
             <button
               type="button"
+              aria-label="menu"
               className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center"
             >
               <svg
@@ -136,6 +138,7 @@ const HeaderProduk = () => {
             />
             <button
               type="button"
+              aria-label="search"
               className="absolute right-1.5 inline-flex items-center justify-center w-10 h-10 text-white bg-blue-600 rounded-full hover:bg-blue-700 focus:outline-none"
               onClick={toggleDropdown}
             >
@@ -167,18 +170,21 @@ const HeaderProduk = () => {
               <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
                 <button
                   className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                  aria-label="sort by id"
                   onClick={() => handleSort("-id")}
                 >
                   Tanggal Pembuatan
                 </button>
                 <button
                   className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                  aria-label="sort by stok"
                   onClick={() => handleSort("stok")}
                 >
                   Stok Terendah
                 </button>
                 <button
                   className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                  aria-label="sort by stok tertinggi"
                   onClick={() => handleSort("-stok")}
                 >
                   Stok Tertinggi

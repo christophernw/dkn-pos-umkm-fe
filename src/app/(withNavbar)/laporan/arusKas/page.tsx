@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useAuth } from "@/contexts/AuthContext";
 import config from '@/src/config';
+import Head from 'next/head';
 
 interface CashflowTransaction {
     id: number;
@@ -96,6 +97,34 @@ export default function ArusKasPage() {
     const groupedPenjualan = groupByKategori(penjualanBarangTransaksi);
 
     return (
+        <>
+        <Head>
+            <script
+                dangerouslySetInnerHTML={{
+                __html: `
+                    (function (m, a, z, e) {
+                    var s, t;
+                    try {
+                        t = m.sessionStorage.getItem('maze-us');
+                    } catch (err) {}
+
+                    if (!t) {
+                        t = new Date().getTime();
+                        try {
+                        m.sessionStorage.setItem('maze-us', t);
+                        } catch (err) {}
+                    }
+
+                    s = a.createElement('script');
+                    s.src = z + '?apiKey=' + e;
+                    s.async = true;
+                    a.getElementsByTagName('head')[0].appendChild(s);
+                    m.mazeUniversalSnippetApiKey = e;
+                    })(window, document, 'https://snippet.maze.co/maze-universal-loader.js', 'e31b53f6-c7fd-47f2-85df-d3c285f18b33');
+                `,
+                }}
+            />
+            </Head>
       <div className="py-4 px-2 flex flex-col gap-4">
         <h1 className="text-2xl font-bold">Laporan Arus Kas</h1>
 
@@ -137,5 +166,6 @@ export default function ArusKasPage() {
             </div>
         </div>
       </div>
+      </>
     )
 }

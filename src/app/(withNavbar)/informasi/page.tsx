@@ -7,6 +7,7 @@ import HeaderProduk from '@/src/components/HeaderProduk';
 import config from '@/src/config';
 import { useAuth } from '@/contexts/AuthContext';
 import { PlusIcon } from '@/public/icons/PlusIcon';
+import Head from 'next/head';
 
 interface TopSellingProduct {
   id: number;
@@ -182,6 +183,34 @@ const SemuaBarangPage: React.FC = () => {
   };
 
   return (
+    <>
+        <Head>
+            <script
+                dangerouslySetInnerHTML={{
+                __html: `
+                    (function (m, a, z, e) {
+                    var s, t;
+                    try {
+                        t = m.sessionStorage.getItem('maze-us');
+                    } catch (err) {}
+
+                    if (!t) {
+                        t = new Date().getTime();
+                        try {
+                        m.sessionStorage.setItem('maze-us', t);
+                        } catch (err) {}
+                    }
+
+                    s = a.createElement('script');
+                    s.src = z + '?apiKey=' + e;
+                    s.async = true;
+                    a.getElementsByTagName('head')[0].appendChild(s);
+                    m.mazeUniversalSnippetApiKey = e;
+                    })(window, document, 'https://snippet.maze.co/maze-universal-loader.js', 'e31b53f6-c7fd-47f2-85df-d3c285f18b33');
+                `,
+                }}
+            />
+            </Head>
     <div className="relative min-h-screen">
       <HeaderProduk />
       <main className="container mx-auto px-4 py-6 space-y-6">
@@ -192,13 +221,20 @@ const SemuaBarangPage: React.FC = () => {
           <div className="flex justify-between items-center mb-4">
              <div className="flex items-center space-x-2">
                 <div className="relative">
+                <label htmlFor="month-select" className="sr-only">
+                  Pilih Bulan
+                </label>
                   <select
+                    id="month-select"
+                    name="month-select"
                     className="text-xs bg-white border border-gray-300 text-gray-700 px-3 py-1.5 pr-8 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 appearance-none"
                     value={selectedMonth}
                     onChange={(e) => setSelectedMonth(Number(e.target.value))}
                   >
                     {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                      <option key={month} value={month}>{getMonthName(month)}</option>
+                      <option key={month} value={month}>
+                        {getMonthName(month)}
+                      </option>
                     ))}
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
@@ -209,7 +245,12 @@ const SemuaBarangPage: React.FC = () => {
                 </div>
 
                 <div className="relative">
+                <label htmlFor="year-select" className="sr-only">
+                  Pilih Tahun
+                </label>
                   <select
+                    id="year-select"
+                    name="year-select"
                     className="text-xs bg-white border border-gray-300 text-gray-700 px-3 py-1.5 pr-8 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 appearance-none"
                     value={selectedYear}
                     onChange={(e) => setSelectedYear(Number(e.target.value))}
@@ -320,6 +361,7 @@ const SemuaBarangPage: React.FC = () => {
                        </div>
                      </div>
                      <button
+                       aria-label="update product"
                        className="w-full bg-blue-600 text-white text-xs font-medium py-1.5 px-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-150 ease-in-out"
                        onClick={() => navigateToEditProduct(produk.id)}
                      >
@@ -377,6 +419,7 @@ const SemuaBarangPage: React.FC = () => {
                    </div>
                    <div className="flex-shrink-0">
                      <button
+                      aria-label="update product"
                        className="bg-blue-600 text-white text-xs font-medium py-1.5 px-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 whitespace-nowrap transition duration-150 ease-in-out"
                        onClick={() => navigateToEditProduct(produk.id)}
                      >
@@ -394,11 +437,13 @@ const SemuaBarangPage: React.FC = () => {
       {/* Floating Add Product Button - updated to match Semua Barang page styling */}
       <button
         className="bg-primary-indigo rounded-full w-fit fixed bottom-4 right-4 sm:right-[calc(50%-(420px/2)+1rem)] p-4 mb-24"
+        aria-label="add product"
         onClick={() => router.push('/tambahProduk')}
       >
         <PlusIcon />
       </button>
     </div>
+    </>
   );
 };
 
