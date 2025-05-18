@@ -98,13 +98,10 @@ const ReportPage = () => {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   });
 
-  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
-  // Check user role access - only Pemilik and Pengelola can access
   useEffect(() => {
-    // Wait until authentication data is loaded before checking permissions
     if (user) {
       setIsAuthLoading(false);
 
