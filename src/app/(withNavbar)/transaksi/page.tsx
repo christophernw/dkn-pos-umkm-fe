@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import config from "@/src/config";
 import { useRouter } from "next/navigation";
 import { NotesIcon } from "@/public/icons/notesIcon";
+import Script from "next/script";
 
 interface TransactionItem {
   id: string;
@@ -219,36 +220,66 @@ export default function TransactionMainPage() {
   const yearList = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
   return (
-    <div className="mt-8 flex flex-col gap-4">
-      <div className="justify-between flex">
-        <div className="relative">
-          <div
-            className="flex p-1 bg-white rounded-full items-center gap-2 w-fit cursor-pointer"
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-          >
-            <div className="bg-primary-indigo rounded-full p-2">
-              <NotesIcon />
+    <>
+      <Script
+        id="maze-script"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function (m, a, z, e) {
+              var s, t;
+              try {
+                t = m.sessionStorage.getItem('maze-us');
+              } catch (err) {}
+
+              if (!t) {
+                t = new Date().getTime();
+                try {
+                  m.sessionStorage.setItem('maze-us', t);
+                } catch (err) {}
+              }
+
+              s = a.createElement('script');
+              s.src = z + '?apiKey=' + e;
+              s.async = true;
+              a.getElementsByTagName('head')[0].appendChild(s);
+              m.mazeUniversalSnippetApiKey = e;
+            })(window, document, 'https://snippet.maze.co/maze-universal-loader.js', 'e31b53f6-c7fd-47f2-85df-d3c285f18b33');
+          `,
+        }}
+      />
+      <div className="mt-8 flex flex-col gap-4">
+        <div className="justify-between flex">
+          <div className="relative">
+            <div
+              className="flex p-1 bg-white rounded-full items-center gap-2 w-fit cursor-pointer"
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+            >
+              <div className="bg-primary-indigo rounded-full p-2">
+                <NotesIcon />
+              </div>
+              <p className="pr-1">
+                {viewMode === "transaksi"
+                  ? "Transaksi"
+                  : "Pembatalan Transaksi"}
+              </p>
+              <div className="pr-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </div>
             </div>
-            <p className="pr-1">
-              {viewMode === "transaksi" ? "Transaksi" : "Pembatalan Transaksi"}
-            </p>
-            <div className="pr-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </div>
-          </div>
 
           {dropdownOpen && (
             <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg z-10 w-[220px]">
@@ -385,44 +416,44 @@ export default function TransactionMainPage() {
         />
       )}
 
-      {/* Filter Buttons */}
-      <div className="flex gap-2">
-        <button
-          onClick={() => handleFilterChange("all")}
-          className={`flex-1 p-2 rounded-lg font-medium ${
-            activeFilter === "all"
-              ? "bg-primary-indigo text-white"
-              : "bg-gray-200 text-gray-700"
-          }`}
-        >
-          Semua
-        </button>
-        <button
-          onClick={() => handleFilterChange("paid")}
-          className={`flex-1 p-2 rounded-lg font-medium ${
-            activeFilter === "paid"
-              ? "bg-primary-indigo text-white"
-              : "bg-gray-200 text-gray-700"
-          }`}
-        >
-          Lunas
-        </button>
-        <button
-          onClick={() => handleFilterChange("unpaid")}
-          className={`flex-1 p-2 rounded-lg font-medium ${
-            activeFilter === "unpaid"
-              ? "bg-primary-indigo text-white"
-              : "bg-gray-200 text-gray-700"
-          }`}
-        >
-          Belum Lunas
-        </button>
-      </div>
+        {/* Filter Buttons */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleFilterChange("all")}
+            className={`flex-1 p-2 rounded-lg font-medium ${
+              activeFilter === "all"
+                ? "bg-primary-indigo text-white"
+                : "bg-gray-200 text-gray-700"
+            }`}
+          >
+            Semua
+          </button>
+          <button
+            onClick={() => handleFilterChange("paid")}
+            className={`flex-1 p-2 rounded-lg font-medium ${
+              activeFilter === "paid"
+                ? "bg-primary-indigo text-white"
+                : "bg-gray-200 text-gray-700"
+            }`}
+          >
+            Lunas
+          </button>
+          <button
+            onClick={() => handleFilterChange("unpaid")}
+            className={`flex-1 p-2 rounded-lg font-medium ${
+              activeFilter === "unpaid"
+                ? "bg-primary-indigo text-white"
+                : "bg-gray-200 text-gray-700"
+            }`}
+          >
+            Belum Lunas
+          </button>
+        </div>
 
-      {/* Results count */}
-      <div>
-        <p className="font-medium">{totalItems} Results</p>
-      </div>
+        {/* Results count */}
+        <div>
+          <p className="font-medium">{totalItems} Results</p>
+        </div>
 
       {/* Transaction List */}
       <div className="flex flex-col gap-3">
@@ -485,48 +516,48 @@ export default function TransactionMainPage() {
         )}
       </div>
 
-      {/* Updated Pagination Controls */}
-      {!loading && transactions.length > 0 && (
-        <div className="flex justify-center items-center mt-4 mb-24 gap-2">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="rounded-md border border-slate-300 py-1 px-2 text-xs hover:bg-blue-100 disabled:opacity-50"
-          >
-            Prev
-          </button>
+        {/* Updated Pagination Controls */}
+        {!loading && transactions.length > 0 && (
+          <div className="flex justify-center items-center mt-4 mb-24 gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="rounded-md border border-slate-300 py-1 px-2 text-xs hover:bg-blue-100 disabled:opacity-50"
+            >
+              Prev
+            </button>
 
-          {renderPaginationButtons()}
+            {renderPaginationButtons()}
 
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-            className="rounded-md border border-slate-300 py-1 px-2 text-xs hover:bg-blue-100 disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-      )}
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="rounded-md border border-slate-300 py-1 px-2 text-xs hover:bg-blue-100 disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        )}
 
-      {/* Add Button */}
-      <Link 
-        href="/tambahTransaksi"
-        className="bg-primary-indigo rounded-full w-fit fixed bottom-4 right-4 sm:right-[calc(50%-(420px/2)+1rem)] p-4 mb-24"
-        aria-label="Tambah Transaksi Baru"
-      >
-        <PlusIcon />
-      </Link>
+        {/* Add Button */}
+        <Link
+          href="/tambahTransaksi"
+          className="bg-primary-indigo rounded-full w-fit fixed bottom-4 right-4 sm:right-[calc(50%-(420px/2)+1rem)] p-4 mb-24"
+        >
+          <PlusIcon />
+        </Link>
 
-      {/* Modal popup */}
-      {modalOpen && (
-        <>
-          {/* Backdrop overlay */}
-          <div
-            className="fixed inset-0 bg-black bg-opacity-30 z-40"
-            onClick={() => setModalOpen(false)}
-          />
-        </>
-      )}
-    </div>
+        {/* Modal popup */}
+        {modalOpen && (
+          <>
+            {/* Backdrop overlay */}
+            <div
+              className="fixed inset-0 bg-black bg-opacity-30 z-40"
+              onClick={() => setModalOpen(false)}
+            />
+          </>
+        )}
+      </div>
+    </>
   );
 }

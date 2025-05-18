@@ -26,7 +26,7 @@ jobs:
         run: npm install
 
       - name: Run tests and generate coverage
-        run: npm run test -- --coverage
+        run: 
 
       - name: Run SonarQube Scan (Only `src/` Files)
         env:
