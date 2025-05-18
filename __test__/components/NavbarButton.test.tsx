@@ -9,7 +9,7 @@ const DummyIcon: FC<IconInterface> = ({ stroke }) => (
   <svg data-testid="dummy-icon" stroke={stroke || 'black'}></svg>
 );
 
-describe('NavbarButton - Corner Cases', () => {
+describe('NavbarButton', () => {
   it('renders correctly with valid props', () => {
     render(
       <NavbarButton
