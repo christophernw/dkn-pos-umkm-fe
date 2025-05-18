@@ -14,6 +14,18 @@ export default function Home() {
   const { user } = useAuth();
   const router = useRouter();
   
+  useEffect(() => {
+    // If user is BPR, redirect to BPR homepage
+    if (user?.is_bpr) {
+      router.push("/bpr");
+    }
+  }, [user, router]);
+  
+  // If not BPR, render the regular homepage (removed for brevity)
+  if (user?.is_bpr) {
+    return null; // Don't render anything during redirect
+  }
+  
   return (
     <>
         <Head>

@@ -6,7 +6,9 @@ type User = {
   id: number;
   email: string;
   name: string;
-  role: "Pengelola" | "Pemilik" | "Karyawan";
+  role: "Pengelola" | "Pemilik" | "Karyawan" | "BPR";
+  toko_id?: number | null;
+  is_bpr?: boolean;
 };
 
 type AuthContextType = {
