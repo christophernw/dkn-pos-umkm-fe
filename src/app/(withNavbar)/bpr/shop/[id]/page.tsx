@@ -33,8 +33,8 @@ interface ArusKasTransaction {
   jenis: "inflow" | "outflow";
   kategori: string;
   keterangan?: string;
-  nominal: string; 
-  tanggal_transaksi: string; 
+  nominal: string;
+  tanggal_transaksi: string;
   transaksi_id: number;
 }
 
@@ -54,10 +54,12 @@ const ShopReportPage = () => {
   const shopId = params.id as string;
   const { accessToken, user } = useAuth();
   const { showModal } = useModal();
-  
+
   // State
   const [shopInfo, setShopInfo] = useState<ShopInfo | null>(null);
-  const [reportType, setReportType] = useState<"keuangan" | "utang" | "arus-kas">("utang");
+  const [reportType, setReportType] = useState<
+    "keuangan" | "utang" | "arus-kas"
+  >("utang");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [hasAccess, setHasAccess] = useState<boolean>(false);
   const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
@@ -66,23 +68,26 @@ const ShopReportPage = () => {
   const [customStartDate, setCustomStartDate] = useState<string>("");
   const [customEndDate, setCustomEndDate] = useState<string>("");
   const [firstTransactionDate, setFirstTransactionDate] = useState<string>("");
-  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState<boolean>(false);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] =
+    useState<boolean>(false);
   const [isGeneratingReport, setIsGeneratingReport] = useState<boolean>(false);
-  
+
   // Data states
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [arusKasTransactions, setArusKasTransactions] = useState<ArusKasTransaction[]>([]);
+  const [arusKasTransactions, setArusKasTransactions] = useState<
+    ArusKasTransaction[]
+  >([]);
   const [summary, setSummary] = useState({
     utangSaya: 0,
     utangPelanggan: 0,
     totalPemasukan: 0,
-    totalPengeluaran: 0
+    totalPengeluaran: 0,
   });
   const [reportDateRange, setReportDateRange] = useState({
     startDate: "",
     endDate: "",
   });
-  
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -94,7 +99,7 @@ const ShopReportPage = () => {
     if (user) {
       setIsAuthLoading(false);
       setHasAccess(!!user.is_bpr);
-      
+
       if (!user.is_bpr) {
         router.push("/");
       }
@@ -108,34 +113,29 @@ const ShopReportPage = () => {
   useEffect(() => {
     const fetchShopInfo = async () => {
       if (!accessToken || !hasAccess) return;
-      
+
       try {
-        const response = await fetch(`${config.apiUrl}/auth/bpr/shop/${shopId}`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-        
+        const response = await fetch(
+          `${config.apiUrl}/auth/bpr/shop/${shopId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+
         if (response.ok) {
           const data = await response.json();
           setShopInfo(data);
         } else {
-          showModal(
-            "Error",
-            "Failed to fetch shop information",
-            "error"
-          );
+          showModal("Error", "Failed to fetch shop information", "error");
         }
       } catch (error) {
         console.error("Error fetching shop info:", error);
-        showModal(
-          "Error",
-          "Failed to fetch shop information",
-          "error"
-        );
+        showModal("Error", "Failed to fetch shop information", "error");
       }
     };
-    
+
     if (accessToken && hasAccess) {
       fetchShopInfo();
     }
@@ -156,12 +156,12 @@ const ShopReportPage = () => {
 
     if (dateRange === "this_month") {
       // Set to first day of current month
-      const currentYear = jakartaTime.getFullYear()
-      const currentMonth = jakartaTime.getMonth()
+      const currentYear = jakartaTime.getFullYear();
+      const currentMonth = jakartaTime.getMonth();
       // Create a new date object for the 1st day of current month
-      startDate = new Date(currentYear, currentMonth, 2)
+      startDate = new Date(currentYear, currentMonth, 2);
       // Set time to start of day (00:00:00)
-      startDate.setHours(0, 0, 0, 0)
+      startDate.setHours(0, 0, 0, 0);
     } else if (dateRange === "all") {
       // Use first transaction date for "Semua"
       if (firstTransactionDate) {
@@ -181,7 +181,7 @@ const ShopReportPage = () => {
     // Format dates as YYYY-MM-DD
     setCustomStartDate(startDate.toISOString().split("T")[0]);
     setCustomEndDate(endDate.toISOString().split("T")[0]);
-  }
+  };
 
   // Update custom dates when date range changes
   useEffect(() => {
@@ -198,10 +198,14 @@ const ShopReportPage = () => {
     const fetchFirstTransactionDate = async () => {
       try {
         // Note: In a real implementation, you'd have a BPR-specific endpoint
-        const endpoint = reportType === "utang" 
-          ? `${config.apiUrl}/bpr/shop/${shopId}/first-debt-date`
-          : `${config.apiUrl}/bpr/shop/${shopId}/first-transaction-date`;
-          
+        let endpoint = "";
+        if (reportType === "utang") {
+          endpoint = `${config.apiUrl}/bpr/shop/${shopId}/utang`;
+        } else if (reportType === "keuangan") {
+          endpoint = `${config.apiUrl}/bpr/shop/${shopId}/keuangan`;
+        } else {
+          endpoint = `${config.apiUrl}/bpr/shop/${shopId}/aruskas`;
+        }
         const response = await fetch(endpoint, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -233,12 +237,19 @@ const ShopReportPage = () => {
       threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
       setCustomStartDate(threeMonthsAgo.toISOString().split("T")[0]);
     }
-    
+
     if (!customEndDate) {
       const today = new Date().toISOString().split("T")[0];
       setCustomEndDate(today);
     }
-  }, [accessToken, reportType, hasAccess, shopId, customStartDate, customEndDate]);
+  }, [
+    accessToken,
+    reportType,
+    hasAccess,
+    shopId,
+    customStartDate,
+    customEndDate,
+  ]);
 
   // Handle report type change
   const handleReportTypeChange = (type: "keuangan" | "utang" | "arus-kas") => {
@@ -283,7 +294,7 @@ const ShopReportPage = () => {
           endpoint = `${config.apiUrl}/bpr/shop/${shopId}/aruskas`;
         }
 
-        // Add query parameters 
+        // Add query parameters
         const url = `${endpoint}?start_date=${encodedStartDate}&end_date=${encodedEndDate}`;
 
         const response = await fetch(url, {
@@ -295,7 +306,7 @@ const ShopReportPage = () => {
         if (response.ok) {
           if (reportType !== "arus-kas") {
             const data = await response.json();
-            const transactionsData = data.transactions as Transaction[] || [];
+            const transactionsData = (data.transactions as Transaction[]) || [];
             setTransactions(transactionsData || []);
             setReportDateRange({
               startDate: data.start_date,
@@ -303,52 +314,53 @@ const ShopReportPage = () => {
             });
 
             const totalPemasukan = transactionsData
-              .filter(t => t.transaction_type === "pemasukan")
+              .filter((t) => t.transaction_type === "pemasukan")
               .reduce((sum, t) => sum + Number(t.total_amount), 0);
 
             const totalPengeluaran = transactionsData
-              .filter(t => t.transaction_type === "pengeluaran")
+              .filter((t) => t.transaction_type === "pengeluaran")
               .reduce((sum, t) => sum + Number(t.total_amount), 0);
 
-            setSummary(prev => ({
+            setSummary((prev) => ({
               ...prev,
               utangSaya: totalPemasukan,
               utangPelanggan: totalPengeluaran,
               totalPemasukan,
-              totalPengeluaran
+              totalPengeluaran,
             }));
 
             setArusKasTransactions([]);
-            
+
             // Set pagination info
             setTotalItems(transactionsData.length);
             setTotalPages(Math.ceil(transactionsData.length / itemsPerPage));
           } else {
             const data: ArusKasReportResponse = await response.json();
-            const transactionsData = data.transactions as ArusKasTransaction[] || [];
+            const transactionsData =
+              (data.transactions as ArusKasTransaction[]) || [];
             setArusKasTransactions(transactionsData || []);
 
             const totalPemasukan = transactionsData
-              .filter(t => t.jenis === "inflow")
+              .filter((t) => t.jenis === "inflow")
               .reduce((sum, t) => sum + Number(t.nominal), 0);
 
             const totalPengeluaran = transactionsData
-              .filter(t => t.jenis === "outflow")
+              .filter((t) => t.jenis === "outflow")
               .reduce((sum, t) => sum + Number(t.nominal), 0);
 
-            setSummary(prev => ({
+            setSummary((prev) => ({
               ...prev,
               totalPemasukan,
-              totalPengeluaran
+              totalPengeluaran,
             }));
-            
+
             setTransactions([]);
-            
+
             // Set pagination info
             setTotalItems(transactionsData.length);
             setTotalPages(Math.ceil(transactionsData.length / itemsPerPage));
           }
-          
+
           // Reset to first page when loading new data
           setCurrentPage(1);
         }
@@ -368,7 +380,16 @@ const ShopReportPage = () => {
     }
 
     fetchTransactions();
-  }, [dateRange, customStartDate, customEndDate, accessToken, reportType, hasAccess, shopId, itemsPerPage]);
+  }, [
+    dateRange,
+    customStartDate,
+    customEndDate,
+    accessToken,
+    reportType,
+    hasAccess,
+    shopId,
+    itemsPerPage,
+  ]);
 
   // Handle download click
   const handleDownloadClick = () => {
@@ -391,12 +412,13 @@ const ShopReportPage = () => {
   // Format currency
   const formatCurrency = (amount: number): string => {
     // Convert to number if it's a string, handle NaN cases
-    const amountNumber = typeof amount === 'string' ? parseFloat(amount) : amount;
-    
-    return isNaN(amountNumber) 
-      ? '0' 
-      : new Intl.NumberFormat('id-ID', {
-          maximumFractionDigits: 0 // No decimal places for currency
+    const amountNumber =
+      typeof amount === "string" ? parseFloat(amount) : amount;
+
+    return isNaN(amountNumber)
+      ? "0"
+      : new Intl.NumberFormat("id-ID", {
+          maximumFractionDigits: 0, // No decimal places for currency
         }).format(amountNumber);
   };
 
@@ -416,11 +438,11 @@ const ShopReportPage = () => {
   // Handle start date change with validation
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!hasAccess) return;
-    
+
     const newStartDate = e.target.value;
     // Set to custom date range
     setDateRange("custom");
-    
+
     // Validate: Start date cannot be after end date
     if (customEndDate && newStartDate > customEndDate) {
       // If invalid, set start date to end date
@@ -433,11 +455,11 @@ const ShopReportPage = () => {
   // Handle end date change with validation
   const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!hasAccess) return;
-    
+
     const newEndDate = e.target.value;
     // Set to custom date range
     setDateRange("custom");
-    
+
     // Validate: End date cannot be before start date
     if (customStartDate && newEndDate < customStartDate) {
       // If invalid, set end date to start date
@@ -543,12 +565,14 @@ const ShopReportPage = () => {
       </div>
     );
   }
-  
+
   if (!hasAccess) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-100">
         <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-sm">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Akses Ditolak</h1>
+          <h1 className="text-2xl font-bold text-red-600 mb-4">
+            Akses Ditolak
+          </h1>
           <p className="mb-6">Anda tidak memiliki akses ke halaman ini.</p>
           <button
             onClick={() => router.push("/")}
@@ -564,9 +588,10 @@ const ShopReportPage = () => {
   // Get current transactions for display
   const currentTransactions = getActiveTransactions();
   const displayedTransactionsCount = currentTransactions.length;
-  const totalTransactionsCount = reportType === "arus-kas" 
-    ? arusKasTransactions.length 
-    : transactions.length;
+  const totalTransactionsCount =
+    reportType === "arus-kas"
+      ? arusKasTransactions.length
+      : transactions.length;
 
   return (
     <>
@@ -620,12 +645,12 @@ const ShopReportPage = () => {
               />
             </svg>
           </button>
-          
+
           <h1 className="text-xl font-semibold flex-grow">
-            {shopInfo ? shopInfo.owner : 'Loading...'} - Laporan
+            {shopInfo ? shopInfo.owner : "Loading..."} - Laporan
           </h1>
         </div>
-        
+
         <div className="flex justify-start items-center mb-4">
           <div className="relative">
             <div
@@ -636,7 +661,11 @@ const ShopReportPage = () => {
                 <NotesIcon />
               </div>
               <p className="pr-1">
-                {reportType === "utang" ? "Laporan Utang Piutang" : reportType === "keuangan" ? "Laporan Laba Rugi" : "Laporan Arus Kas"}
+                {reportType === "utang"
+                  ? "Laporan Utang Piutang"
+                  : reportType === "keuangan"
+                  ? "Laporan Laba Rugi"
+                  : "Laporan Arus Kas"}
               </p>
               <div className="pr-2">
                 <svg
@@ -745,9 +774,14 @@ const ShopReportPage = () => {
                       <p className="text-xl font-bold text-green-600">
                         Rp{formatCurrency(summary.totalPemasukan)}
                       </p>
-                      <p className="text-xs text-gray-500">{dateRange === "custom" && customStartDate && customEndDate
-                        ? `${formatDate(customStartDate)} - ${formatDate(customEndDate)}`
-                        : `${dateRange} Hari Terakhir`}
+                      <p className="text-xs text-gray-500">
+                        {dateRange === "custom" &&
+                        customStartDate &&
+                        customEndDate
+                          ? `${formatDate(customStartDate)} - ${formatDate(
+                              customEndDate
+                            )}`
+                          : `${dateRange} Hari Terakhir`}
                       </p>
                     </div>
                   </div>
@@ -762,9 +796,14 @@ const ShopReportPage = () => {
                       <p className="text-xl font-bold text-red-600">
                         Rp{formatCurrency(summary.totalPengeluaran)}
                       </p>
-                      <p className="text-xs text-gray-500">{dateRange === "custom" && customStartDate && customEndDate
-                        ? `${formatDate(customStartDate)} - ${formatDate(customEndDate)}`
-                        : `${dateRange} Hari Terakhir`}
+                      <p className="text-xs text-gray-500">
+                        {dateRange === "custom" &&
+                        customStartDate &&
+                        customEndDate
+                          ? `${formatDate(customStartDate)} - ${formatDate(
+                              customEndDate
+                            )}`
+                          : `${dateRange} Hari Terakhir`}
                       </p>
                     </div>
                   </div>
@@ -782,9 +821,14 @@ const ShopReportPage = () => {
                       <p className="text-xl font-bold text-green-600">
                         Rp{formatCurrency(summary.totalPemasukan)}
                       </p>
-                      <p className="text-xs text-gray-500">{dateRange === "custom" && customStartDate && customEndDate
-                        ? `${formatDate(customStartDate)} - ${formatDate(customEndDate)}`
-                        : `${dateRange} Hari Terakhir`}
+                      <p className="text-xs text-gray-500">
+                        {dateRange === "custom" &&
+                        customStartDate &&
+                        customEndDate
+                          ? `${formatDate(customStartDate)} - ${formatDate(
+                              customEndDate
+                            )}`
+                          : `${dateRange} Hari Terakhir`}
                       </p>
                     </div>
                   </div>
@@ -799,9 +843,14 @@ const ShopReportPage = () => {
                       <p className="text-xl font-bold text-red-600">
                         Rp{formatCurrency(summary.totalPengeluaran)}
                       </p>
-                      <p className="text-xs text-gray-500">{dateRange === "custom" && customStartDate && customEndDate
-                        ? `${formatDate(customStartDate)} - ${formatDate(customEndDate)}`
-                        : `${dateRange} Hari Terakhir`}
+                      <p className="text-xs text-gray-500">
+                        {dateRange === "custom" &&
+                        customStartDate &&
+                        customEndDate
+                          ? `${formatDate(customStartDate)} - ${formatDate(
+                              customEndDate
+                            )}`
+                          : `${dateRange} Hari Terakhir`}
                       </p>
                     </div>
                   </div>
@@ -817,7 +866,9 @@ const ShopReportPage = () => {
               <select
                 value={dateRange}
                 onChange={(e) => hasAccess && setDateRange(e.target.value)}
-                className={`w-full p-2 border border-gray-300 rounded-md mb-3 ${!hasAccess ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                className={`w-full p-2 border border-gray-300 rounded-md mb-3 ${
+                  !hasAccess ? "bg-gray-100 cursor-not-allowed" : ""
+                }`}
                 disabled={!hasAccess}
               >
                 <option value="this_month">Bulan Ini</option>
@@ -840,7 +891,9 @@ const ShopReportPage = () => {
                     value={customStartDate}
                     onChange={handleStartDateChange}
                     max={customEndDate}
-                    className={`w-full p-2 border border-gray-300 rounded-md ${!hasAccess ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                    className={`w-full p-2 border border-gray-300 rounded-md ${
+                      !hasAccess ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
                     disabled={!hasAccess}
                   />
                 </div>
@@ -853,7 +906,9 @@ const ShopReportPage = () => {
                     value={customEndDate}
                     onChange={handleEndDateChange}
                     min={customStartDate}
-                    className={`w-full p-2 border border-gray-300 rounded-md ${!hasAccess ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                    className={`w-full p-2 border border-gray-300 rounded-md ${
+                      !hasAccess ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
                     disabled={!hasAccess}
                   />
                 </div>
@@ -864,8 +919,8 @@ const ShopReportPage = () => {
             <div className="mb-6">
               <div className="flex justify-between items-center mb-3">
                 <h2 className="text-lg font-semibold">
-                  {reportType === "utang" 
-                    ? "Daftar Transaksi Belum Lunas" 
+                  {reportType === "utang"
+                    ? "Daftar Transaksi Belum Lunas"
                     : "Daftar Transaksi"}
                 </h2>
               </div>
@@ -873,13 +928,14 @@ const ShopReportPage = () => {
               <div className="space-y-3">
                 {totalTransactionsCount === 0 ? (
                   <p className="text-center text-gray-500 py-4 bg-white rounded-lg shadow-sm">
-                    {hasAccess 
-                      ? (reportType === "utang"
+                    {hasAccess
+                      ? reportType === "utang"
                         ? "Tidak ada data utang untuk periode ini."
-                        : "Tidak ada transaksi untuk periode ini.")
+                        : "Tidak ada transaksi untuk periode ini."
                       : "Tidak ada data yang dapat ditampilkan."}
                   </p>
-                ) : currentTransactions.length !== 0 && reportType !== "arus-kas" ? (
+                ) : currentTransactions.length !== 0 &&
+                  reportType !== "arus-kas" ? (
                   currentTransactions.map((transaction) => (
                     <div
                       key={transaction.id}
@@ -890,67 +946,76 @@ const ShopReportPage = () => {
                           Transaksi #{transaction.id}
                         </span>
                         <span className="text-sm text-gray-500">
-                          {formatLocalDate(transaction.created_at)}
+                          {"created_at" in transaction ? formatLocalDate(transaction.created_at) : ""}
                         </span>
                       </div>
                       <div className="flex justify-between items-center mt-2">
                         <span
                           className={`px-2 py-1 rounded-full text-xs ${
-                            transaction.transaction_type === "pemasukan"
+                            "transaction_type" in transaction && transaction.transaction_type === "pemasukan"
                               ? "bg-green-100 text-green-800"
                               : "bg-red-100 text-red-800"
                           }`}
                         >
-                          {transaction.transaction_type === "pemasukan"
+                          {"transaction_type" in transaction && transaction.transaction_type === "pemasukan"
                             ? "Berikan"
                             : "Terima"}
                         </span>
                         <span className="font-semibold">
-                          Rp{formatCurrency(transaction.total_amount)}
+                          Rp{formatCurrency(
+                            "total_amount" in transaction ? transaction.total_amount : 0
+                          )}
                         </span>
                       </div>
                       {/* Status badge */}
                       <div className="flex justify-end mt-1">
-                        <span 
+                        <span
                           className={`px-2 py-0.5 rounded-full text-xs ${
-                            transaction.status === "Lunas"
+                            "status" in transaction && transaction.status === "Lunas"
                               ? "bg-green-50 text-green-700"
                               : "bg-yellow-50 text-yellow-700"
                           }`}
                         >
-                          {transaction.status}
+                          {"status" in transaction ? transaction.status : ""}
                         </span>
                       </div>
                     </div>
                   ))
-                ) : reportType === "arus-kas" && currentTransactions.length > 0 ? (
+                ) : reportType === "arus-kas" &&
+                  currentTransactions.length > 0 ? (
                   currentTransactions.map((transaction) => (
                     <div
-                      key={"transaksi_id" in transaction ? transaction.transaksi_id : transaction.id}
+                      key={
+                        "transaksi_id" in transaction
+                          ? transaction.transaksi_id
+                          : transaction.id
+                      }
                       className="bg-white rounded-xl p-3 shadow-sm"
                     >
                       <div className="flex justify-between items-center">
                         <span className="font-medium">
-                          Transaksi #{transaction.transaksi_id}
+                          Transaksi #{"transaksi_id" in transaction ? transaction.transaksi_id : transaction.id}
                         </span>
                         <span className="text-sm text-gray-500">
-                          {formatLocalDate(transaction.tanggal_transaksi)}
+                          {"tanggal_transaksi" in transaction ? formatLocalDate(transaction.tanggal_transaksi) : ""}
                         </span>
                       </div>
                       <div className="flex justify-between items-center mt-2">
                         <span
                           className={`px-2 py-1 rounded-full text-xs ${
-                            transaction.jenis === "inflow"
+                            "jenis" in transaction && transaction.jenis === "inflow"
                               ? "bg-green-100 text-green-800"
                               : "bg-red-100 text-red-800"
                           }`}
                         >
-                          {transaction.jenis === "inflow"
+                          {"jenis" in transaction && transaction.jenis === "inflow"
                             ? "Kas Masuk"
                             : "Kas Keluar"}
                         </span>
                         <span className="font-semibold">
-                          Rp{formatCurrency(Number(transaction.nominal))}
+                          Rp{formatCurrency(
+                            "nominal" in transaction ? Number(transaction.nominal) : 0
+                          )}
                         </span>
                       </div>
                     </div>
@@ -973,11 +1038,13 @@ const ShopReportPage = () => {
                 >
                   Prev
                 </button>
-                
+
                 {renderPaginationButtons()}
-                
+
                 <button
-                  onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                  onClick={() =>
+                    handlePageChange(Math.min(totalPages, currentPage + 1))
+                  }
                   disabled={currentPage === totalPages}
                   className="rounded-md border border-slate-300 py-1 px-2 text-xs hover:bg-blue-100 disabled:opacity-50 ml-1"
                 >
@@ -989,7 +1056,12 @@ const ShopReportPage = () => {
             {/* Download Button */}
             <button
               onClick={handleDownloadClick}
-              disabled={isGeneratingReport || (transactions.length === 0 && arusKasTransactions.length === 0) || !hasAccess}
+              disabled={
+                isGeneratingReport ||
+                (transactions.length === 0 &&
+                  arusKasTransactions.length === 0) ||
+                !hasAccess
+              }
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium mb-20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center z-20"
             >
               {isGeneratingReport ? "Memproses..." : "Unduh Laporan"}
