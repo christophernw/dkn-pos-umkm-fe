@@ -147,6 +147,7 @@ export default function BPRHomePage() {
               <div
                 key={shop.id}
                 className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow"
+                onClick={() => router.push(`/bpr/shop/${shop.id}`)}             
               >
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="font-semibold">{shop.owner}</h3>
