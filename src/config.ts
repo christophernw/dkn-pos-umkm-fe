@@ -19,7 +19,11 @@ type Config = {
   
 const config: Config = {
   development: {
+<<<<<<< HEAD
     apiUrl: "http://127.0.0.1:8000//api",
+=======
+    apiUrl: "http://127.0.0.1:8000/api",
+>>>>>>> c3b8166821f356300ef06b38b9a076076d6ac7e8
     hostname: "http://localhost:3000/",
   },
   production: {

@@ -6,6 +6,7 @@ import Link from "next/link";
 import config from "@/src/config";
 import { signOut } from "next-auth/react";
 import { useAuth } from "@/contexts/AuthContext";
+import Script from "next/script";
 
 export default function InvitePage() {
   const router = useRouter();
@@ -68,6 +69,35 @@ export default function InvitePage() {
   }, [searchParams, logout]);
 
   return (
+    <>
+    <Script
+        id="maze-script"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function (m, a, z, e) {
+              var s, t;
+              try {
+                t = m.sessionStorage.getItem('maze-us');
+              } catch (err) {}
+
+              if (!t) {
+                t = new Date().getTime();
+                try {
+                  m.sessionStorage.setItem('maze-us', t);
+                } catch (err) {}
+              }
+
+              s = a.createElement('script');
+              s.src = z + '?apiKey=' + e;
+              s.async = true;
+              a.getElementsByTagName('head')[0].appendChild(s);
+              m.mazeUniversalSnippetApiKey = e;
+            })(window, document, 'https://snippet.maze.co/maze-universal-loader.js', 'e31b53f6-c7fd-47f2-85df-d3c285f18b33');
+          `,
+        }}
+      />
+
     <div className="min-h-screen bg-[#EDF1F9] flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full">
         <h1 className="text-2xl font-bold mb-6 text-center">Validasi Undangan</h1>
@@ -104,5 +134,6 @@ export default function InvitePage() {
         )}
       </div>
     </div>
+    </>
   );
 }

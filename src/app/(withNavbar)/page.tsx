@@ -8,12 +8,53 @@ import { CoinIcon } from "@/public/icons/CoinIcon";
 import { StockIcon } from "@/public/icons/StockIcon";
 import { NotesIcon } from "@/public/icons/notesIcon";
 import Logo from "@/public/images/logo.png"; // Import the logo image
+import Script from "next/script";
 
 export default function Home() {
   const { user } = useAuth();
   const router = useRouter();
   
+  useEffect(() => {
+    // If user is BPR, redirect to BPR homepage
+    if (user?.is_bpr) {
+      router.push("/bpr");
+    }
+  }, [user, router]);
+  
+  // If not BPR, render the regular homepage (removed for brevity)
+  if (user?.is_bpr) {
+    return null; // Don't render anything during redirect
+  }
+  
   return (
+    <>
+        <Script
+        id="maze-script"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function (m, a, z, e) {
+              var s, t;
+              try {
+                t = m.sessionStorage.getItem('maze-us');
+              } catch (err) {}
+
+              if (!t) {
+                t = new Date().getTime();
+                try {
+                  m.sessionStorage.setItem('maze-us', t);
+                } catch (err) {}
+              }
+
+              s = a.createElement('script');
+              s.src = z + '?apiKey=' + e;
+              s.async = true;
+              a.getElementsByTagName('head')[0].appendChild(s);
+              m.mazeUniversalSnippetApiKey = e;
+            })(window, document, 'https://snippet.maze.co/maze-universal-loader.js', 'e31b53f6-c7fd-47f2-85df-d3c285f18b33');
+          `,
+        }}
+      />
     <div className="p-4 flex flex-col gap-6">
       {/* Logo Section */}
       <div className="flex justify-center mb-4">
@@ -97,5 +138,6 @@ export default function Home() {
         <p>Versi 1.0 • PPL B - Kelompok 6</p>
       </div>
     </div>
+    </>
   );
 }

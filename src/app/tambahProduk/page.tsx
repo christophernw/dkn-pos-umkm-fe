@@ -6,6 +6,11 @@ import config from "@/src/config";
 import { useModal } from "@/contexts/ModalContext";
 import EnhancedDropdown from "@/src/components/elements/modal/EnhancedDropdown";
 
+import Head from "next/head";
+import { AccessDeniedScreen } from "@/src/components/AccessDeniedScreen";
+import Script from "next/script";
+
+
 // Initial dropdown options
 const initialUnitOptions = ["Pcs", "Kg", "Botol", "Liter"];
 const initialCategoryOptions = [
@@ -26,9 +31,11 @@ export default function AddProductPage() {
   const [unit, setUnit] = useState("");
   const [previewImg, setPreviewImg] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const { accessToken } = useAuth();
+  const { user, accessToken } = useAuth();
   const [loading, setLoading] = useState(false);
   const { showModal, hideModal } = useModal();
+
+  
 
   // State for managing custom options
   const [categoryOptions, setCategoryOptions] = useState<string[]>([...initialCategoryOptions]);
@@ -290,7 +297,40 @@ export default function AddProductPage() {
     }
   };
 
+  // Check if user is BPR
+  if (user?.is_bpr) {
+    return <AccessDeniedScreen userType="BPR" />;
+  }
+  
   return (
+    <>
+        <Script
+        id="maze-script"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function (m, a, z, e) {
+              var s, t;
+              try {
+                t = m.sessionStorage.getItem('maze-us');
+              } catch (err) {}
+
+              if (!t) {
+                t = new Date().getTime();
+                try {
+                  m.sessionStorage.setItem('maze-us', t);
+                } catch (err) {}
+              }
+
+              s = a.createElement('script');
+              s.src = z + '?apiKey=' + e;
+              s.async = true;
+              a.getElementsByTagName('head')[0].appendChild(s);
+              m.mazeUniversalSnippetApiKey = e;
+            })(window, document, 'https://snippet.maze.co/maze-universal-loader.js', 'e31b53f6-c7fd-47f2-85df-d3c285f18b33');
+          `,
+        }}
+      />
     <div className="max-w-md mx-auto p-4">
       <header className="flex items-center mb-4">
         <button
@@ -449,5 +489,6 @@ export default function AddProductPage() {
         </div>
       </form>
     </div>
+    </>
   );
 }

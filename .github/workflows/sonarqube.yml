@@ -23,7 +23,10 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm install
+
+      - name: Run tests and generate coverage
+        run: 
 
       - name: Run SonarQube Scan (Only `src/` Files)
         env:
