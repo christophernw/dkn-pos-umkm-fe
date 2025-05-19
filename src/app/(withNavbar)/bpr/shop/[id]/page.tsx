@@ -200,7 +200,7 @@ const ShopReportPage = () => {
         // Note: In a real implementation, you'd have a BPR-specific endpoint
         let endpoint = "";
         if (reportType === "utang") {
-          endpoint = `${config.apiUrl}/bpr/shop/${shopId}/utang`;
+          endpoint = `${config.apiUrl}/transaksi/bpr/shop/${shopId}/utang`;
         } else if (reportType === "keuangan") {
           endpoint = `${config.apiUrl}/bpr/shop/${shopId}/keuangan`;
         } else {
@@ -287,7 +287,7 @@ const ShopReportPage = () => {
 
         let endpoint = "";
         if (reportType === "utang") {
-          endpoint = `${config.apiUrl}/bpr/shop/${shopId}/utang`;
+          endpoint = `${config.apiUrl}/transaksi/bpr/shop/${shopId}/utang`;
         } else if (reportType === "keuangan") {
           endpoint = `${config.apiUrl}/bpr/shop/${shopId}/keuangan`;
         } else {
@@ -623,8 +623,8 @@ const ShopReportPage = () => {
         />
       </Head>
       <div className="p-4">
-        {/* Back button and shop info */}
-        <div className="flex items-center mb-4">
+        {/* Back button and title */}
+        <div className="flex items-center mb-2">
           <button
             onClick={() => router.push("/bpr")}
             className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2"
@@ -646,9 +646,16 @@ const ShopReportPage = () => {
             </svg>
           </button>
 
-          <h1 className="text-xl font-semibold flex-grow">
-            {shopInfo ? shopInfo.owner : "Loading..."} - Laporan
-          </h1>
+          <h1 className="text-xl font-semibold">Laporan Keuangan UMKM</h1>
+        </div>
+
+        {/* Shop/Toko name */}
+        <div className="mb-4 px-1">
+          <div className="bg-white rounded-lg py-2 px-4 shadow-sm">
+            <h2 className="text-base font-medium">
+              {shopInfo ? shopInfo.owner : "Loading..."}
+            </h2>
+          </div>
         </div>
 
         <div className="flex justify-start items-center mb-4">
@@ -946,24 +953,31 @@ const ShopReportPage = () => {
                           Transaksi #{transaction.id}
                         </span>
                         <span className="text-sm text-gray-500">
-                          {"created_at" in transaction ? formatLocalDate(transaction.created_at) : ""}
+                          {"created_at" in transaction
+                            ? formatLocalDate(transaction.created_at)
+                            : ""}
                         </span>
                       </div>
                       <div className="flex justify-between items-center mt-2">
                         <span
                           className={`px-2 py-1 rounded-full text-xs ${
-                            "transaction_type" in transaction && transaction.transaction_type === "pemasukan"
+                            "transaction_type" in transaction &&
+                            transaction.transaction_type === "pemasukan"
                               ? "bg-green-100 text-green-800"
                               : "bg-red-100 text-red-800"
                           }`}
                         >
-                          {"transaction_type" in transaction && transaction.transaction_type === "pemasukan"
+                          {"transaction_type" in transaction &&
+                          transaction.transaction_type === "pemasukan"
                             ? "Berikan"
                             : "Terima"}
                         </span>
                         <span className="font-semibold">
-                          Rp{formatCurrency(
-                            "total_amount" in transaction ? transaction.total_amount : 0
+                          Rp
+                          {formatCurrency(
+                            "total_amount" in transaction
+                              ? transaction.total_amount
+                              : 0
                           )}
                         </span>
                       </div>
@@ -971,7 +985,8 @@ const ShopReportPage = () => {
                       <div className="flex justify-end mt-1">
                         <span
                           className={`px-2 py-0.5 rounded-full text-xs ${
-                            "status" in transaction && transaction.status === "Lunas"
+                            "status" in transaction &&
+                            transaction.status === "Lunas"
                               ? "bg-green-50 text-green-700"
                               : "bg-yellow-50 text-yellow-700"
                           }`}
@@ -994,27 +1009,37 @@ const ShopReportPage = () => {
                     >
                       <div className="flex justify-between items-center">
                         <span className="font-medium">
-                          Transaksi #{"transaksi_id" in transaction ? transaction.transaksi_id : transaction.id}
+                          Transaksi #
+                          {"transaksi_id" in transaction
+                            ? transaction.transaksi_id
+                            : transaction.id}
                         </span>
                         <span className="text-sm text-gray-500">
-                          {"tanggal_transaksi" in transaction ? formatLocalDate(transaction.tanggal_transaksi) : ""}
+                          {"tanggal_transaksi" in transaction
+                            ? formatLocalDate(transaction.tanggal_transaksi)
+                            : ""}
                         </span>
                       </div>
                       <div className="flex justify-between items-center mt-2">
                         <span
                           className={`px-2 py-1 rounded-full text-xs ${
-                            "jenis" in transaction && transaction.jenis === "inflow"
+                            "jenis" in transaction &&
+                            transaction.jenis === "inflow"
                               ? "bg-green-100 text-green-800"
                               : "bg-red-100 text-red-800"
                           }`}
                         >
-                          {"jenis" in transaction && transaction.jenis === "inflow"
+                          {"jenis" in transaction &&
+                          transaction.jenis === "inflow"
                             ? "Kas Masuk"
                             : "Kas Keluar"}
                         </span>
                         <span className="font-semibold">
-                          Rp{formatCurrency(
-                            "nominal" in transaction ? Number(transaction.nominal) : 0
+                          Rp
+                          {formatCurrency(
+                            "nominal" in transaction
+                              ? Number(transaction.nominal)
+                              : 0
                           )}
                         </span>
                       </div>
