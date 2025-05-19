@@ -57,9 +57,7 @@ const ShopReportPage = () => {
 
   // State
   const [shopInfo, setShopInfo] = useState<ShopInfo | null>(null);
-  const [reportType, setReportType] = useState<
-    "keuangan" | "utang" | "arus-kas"
-  >("utang");
+  const [reportType, setReportType] = useState<"keuangan" | "utang" | "arus-kas">("utang");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [hasAccess, setHasAccess] = useState<boolean>(false);
   const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
@@ -74,9 +72,7 @@ const ShopReportPage = () => {
 
   // Data states
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [arusKasTransactions, setArusKasTransactions] = useState<
-    ArusKasTransaction[]
-  >([]);
+  const [arusKasTransactions, setArusKasTransactions] = useState<ArusKasTransaction[]>([]);
   const [summary, setSummary] = useState({
     utangSaya: 0,
     utangPelanggan: 0,
@@ -394,6 +390,7 @@ const ShopReportPage = () => {
   // Handle download click
   const handleDownloadClick = () => {
     if (!hasAccess) {
+      // Prevent download if no access
       return;
     }
     setIsDownloadModalOpen(true);
