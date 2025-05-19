@@ -80,6 +80,7 @@ export default function AddUserPage() {
           setName("");
           setRole("Karyawan");
           setEmail("");
+          router.push("/multirole")
         } catch (error) {
           console.error("Gagal mengirim email:", error);
           setMessage("Terjadi kesalahan saat mengirim undangan.");
