@@ -1,5 +1,6 @@
 "use client";
 
+
 import type React from "react";
 
 import Image from "next/image";
@@ -14,6 +15,7 @@ import { StockIcon } from "@/public/icons/StockIcon";
 import { BellIcon } from "@/public/icons/BellIcon";
 import Head from "next/head";
 import { AccessDeniedScreen } from "@/src/components/AccessDeniedScreen";
+
 
 interface ProductCardProps {
   id: number;
@@ -344,6 +346,7 @@ export default function TambahTransaksiPage() {
   }
   return (
     <>
+
       <Head>
         <script
           dangerouslySetInnerHTML={{
@@ -376,6 +379,7 @@ export default function TambahTransaksiPage() {
           <button
             onClick={() => window.history.back()}
             className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2"
+
           >
             <svg
               className="w-4 h-4 transform scale-x-[-1]"

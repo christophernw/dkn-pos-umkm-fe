@@ -6,7 +6,7 @@ import Header from "./components/header";
 import UserList from "./components/userList";
 import { useAuth } from "@/contexts/AuthContext";
 import AddUserButton from "./components/addUserButton";
-import Head from "next/head";
+import Script from "next/script";
 
 const MultiRolePageContent: React.FC = () => {
   const { user } = useAuth();
@@ -18,33 +18,33 @@ const MultiRolePageContent: React.FC = () => {
 
   return (
     <>
-        <Head>
-            <script
-                dangerouslySetInnerHTML={{
-                __html: `
-                    (function (m, a, z, e) {
-                    var s, t;
-                    try {
-                        t = m.sessionStorage.getItem('maze-us');
-                    } catch (err) {}
+        <Script
+        id="maze-script"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function (m, a, z, e) {
+              var s, t;
+              try {
+                t = m.sessionStorage.getItem('maze-us');
+              } catch (err) {}
 
-                    if (!t) {
-                        t = new Date().getTime();
-                        try {
-                        m.sessionStorage.setItem('maze-us', t);
-                        } catch (err) {}
-                    }
+              if (!t) {
+                t = new Date().getTime();
+                try {
+                  m.sessionStorage.setItem('maze-us', t);
+                } catch (err) {}
+              }
 
-                    s = a.createElement('script');
-                    s.src = z + '?apiKey=' + e;
-                    s.async = true;
-                    a.getElementsByTagName('head')[0].appendChild(s);
-                    m.mazeUniversalSnippetApiKey = e;
-                    })(window, document, 'https://snippet.maze.co/maze-universal-loader.js', 'e31b53f6-c7fd-47f2-85df-d3c285f18b33');
-                `,
-                }}
-            />
-            </Head> 
+              s = a.createElement('script');
+              s.src = z + '?apiKey=' + e;
+              s.async = true;
+              a.getElementsByTagName('head')[0].appendChild(s);
+              m.mazeUniversalSnippetApiKey = e;
+            })(window, document, 'https://snippet.maze.co/maze-universal-loader.js', 'e31b53f6-c7fd-47f2-85df-d3c285f18b33');
+          `,
+        }}
+      />
     <div className="relative min-h-screen pt-4 mt-4">
       <Header />
       <UserList />

@@ -12,8 +12,7 @@ import {
 import { CoinIcon } from "@/public/icons/CoinIcon";
 import { StockIcon } from "@/public/icons/StockIcon";
 import { NotesIcon } from "@/public/icons/notesIcon";
-import { report } from "process";
-import Head from "next/head";
+import Script from "next/script";
 import { formatDate } from "@/src/utils/formatDate";
 import { AccessDeniedScreen } from "@/src/components/AccessDeniedScreen";
 
@@ -110,13 +109,10 @@ const ReportPage = () => {
     )}`;
   });
 
-  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
-  // Check user role access - only Pemilik and Pengelola can access
   useEffect(() => {
-    // Wait until authentication data is loaded before checking permissions
     if (user) {
       setIsAuthLoading(false);
 
@@ -701,6 +697,7 @@ const ReportPage = () => {
 
   return (
     <>
+
       <Head>
         <script
           dangerouslySetInnerHTML={{
@@ -728,6 +725,7 @@ const ReportPage = () => {
           }}
         />
       </Head>
+
       <div className="p-4">
         <div className="flex justify-start items-center mb-4">
           <div className="relative">
@@ -812,6 +810,7 @@ const ReportPage = () => {
                 <>
                   <div className="bg-white rounded-xl p-4 shadow-sm">
                     <div className="flex items-center gap-2 mb-3">
+
                       <div className="bg-green-100 p-3 rounded-full">
                         <CoinIcon className="text-green-500" />
                       </div>
@@ -819,6 +818,7 @@ const ReportPage = () => {
                     </div>
                     <div className="flex flex-col gap-1">
                       <p className="text-xl font-bold text-green-600">
+
                         Rp{formatCurrency(summary.utangSaya)}
                       </p>
                       <p className="text-xs text-gray-500">Belum dilunasi</p>
@@ -826,6 +826,7 @@ const ReportPage = () => {
                   </div>
                   <div className="bg-white rounded-xl p-4 shadow-sm">
                     <div className="flex items-center gap-2 mb-3">
+
                       <div className="bg-red-100 p-3 rounded-full">
                         <StockIcon className="text-red-500" />
                       </div>
@@ -850,6 +851,7 @@ const ReportPage = () => {
                     </div>
                     <div className="flex flex-col gap-1">
                       <p className="text-xl font-bold text-green-600">
+
                         Rp{formatCurrency(summary.totalPengeluaran)}
                       </p>
                       <p className="text-xs text-gray-500">
@@ -872,7 +874,9 @@ const ReportPage = () => {
                     </div>
                     <div className="flex flex-col gap-1">
                       <p className="text-xl font-bold text-red-600">
+
                         Rp{formatCurrency(summary.totalPemasukan)}
+
                       </p>
                       <p className="text-xs text-gray-500">
                         {dateRange === "custom" &&

@@ -9,8 +9,10 @@ import config from "@/src/config";
 import { CoinIcon } from "@/public/icons/CoinIcon";
 import { StockIcon } from "@/public/icons/StockIcon";
 import { BellIcon } from "@/public/icons/BellIcon";
+
 import Head from "next/head";
 import { AccessDeniedScreen } from "@/src/components/AccessDeniedScreen";
+
 
 interface ProductItem {
   id: number;
@@ -309,6 +311,7 @@ export default function TransaksiDetailPage() {
 
   return (
     <>
+
       <Head>
         <script
           dangerouslySetInnerHTML={{
@@ -339,6 +342,7 @@ export default function TransaksiDetailPage() {
       <div className="p-4 max-w-md mx-auto bg-gray-50 min-h-screen pb-24">
         {/* Header */}
         <div className="flex items-center mb-4">
+
           <button
             onClick={() => window.history.back()}
             className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2"

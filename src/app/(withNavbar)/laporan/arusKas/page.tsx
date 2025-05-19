@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+
 import config from "@/src/config";
 import Head from "next/head";
 import { AccessDeniedScreen } from "@/src/components/AccessDeniedScreen";
@@ -96,6 +97,7 @@ export default function ArusKasPage() {
         item.kategori === "Pembelian Stok"
     ) || [];
 
+
   const totalOperasional = operasionalTransaksi.reduce((total, item) => {
     const nominal = item.jenis === "outflow" ? -item.nominal : item.nominal;
     return Number(total) + Number(nominal);
@@ -120,8 +122,9 @@ export default function ArusKasPage() {
             __html: `
                     (function (m, a, z, e) {
                     var s, t;
+
                     try {
-                        t = m.sessionStorage.getItem('maze-us');
+                    m.sessionStorage.setItem('maze-us', t);
                     } catch (err) {}
 
                     if (!t) {
@@ -141,6 +144,7 @@ export default function ArusKasPage() {
           }}
         />
       </Head>
+
       <div className="py-4 px-2 flex flex-col gap-4">
         <h1 className="text-2xl font-bold">Laporan Arus Kas</h1>
 

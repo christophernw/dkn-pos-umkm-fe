@@ -6,8 +6,10 @@ import React, { Suspense } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { PlusIcon } from "@/public/icons/PlusIcon";
+
 import Head from "next/head";
 import { AccessDeniedScreen } from "@/src/components/AccessDeniedScreen";
+
 
 const SemuaBarang = () => {
   const { user } = useAuth();
@@ -20,33 +22,33 @@ const SemuaBarang = () => {
 
   return (
     <>
-        <Head>
-            <script
-                dangerouslySetInnerHTML={{
-                __html: `
-                    (function (m, a, z, e) {
-                    var s, t;
-                    try {
-                        t = m.sessionStorage.getItem('maze-us');
-                    } catch (err) {}
+        <Script
+        id="maze-script"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function (m, a, z, e) {
+              var s, t;
+              try {
+                t = m.sessionStorage.getItem('maze-us');
+              } catch (err) {}
 
-                    if (!t) {
-                        t = new Date().getTime();
-                        try {
-                        m.sessionStorage.setItem('maze-us', t);
-                        } catch (err) {}
-                    }
+              if (!t) {
+                t = new Date().getTime();
+                try {
+                  m.sessionStorage.setItem('maze-us', t);
+                } catch (err) {}
+              }
 
-                    s = a.createElement('script');
-                    s.src = z + '?apiKey=' + e;
-                    s.async = true;
-                    a.getElementsByTagName('head')[0].appendChild(s);
-                    m.mazeUniversalSnippetApiKey = e;
-                    })(window, document, 'https://snippet.maze.co/maze-universal-loader.js', 'e31b53f6-c7fd-47f2-85df-d3c285f18b33');
-                `,
-                }}
-            />
-            </Head> 
+              s = a.createElement('script');
+              s.src = z + '?apiKey=' + e;
+              s.async = true;
+              a.getElementsByTagName('head')[0].appendChild(s);
+              m.mazeUniversalSnippetApiKey = e;
+            })(window, document, 'https://snippet.maze.co/maze-universal-loader.js', 'e31b53f6-c7fd-47f2-85df-d3c285f18b33');
+          `,
+        }}
+      />
     <div className="relative min-h-screen">
       <Suspense fallback={<div>Loading...</div>}>
         <HeaderProduk />
