@@ -3,9 +3,21 @@ import { Header } from './module-element/Header'
 import { CoinIcon } from '@/public/icons/CoinIcon'
 import BarangSection from './module-element/BarangSection'
 import TotalSummarySection from './module-element/TotalSummarySection'
+
+import Head from 'next/head'
+import { useAuth } from '@/contexts/AuthContext'
+import { AccessDeniedScreen } from '@/src/components/AccessDeniedScreen'
 import Script from 'next/script'
 
+
 export default function TambahPengeluaranPage() {
+
+  const {user,  accessToken } = useAuth();
+
+  // // Check if user is BPR
+  // if (user?.is_bpr) {
+  //   return <AccessDeniedScreen userType="BPR" />;
+  // }
   return (
     <>
         <Script

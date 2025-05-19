@@ -12,7 +12,7 @@ interface User {
   id: number;
   email: string;
   name: string;
-  role: "Pemilik" | "Pengelola" | "Karyawan";
+  role: "Pemilik" | "Pengelola" | "Karyawan" | "BPR";
 }
 
 const UserList = () => {
@@ -23,6 +23,9 @@ const UserList = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  
+  // Check if the current user is a BPR user
+  const isBPRUser = user?.is_bpr === true;
 
   const fetchData = async () => {
     try {
@@ -234,22 +237,27 @@ const UserList = () => {
                           className="text-xs px-3 py-1 rounded-full"
                           style={{
                             backgroundColor:
+                              // If current user is BPR, always use BPR styling
+                              isBPRUser ? "#3B82F6" :
+                              // Otherwise use the original role-based styling
                               userItem.role === "Pemilik"
                                 ? "#4CAF50"
                                 : userItem.role === "Pengelola"
                                 ? "#FFC107"
                                 : "#3B82F6",
                             color:
-                              userItem.role === "Pengelola" ? "#000" : "#fff",
+                              (isBPRUser || userItem.role !== "Pengelola") ? "#fff" : "#000",
                           }}
                         >
-                          {userItem.role}
+                          {/* Hardcode to "BPR" if current user is BPR */}
+                          {isBPRUser ? "BPR" : userItem.role}
                         </span>
 
-                        {/* Show delete button only if current user is Pemilik and not trying to delete themselves */}
+                        {/* Only show delete button for Pemilik and not for themselves */}
                         {user &&
                           user.role === "Pemilik" &&
-                          user.id !== userItem.id && (
+                          user.id !== userItem.id && 
+                          !isBPRUser && (
                             <button
                               onClick={() => handleDeleteUser(userItem)}
                               disabled={isDeleting}
@@ -266,8 +274,8 @@ const UserList = () => {
               </>
             )}
 
-            {/* Pending Invitations */}
-            {pendingInvitations.length > 0 && (
+            {/* Pending Invitations - Only show if not BPR user */}
+            {pendingInvitations.length > 0 && !isBPRUser && (
               <>
                 <h3 className="font-medium text-sm mt-4 mb-2 text-gray-600">
                   Undangan Tertunda
@@ -288,16 +296,6 @@ const UserList = () => {
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        {/* <span
-                          className="text-xs px-3 py-1 rounded-full flex items-center gap-1"
-                          style={{
-                            backgroundColor: "#F3F4F6",
-                            color: "#6B7280",
-                          }}
-                        >
-                          <Clock size={12} />
-                          Tertunda
-                        </span> */}
                         <span
                           className="text-xs px-3 py-1 rounded-full"
                           style={{
