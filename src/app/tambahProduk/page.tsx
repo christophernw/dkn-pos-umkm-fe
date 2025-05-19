@@ -8,6 +8,7 @@ import EnhancedDropdown from "@/src/components/elements/modal/EnhancedDropdown";
 
 import Head from "next/head";
 import { AccessDeniedScreen } from "@/src/components/AccessDeniedScreen";
+import Script from "next/script";
 
 
 // Initial dropdown options

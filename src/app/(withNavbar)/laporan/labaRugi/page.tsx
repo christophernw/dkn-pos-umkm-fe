@@ -7,6 +7,7 @@ import DatePicker from "@/src/components/DatePicker"
 import Head from "next/head"
 import { useAuth } from "@/contexts/AuthContext"
 import { AccessDeniedScreen } from "@/src/components/AccessDeniedScreen"
+import Script from "next/script"
 
 
 export default function LaporanAkuntansi() {

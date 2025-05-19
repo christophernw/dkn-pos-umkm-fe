@@ -15,6 +15,7 @@ import { NotesIcon } from "@/public/icons/notesIcon";
 import Script from "next/script";
 import { formatDate } from "@/src/utils/formatDate";
 import { AccessDeniedScreen } from "@/src/components/AccessDeniedScreen";
+import Head from "next/head";
 
 // Define types
 interface Transaction {

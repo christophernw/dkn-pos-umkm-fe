@@ -9,6 +9,7 @@ import { PlusIcon } from "@/public/icons/PlusIcon";
 
 import Head from "next/head";
 import { AccessDeniedScreen } from "@/src/components/AccessDeniedScreen";
+import Script from "next/script";
 
 
 const SemuaBarang = () => {

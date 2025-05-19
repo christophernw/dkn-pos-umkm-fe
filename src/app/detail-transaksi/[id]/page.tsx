@@ -7,6 +7,7 @@ import TotalSummarySection from './module-element/TotalSummarySection'
 import Head from 'next/head'
 import { useAuth } from '@/contexts/AuthContext'
 import { AccessDeniedScreen } from '@/src/components/AccessDeniedScreen'
+import Script from 'next/script'
 
 
 export default function TambahPengeluaranPage() {
