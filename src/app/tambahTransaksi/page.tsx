@@ -13,6 +13,9 @@ import { CoinIcon } from "@/public/icons/CoinIcon"
 import { StockIcon } from "@/public/icons/StockIcon"
 import { BellIcon } from "@/public/icons/BellIcon"
 import Script from "next/script";
+import { Button } from "@/src/components/elements/button/Button";
+import { Select } from "@/src/components/elements/input/Select";
+import { pemasukanOptions, pengeluaranOptions } from "./const/transactionCategoryOptions";
 
 interface ProductCardProps {
   id: number
@@ -324,7 +327,7 @@ export default function TambahTransaksiPage() {
           `,
         }}
       />
-    <div className="p-4 max-w-md mx-auto bg-gray-50 min-h-screen pb-24">
+    <div className="p-4 max-w-md mx-auto bg-[#F1F6FD] min-h-screen pb-24">
       <div className="flex items-center mb-4">
         <button
           onClick={() => window.history.back()}
@@ -354,26 +357,26 @@ export default function TambahTransaksiPage() {
 
       <div className="grid grid-cols-2 gap-3 mb-4">
         <button
-          className={`shadow-sm rounded-3xl py-3 px-4 text-sm font-medium text-center flex items-center justify-center ${
-            transactionMode === "pemasukan" ? "bg-green-100 text-green-700" : "bg-white text-gray-500 hover:bg-gray-50"
+          className={`rounded-3xl py-1 text-sm text-center flex items-center px-2 ${
+            transactionMode === "pemasukan" ? "bg-[#EFF8EF] text-[#818898]" : "bg-white text-gray-500 hover:bg-gray-50"
           }`}
           onClick={() => handleTransactionModeChange("pemasukan")}
         >
           <div
-            className={`${transactionMode === "pemasukan" ? "bg-primary-blue" : "bg-gray-200"} p-1.5 rounded-full mr-2`}
+            className={`${transactionMode === "pemasukan" ? "bg-[#FFFFFF]" : "bg-[#F1F6FD]"} p-3 rounded-full mr-2`}
           >
             <CoinIcon />
           </div>
           Pemasukan
         </button>
         <button
-          className={`shadow-sm rounded-3xl py-3 px-4 text-sm font-medium text-center flex items-center justify-center ${
-            transactionMode === "pengeluaran" ? "bg-red-100 text-red-700" : "bg-white text-gray-500 hover:bg-gray-50"
+          className={`rounded-3xl py-1 text-sm text-center flex items-center px-2 ${
+            transactionMode === "pengeluaran" ? "bg-[#FDEFEF] text-[#818898]" : "bg-white text-gray-500 hover:bg-gray-50"
           }`}
           onClick={() => handleTransactionModeChange("pengeluaran")}
         >
           <div
-            className={`${transactionMode === "pengeluaran" ? "bg-primary-red" : "bg-gray-200"} p-1.5 rounded-full mr-2`}
+            className={`${transactionMode === "pengeluaran" ? "bg-[#FFFFFF]" : "bg-[#F1F6FD]"} p-3 rounded-full mr-2`}
           >
             <StockIcon />
           </div>
@@ -382,60 +385,20 @@ export default function TambahTransaksiPage() {
       </div>
 
       <div className="relative mb-6">
-        <select
+        <Select
           id="categoryType"
           name="categoryType"
-          className="w-full bg-white shadow-sm rounded-3xl py-3 px-4 text-sm font-medium text-gray-500 appearance-none flex items-center justify-center"
+          icon={<BellIcon />}
           value={categoryType}
           onChange={handleCategoryChange}
-          style={{ paddingLeft: "56px", paddingRight: "40px" }}
-        >
-          {transactionMode === "pemasukan" ? (
-            <>
-              <option>Penjualan Barang</option>
-              <option>Pendapatan Pinjaman</option>
-              <option>Pendapatan Di Luar Usaha</option>
-              <option>Pendapatan Lain-Lain</option>
-              <option>Pendapatan Jasa/Komisi</option>
-              <option>Terima Pinjaman</option>
-              <option>Penagihan Utang/Cicilan</option>
-            </>
-          ) : (
-            <>
-              <option>Pembelian Stok</option>
-              <option>Pembelian Bahan Baku</option>
-              <option>Biaya Operasional</option>
-              <option>Gaji/Bonus Karyawan</option>
-              <option>Pemberian utang</option>
-              <option>Pembayaran Utang/Cicilan</option>
-              <option>Pengeluaran Di Luar Usaha</option>
-              <option>Pengeluaran lain-lain</option>
-            </>
-          )}
-        </select>
-        <div className="absolute left-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
-          <div className="bg-gray-200 p-1.5 rounded-full">
-            <BellIcon />
-          </div>
-        </div>
-        <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-4 h-4 text-gray-500"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-          </svg>
-        </div>
+          options={ transactionMode === "pemasukan" ? pemasukanOptions : pengeluaranOptions}
+        />
       </div>
 
       {((transactionMode === "pemasukan" && categoryType === "Penjualan Barang") ||
         (transactionMode === "pengeluaran" && categoryType === "Pembelian Stok")) && (
         <>
-          <div className="flex justify-between items-center mb-3">
+          <div className="flex justify-between items-center mb-3 bg-">
             <h2 className="text-lg font-semibold">Barang</h2>
             <button
               onClick={handleOpenProductSelector}
@@ -616,7 +579,7 @@ export default function TambahTransaksiPage() {
         </div>
       )}
 
-      <button
+      <Button
         onClick={handleSave}
         disabled={
           isLoading ||
@@ -624,7 +587,6 @@ export default function TambahTransaksiPage() {
           (transactionMode === "pengeluaran" && categoryType === "Pembelian Stok" && selectedProducts.length === 0) ||
           effectiveTotalAmount === 0
         }
-        className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-[calc(100%-2rem)] max-w-[calc(theme(maxWidth.md)-2rem)] bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center z-20"
       >
         {isLoading ? (
           <>
@@ -646,7 +608,8 @@ export default function TambahTransaksiPage() {
         ) : (
           "Simpan"
         )}
-      </button>
+      </Button>
+      
 
       {((transactionMode === "pemasukan" && categoryType === "Penjualan Barang") ||
         (transactionMode === "pengeluaran" && categoryType === "Pembelian Stok")) && (
