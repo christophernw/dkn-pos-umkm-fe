@@ -19,6 +19,11 @@ export default function BPRHomePage() {
   const [shops, setShops] = useState<ShopData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [totalShops, setTotalShops] = useState(0);
 
   useEffect(() => {
     // Redirect if not a BPR user
@@ -46,6 +51,7 @@ export default function BPRHomePage() {
 
         const data = await response.json();
         setShops(data);
+        setTotalShops(data.length);
       } catch (err) {
         console.error("Error fetching shops:", err);
         setError("Failed to load shops data. Please try again.");
@@ -59,6 +65,15 @@ export default function BPRHomePage() {
     }
   }, [user, accessToken, router]);
 
+  // Get current shops
+  const indexOfLastShop = currentPage * itemsPerPage;
+  const indexOfFirstShop = indexOfLastShop - itemsPerPage;
+  const currentShops = shops.slice(indexOfFirstShop, indexOfLastShop);
+  const totalPages = Math.ceil(shops.length / itemsPerPage);
+
+  // Change page
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+
   // Format date to a more readable format
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("id-ID", {
@@ -66,6 +81,92 @@ export default function BPRHomePage() {
       month: "long",
       year: "numeric",
     });
+  };
+
+  // Pagination component
+  const Pagination = () => {
+    const pageNumbers = [];
+    
+    // Calculate page range to show
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + 4);
+    
+    // Adjust start page if we're near the end
+    if (endPage - startPage < 4) {
+      startPage = Math.max(1, endPage - 4);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i);
+    }
+
+    return (
+      <div className="flex justify-center mt-6 mb-8">
+        <nav className="inline-flex rounded-md shadow">
+          <button
+            onClick={() => paginate(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="relative inline-flex items-center px-3 py-2 text-sm font-medium rounded-l-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Prev
+          </button>
+          
+          {startPage > 1 && (
+            <>
+              <button 
+                onClick={() => paginate(1)} 
+                className="relative inline-flex items-center px-4 py-2 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              >
+                1
+              </button>
+              {startPage > 2 && (
+                <span className="relative inline-flex items-center px-4 py-2 text-sm font-medium border border-gray-300 bg-white text-gray-700">
+                  ...
+                </span>
+              )}
+            </>
+          )}
+          
+          {pageNumbers.map(number => (
+            <button
+              key={number}
+              onClick={() => paginate(number)}
+              className={`relative inline-flex items-center px-4 py-2 text-sm font-medium border border-gray-300 ${
+                currentPage === number
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {number}
+            </button>
+          ))}
+          
+          {endPage < totalPages && (
+            <>
+              {endPage < totalPages - 1 && (
+                <span className="relative inline-flex items-center px-4 py-2 text-sm font-medium border border-gray-300 bg-white text-gray-700">
+                  ...
+                </span>
+              )}
+              <button 
+                onClick={() => paginate(totalPages)} 
+                className="relative inline-flex items-center px-4 py-2 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              >
+                {totalPages}
+              </button>
+            </>
+          )}
+          
+          <button
+            onClick={() => paginate(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="relative inline-flex items-center px-3 py-2 text-sm font-medium rounded-r-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        </nav>
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -123,7 +224,7 @@ export default function BPRHomePage() {
           <h2 className="font-semibold text-lg mb-3">Ringkasan</h2>
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-blue-50 p-3 rounded-lg text-center">
-              <p className="text-2xl font-bold text-blue-600">{shops.length}</p>
+              <p className="text-2xl font-bold text-blue-600">{totalShops}</p>
               <p className="text-sm text-gray-600">Total Toko</p>
             </div>
             <div className="bg-green-50 p-3 rounded-lg text-center">
@@ -135,39 +236,44 @@ export default function BPRHomePage() {
           </div>
         </div>
 
-        {/* Shops list */}
-        <h2 className="font-semibold text-lg mb-3">Daftar Toko UMKM</h2>
-        <div className="space-y-4">
-          {shops.length === 0 ? (
-            <div className="bg-white p-4 rounded-lg text-center text-gray-500">
-              Tidak ada toko yang terdaftar
-            </div>
-          ) : (
-            shops.map((shop) => (
-              <div
-                key={shop.id}
-                className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow"
-                onClick={() => router.push(`/bpr/shop/${shop.id}`)}             
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-semibold">{shop.owner}</h3>
-                  <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full">
-                    ID: {shop.id}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 mt-3 text-sm">
-                  <div>
-                    <p className="text-gray-500">Tanggal Dibuat</p>
-                    <p>{formatDate(shop.created_at)}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Jumlah Pengguna</p>
-                    <p>{shop.user_count} orang</p>
-                  </div>
-                </div>
+        {/* Shops list with pagination */}
+        <div>
+          <h2 className="font-semibold text-lg mb-3">Daftar Toko UMKM</h2>
+          <div className="space-y-4">
+            {currentShops.length === 0 ? (
+              <div className="bg-white p-4 rounded-lg text-center text-gray-500">
+                Tidak ada toko yang terdaftar
               </div>
-            ))
-          )}
+            ) : (
+              currentShops.map((shop) => (
+                <div
+                  key={shop.id}
+                  className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => router.push(`/bpr/shop/${shop.id}`)}             
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-semibold">{shop.owner}</h3>
+                    <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full">
+                      ID: {shop.id}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mt-3 text-sm">
+                    <div>
+                      <p className="text-gray-500">Tanggal Dibuat</p>
+                      <p>{formatDate(shop.created_at)}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Jumlah Pengguna</p>
+                      <p>{shop.user_count} orang</p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          
+          {/* Pagination controls */}
+          {totalPages > 1 && <Pagination />}
         </div>
       </div>
     </>
