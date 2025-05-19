@@ -30,8 +30,19 @@ export default function LoginPage() {
             })
             .then(response => response.json())
             .then(data => {
+                // Check if user is BPR
+                if (data.user && data.user.is_bpr) {
+                    // Set auth data for BPR user
+                    setAuthData({
+                        user: data.user,
+                        access: data.access,
+                        refresh: data.refresh
+                    });
+                    // Redirect to BPR homepage
+                    router.push('/bpr');
+                } 
                 // Check if user has a toko (was not removed)
-                if (data.user && data.user.toko_id) {
+                else if (data.user && data.user.toko_id) {
                     // Normal user with a toko - proceed with login
                     setAuthData({
                         user: data.user,

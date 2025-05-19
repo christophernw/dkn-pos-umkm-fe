@@ -17,6 +17,7 @@ import { Modal } from '@/src/components/elements/modal/Modal'
 import config from "@/src/config";
 import { ConfirmModal } from "./component/confirmmodal";
 import Dropdown from "@/src/components/Dropdown";
+import { AccessDeniedScreen } from "@/src/components/AccessDeniedScreen";
 
 // Role options for dropdown
 const roleOptions = ["Pengelola", "Karyawan"];
@@ -24,6 +25,12 @@ const roleOptions = ["Pengelola", "Karyawan"];
 export default function AddUserPage() {
   const router = useRouter();
   const { accessToken, user } = useAuth();
+  
+
+  // Check if user is BPR
+  if (user?.is_bpr) {
+    return <AccessDeniedScreen userType="BPR" />;
+  }
   const handleBack = () => router.back();
 
   const [name, setName] = useState("");

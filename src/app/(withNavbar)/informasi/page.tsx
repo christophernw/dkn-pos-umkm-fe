@@ -1,13 +1,16 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import HeaderProduk from "@/src/components/HeaderProduk";
-import config from "@/src/config";
-import { useAuth } from "@/contexts/AuthContext";
-import { PlusIcon } from "@/public/icons/PlusIcon";
-import Script from "next/script";
+
+import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import HeaderProduk from '@/src/components/HeaderProduk';
+import config from '@/src/config';
+import { useAuth } from '@/contexts/AuthContext';
+import { PlusIcon } from '@/public/icons/PlusIcon';
+import Head from 'next/head';
+import { AccessDeniedScreen } from '@/src/components/AccessDeniedScreen';
+
 
 interface TopSellingProduct {
   id: number;
@@ -33,8 +36,12 @@ interface LowStockProduct {
 const progressBarColors = ["bg-green-400", "bg-blue-500", "bg-purple-500"];
 
 const SemuaBarangPage: React.FC = () => {
-  const { accessToken } = useAuth();
+  const { user, accessToken } = useAuth();
   const router = useRouter();
+  // Check if user is BPR
+  if (user?.is_bpr) {
+    return <AccessDeniedScreen userType="BPR" />;
+  }
 
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState<number>(

@@ -1,47 +1,34 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useModal } from "@/contexts/ModalContext";
 import config from "@/src/config";
-import { useRouter } from "next/navigation";
-import { generateDebtReportPDF, PDFReportData } from "@/src/utils/pdfGenerator";
-import {
-  generateDebtReportExcel,
-  ExcelReportData,
-} from "@/src/utils/excelGenerator";
 import { CoinIcon } from "@/public/icons/CoinIcon";
 import { StockIcon } from "@/public/icons/StockIcon";
 import { NotesIcon } from "@/public/icons/notesIcon";
-import Script from "next/script";
+import Head from "next/head";
 import { formatDate } from "@/src/utils/formatDate";
-import { AccessDeniedScreen } from "@/src/components/AccessDeniedScreen";
 
-// Define types
+// Types
+interface ShopInfo {
+  id: number;
+  owner: string;
+  created_at: string;
+  user_count: number;
+}
+
 interface Transaction {
   id: string;
   transaction_type: "pemasukan" | "pengeluaran";
   category: string;
   total_amount: number;
-  total_modal: number;
-  amount: number;
   status: "Lunas" | "Belum Lunas";
   created_at: string;
-  is_deleted: boolean;
 }
 
-interface ReportDateRange {
-  startDate: string;
-  endDate: string;
-}
-
-interface ReportSummary {
-  utangSaya: number;
-  utangPelanggan: number;
-  totalPemasukan: number;
-  totalPengeluaran: number;
-}
-
-export interface ArusKasTransaction {
+interface ArusKasTransaction {
   id: number;
   jenis: "inflow" | "outflow";
   kategori: string;
@@ -51,7 +38,7 @@ export interface ArusKasTransaction {
   transaksi_id: number;
 }
 
-export interface ArusKasReportResponse {
+interface ArusKasReportResponse {
   id: number;
   month: number;
   year: number;
@@ -61,66 +48,56 @@ export interface ArusKasReportResponse {
   transactions: ArusKasTransaction[];
 }
 
-const ReportPage = () => {
-  const { user, accessToken } = useAuth();
-  // Check if user is BPR
-  if (user?.is_bpr) {
-    return <AccessDeniedScreen userType="BPR" />;
-  }
-  const { showModal } = useModal();
+const ShopReportPage = () => {
   const router = useRouter();
-  const [reportType, setReportType] = useState<
-    "keuangan" | "utang" | "arus-kas"
-  >("utang");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  // Add a state to track authorization
-  const [hasAccess, setHasAccess] = useState<boolean>(false);
+  const params = useParams();
+  const shopId = params.id as string;
+  const { accessToken, user } = useAuth();
+  const { showModal } = useModal();
 
-  // Summary data
-  const [summary, setSummary] = useState<ReportSummary>({
+  // State
+  const [shopInfo, setShopInfo] = useState<ShopInfo | null>(null);
+  const [reportType, setReportType] = useState<"keuangan" | "utang" | "arus-kas">("utang");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [hasAccess, setHasAccess] = useState<boolean>(false);
+  const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [dateRange, setDateRange] = useState<string>("7"); // Default to last 7 days
+  const [customStartDate, setCustomStartDate] = useState<string>("");
+  const [customEndDate, setCustomEndDate] = useState<string>("");
+  const [firstTransactionDate, setFirstTransactionDate] = useState<string>("");
+  const [isDownloadModalOpen, setIsDownloadModalOpen] =
+    useState<boolean>(false);
+  const [isGeneratingReport, setIsGeneratingReport] = useState<boolean>(false);
+
+  // Data states
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [arusKasTransactions, setArusKasTransactions] = useState<ArusKasTransaction[]>([]);
+  const [summary, setSummary] = useState({
     utangSaya: 0,
     utangPelanggan: 0,
     totalPemasukan: 0,
     totalPengeluaran: 0,
   });
-
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [dateRange, setDateRange] = useState<string>("7"); // Default to last 7 days
-  const [reportDateRange, setReportDateRange] = useState<ReportDateRange>({
+  const [reportDateRange, setReportDateRange] = useState({
     startDate: "",
     endDate: "",
   });
-  const [customStartDate, setCustomStartDate] = useState<string>("");
-  const [customEndDate, setCustomEndDate] = useState<string>("");
-  const [firstTransactionDate, setFirstTransactionDate] = useState<string>("");
-  const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isGeneratingReport, setIsGeneratingReport] = useState<boolean>(false);
-  const [isDownloadModalOpen, setIsDownloadModalOpen] =
-    useState<boolean>(false);
-  const [arusKasTransactions, setArusKasTransactions] = useState<
-    ArusKasTransaction[]
-  >([]);
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
-      2,
-      "0"
-    )}`;
-  });
 
+  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
 
+  // Check if user is BPR
   useEffect(() => {
     if (user) {
       setIsAuthLoading(false);
+      setHasAccess(!!user.is_bpr);
 
-      // Set access based on role
-      if (user.role === "Pemilik" || user.role === "Pengelola") {
-        setHasAccess(true);
-      } else {
-        setHasAccess(false);
+      if (!user.is_bpr) {
+        router.push("/");
       }
     } else if (accessToken === null) {
       setIsAuthLoading(false);
@@ -128,122 +105,39 @@ const ReportPage = () => {
     }
   }, [user, accessToken, router]);
 
-  // Handle report type change
-  const handleReportTypeChange = (type: "keuangan" | "utang" | "arus-kas") => {
-    setReportType(type);
-    setDropdownOpen(false);
-    // Reset pagination
-    setCurrentPage(1);
-    // Reset dates and fetch new data
-    if (dateRange !== "custom") {
-      resetDateRange();
-    }
-  };
-
-  // Fetch summary data - only if user has access
-  // useEffect(() => {
-  //   if (!accessToken || !hasAccess || reportType !== "utang") {
-  //     setIsLoading(false);
-  //     return;
-  //   }
-
-  //   const fetchSummary = async () => {
-  //     if (!accessToken || !hasAccess || reportType === "arus-kas") {
-  //       return;
-  //     }
-
-  //     setIsLoading(true);
-  //     try {
-  //       // Fetch debt summary (for both report types)
-  //       const debtResponse = await fetch(
-  //         `${config.apiUrl}/transaksi/debt-summary`,
-  //         {
-  //           headers: {
-  //             Authorization: `Bearer ${accessToken}`,
-  //           },
-  //         }
-  //       );
-
-  //       // If we're in financial report mode, also fetch total transactions summary
-  //       let totalPemasukan = 0;
-  //       let totalPengeluaran = 0;
-
-  //       if (reportType === "keuangan") {
-  //         const financialResponse = await fetch(
-  //           `${config.apiUrl}/transaksi/summary/monthly`,
-  //           {
-  //             headers: {
-  //               Authorization: `Bearer ${accessToken}`,
-  //             },
-  //           }
-  //         );
-
-  //         if (financialResponse.ok) {
-  //           const financialData = await financialResponse.json();
-  //           totalPemasukan = financialData.pemasukan.amount || 0;
-  //           totalPengeluaran = financialData.pengeluaran.amount || 0;
-  //         }
-  //       }
-
-  //       if (debtResponse.ok) {
-  //         const debtData = await debtResponse.json();
-  //         setSummary({
-  //           utangSaya: debtData.utang_saya || 0,
-  //           utangPelanggan: debtData.utang_pelanggan || 0,
-  //           totalPemasukan: totalPemasukan,
-  //           totalPengeluaran: totalPengeluaran
-  //         });
-  //       }
-  //     } catch (error) {
-  //       console.error("Error fetching summary data:", error);
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-
-  //   fetchSummary();
-  // }, [accessToken, reportType, hasAccess]);
-
-  // Fetch first transaction date - only if user has access
+  // Fetch shop info
   useEffect(() => {
-    if (!accessToken || !hasAccess) {
-      return;
-    }
+    const fetchShopInfo = async () => {
+      if (!accessToken || !hasAccess) return;
 
-    const fetchFirstTransactionDate = async () => {
       try {
-        const endpoint =
-          reportType === "utang"
-            ? `${config.apiUrl}/transaksi/first-debt-date`
-            : `${config.apiUrl}/transaksi/first-transaction-date`;
-
-        const response = await fetch(endpoint, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        const response = await fetch(
+          `${config.apiUrl}/auth/bpr/shop/${shopId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
 
         if (response.ok) {
           const data = await response.json();
-          setFirstTransactionDate(data.first_date || "");
-
-          // Initialize custom dates if they haven't been set
-          if (!customStartDate) {
-            setCustomStartDate(data.first_date || "");
-          }
-          if (!customEndDate) {
-            const today = new Date().toISOString().split("T")[0];
-            setCustomEndDate(today);
-          }
+          setShopInfo(data);
+        } else {
+          showModal("Error", "Failed to fetch shop information", "error");
         }
       } catch (error) {
-        console.error("Error fetching first transaction date:", error);
+        console.error("Error fetching shop info:", error);
+        showModal("Error", "Failed to fetch shop information", "error");
       }
     };
 
-    fetchFirstTransactionDate();
-  }, [accessToken, reportType, hasAccess, customStartDate, customEndDate]);
+    if (accessToken && hasAccess) {
+      fetchShopInfo();
+    }
+  }, [accessToken, hasAccess, shopId, showModal]);
 
+  // Reset date range
   const resetDateRange = () => {
     // Get current date in Asia/Jakarta timezone (UTC+7)
     const now = new Date();
@@ -257,7 +151,7 @@ const ReportPage = () => {
     let startDate = new Date(jakartaTime);
 
     if (dateRange === "this_month") {
-      // Set to first day of current month - fixing the issue
+      // Set to first day of current month
       const currentYear = jakartaTime.getFullYear();
       const currentMonth = jakartaTime.getMonth();
       // Create a new date object for the 1st day of current month
@@ -291,7 +185,81 @@ const ReportPage = () => {
     resetDateRange();
   }, [dateRange, firstTransactionDate, hasAccess]);
 
-  // Fetch transactions data with timezone handling - only if user has access
+  // Fetch first transaction date
+  useEffect(() => {
+    if (!accessToken || !hasAccess) {
+      return;
+    }
+
+    const fetchFirstTransactionDate = async () => {
+      try {
+        // Note: In a real implementation, you'd have a BPR-specific endpoint
+        let endpoint = "";
+        if (reportType === "utang") {
+          endpoint = `${config.apiUrl}/transaksi/bpr/shop/${shopId}/utang`;
+        } else if (reportType === "keuangan") {
+          endpoint = `${config.apiUrl}/bpr/shop/${shopId}/keuangan`;
+        } else {
+          endpoint = `${config.apiUrl}/bpr/shop/${shopId}/aruskas`;
+        }
+        const response = await fetch(endpoint, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setFirstTransactionDate(data.first_date || "");
+
+          // Initialize custom dates if they haven't been set
+          if (!customStartDate) {
+            setCustomStartDate(data.first_date || "");
+          }
+          if (!customEndDate) {
+            const today = new Date().toISOString().split("T")[0];
+            setCustomEndDate(today);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching first transaction date:", error);
+      }
+    };
+
+    // For this example, we'll just set a default date
+    // In a real implementation, you'd call fetchFirstTransactionDate()
+    if (!customStartDate) {
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+      setCustomStartDate(threeMonthsAgo.toISOString().split("T")[0]);
+    }
+
+    if (!customEndDate) {
+      const today = new Date().toISOString().split("T")[0];
+      setCustomEndDate(today);
+    }
+  }, [
+    accessToken,
+    reportType,
+    hasAccess,
+    shopId,
+    customStartDate,
+    customEndDate,
+  ]);
+
+  // Handle report type change
+  const handleReportTypeChange = (type: "keuangan" | "utang" | "arus-kas") => {
+    setReportType(type);
+    setDropdownOpen(false);
+    // Reset pagination
+    setCurrentPage(1);
+    // Reset dates and fetch new data
+    if (dateRange !== "custom") {
+      resetDateRange();
+    }
+  };
+
+  // Fetch transactions data with timezone handling
   useEffect(() => {
     if (!accessToken || !hasAccess) {
       setIsLoading(false);
@@ -302,8 +270,6 @@ const ReportPage = () => {
       setIsLoading(true);
       try {
         // Add timezone offset to make it clear these are in UTC+7
-        // Even though we're only passing the date part, this helps ensure
-        // the backend knows these dates are in local time
         const startDateWithTz = customStartDate
           ? `${customStartDate}T00:00:00+07:00`
           : "";
@@ -317,15 +283,14 @@ const ReportPage = () => {
 
         let endpoint = "";
         if (reportType === "utang") {
-          endpoint = `${config.apiUrl}/transaksi/debt-report-by-date`;
+          endpoint = `${config.apiUrl}/transaksi/bpr/shop/${shopId}/utang`;
         } else if (reportType === "keuangan") {
-          endpoint = `${config.apiUrl}/transaksi/financial-report-by-date`;
+          endpoint = `${config.apiUrl}/bpr/shop/${shopId}/keuangan`;
         } else {
-          // Modified to use date range for arus-kas as well
-          endpoint = `${config.apiUrl}/laporan/aruskas-report`;
+          endpoint = `${config.apiUrl}/bpr/shop/${shopId}/aruskas`;
         }
 
-        // Updated to use same URL structure for all report types
+        // Add query parameters
         const url = `${endpoint}?start_date=${encodedStartDate}&end_date=${encodedEndDate}`;
 
         const response = await fetch(url, {
@@ -361,6 +326,10 @@ const ReportPage = () => {
             }));
 
             setArusKasTransactions([]);
+
+            // Set pagination info
+            setTotalItems(transactionsData.length);
+            setTotalPages(Math.ceil(transactionsData.length / itemsPerPage));
           } else {
             const data: ArusKasReportResponse = await response.json();
             const transactionsData =
@@ -380,8 +349,14 @@ const ReportPage = () => {
               totalPemasukan,
               totalPengeluaran,
             }));
+
             setTransactions([]);
+
+            // Set pagination info
+            setTotalItems(transactionsData.length);
+            setTotalPages(Math.ceil(transactionsData.length / itemsPerPage));
           }
+
           // Reset to first page when loading new data
           setCurrentPage(1);
         }
@@ -408,9 +383,11 @@ const ReportPage = () => {
     accessToken,
     reportType,
     hasAccess,
-    selectedMonth,
+    shopId,
+    itemsPerPage,
   ]);
 
+  // Handle download click
   const handleDownloadClick = () => {
     if (!hasAccess) {
       // Prevent download if no access
@@ -419,90 +396,17 @@ const ReportPage = () => {
     setIsDownloadModalOpen(true);
   };
 
+  // Handle download
   const handleDownload = async (format: string) => {
-    if (!hasAccess) {
-      // Prevent download if no access
-      return;
-    }
-
-    try {
-      setIsGeneratingReport(true);
-
-      let reportData;
-
-      if (true) {
-        // Now uniform for all report types
-        reportData = {
-          transactions:
-            reportType === "arus-kas" ? arusKasTransactions : transactions,
-          startDate: reportDateRange.startDate,
-          endDate: reportDateRange.endDate,
-          utangSaya: summary.utangSaya,
-          utangPelanggan: summary.utangPelanggan,
-          totalPemasukan: summary.totalPemasukan,
-          totalPengeluaran: summary.totalPengeluaran,
-          reportType: reportType,
-        };
-      }
-
-      // Generate report based on format
-      let blob: Blob;
-      let fileName: string;
-
-      if (format === "pdf") {
-        blob = await generateDebtReportPDF(reportData as PDFReportData);
-        fileName = `Laporan_${
-          reportType === "utang"
-            ? "Utang_Piutang"
-            : reportType !== "arus-kas"
-            ? "Keuangan"
-            : "Arus Kas"
-        }_${dateRange}_Hari.pdf`;
-      } else {
-        blob = generateDebtReportExcel(reportData as ExcelReportData);
-        fileName = `Laporan_${
-          reportType === "utang"
-            ? "Utang_Piutang"
-            : reportType !== "arus-kas"
-            ? "Keuangan"
-            : "Arus Kas"
-        }_${dateRange}_Hari.xlsx`;
-      }
-
-      // Create download link and trigger download
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-
-      // Clean up
-      URL.revokeObjectURL(url);
-      document.body.removeChild(link);
-
-      showModal(
-        "Laporan Diunduh",
-        `Laporan dalam format ${
-          format === "pdf" ? "PDF" : "Excel"
-        } telah berhasil diunduh.`,
-        "success"
-      );
-    } catch (error) {
-      console.error(`Error generating ${format} report:`, error);
-      showModal(
-        "Gagal Mengunduh",
-        `Terjadi kesalahan saat mengunduh laporan dalam format ${
-          format === "pdf" ? "PDF" : "Excel"
-        }.`,
-        "error"
-      );
-    } finally {
-      setIsGeneratingReport(false);
-      setIsDownloadModalOpen(false);
-    }
+    setIsDownloadModalOpen(false);
+    showModal(
+      "Coming Soon",
+      "Download feature for BPR shop reports will be available soon.",
+      "info"
+    );
   };
 
+  // Format currency
   const formatCurrency = (amount: number): string => {
     // Convert to number if it's a string, handle NaN cases
     const amountNumber =
@@ -515,7 +419,7 @@ const ReportPage = () => {
         }).format(amountNumber);
   };
 
-  // Format date in Indonesia locale (UTC+7)
+  // Format local date
   const formatLocalDate = (dateString: string): string => {
     const date = new Date(dateString);
 
@@ -562,7 +466,7 @@ const ReportPage = () => {
     }
   };
 
-  // Pagination calculation
+  // Get current transactions for display
   const getActiveTransactions = () => {
     if (reportType === "arus-kas") {
       const indexOfLastItem = currentPage * itemsPerPage;
@@ -574,13 +478,6 @@ const ReportPage = () => {
       return transactions.slice(indexOfFirstItem, indexOfLastItem);
     }
   };
-
-  // Calculate total pages
-  const totalPages = Math.ceil(
-    reportType === "arus-kas"
-      ? arusKasTransactions.length / itemsPerPage
-      : transactions.length / itemsPerPage
-  );
 
   // Pagination controls
   const handlePageChange = (pageNumber: number) => {
@@ -673,9 +570,7 @@ const ReportPage = () => {
           <h1 className="text-2xl font-bold text-red-600 mb-4">
             Akses Ditolak
           </h1>
-          <p className="mb-6">
-            Karyawan tidak diperbolehkan mengakses halaman Laporan.
-          </p>
+          <p className="mb-6">Anda tidak memiliki akses ke halaman ini.</p>
           <button
             onClick={() => router.push("/")}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -697,36 +592,69 @@ const ReportPage = () => {
 
   return (
     <>
-
       <Head>
         <script
           dangerouslySetInnerHTML={{
             __html: `
-                    (function (m, a, z, e) {
-                    var s, t;
-                    try {
-                        t = m.sessionStorage.getItem('maze-us');
-                    } catch (err) {}
+              (function (m, a, z, e) {
+                var s, t;
+                try {
+                  t = m.sessionStorage.getItem('maze-us');
+                } catch (err) {}
 
-                    if (!t) {
-                        t = new Date().getTime();
-                        try {
-                        m.sessionStorage.setItem('maze-us', t);
-                        } catch (err) {}
-                    }
+                if (!t) {
+                  t = new Date().getTime();
+                  try {
+                    m.sessionStorage.setItem('maze-us', t);
+                  } catch (err) {}
+                }
 
-                    s = a.createElement('script');
-                    s.src = z + '?apiKey=' + e;
-                    s.async = true;
-                    a.getElementsByTagName('head')[0].appendChild(s);
-                    m.mazeUniversalSnippetApiKey = e;
-                    })(window, document, 'https://snippet.maze.co/maze-universal-loader.js', 'e31b53f6-c7fd-47f2-85df-d3c285f18b33');
-                `,
+                s = a.createElement('script');
+                s.src = z + '?apiKey=' + e;
+                s.async = true;
+                a.getElementsByTagName('head')[0].appendChild(s);
+                m.mazeUniversalSnippetApiKey = e;
+              })(window, document, 'https://snippet.maze.co/maze-universal-loader.js', 'e31b53f6-c7fd-47f2-85df-d3c285f18b33');
+            `,
           }}
         />
       </Head>
-
       <div className="p-4">
+        {/* Back button and title */}
+        <div className="flex items-center mb-2">
+          <button
+            onClick={() => router.push("/bpr")}
+            className="bg-white hover:bg-gray-200 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2"
+          >
+            <svg
+              className="w-4 h-4 transform scale-x-[-1]"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 14 10"
+            >
+              <path
+                stroke="black"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M1 5h12m0 0L9 1m4 4L9 9"
+              />
+            </svg>
+          </button>
+
+          <h1 className="text-xl font-semibold">Laporan Keuangan UMKM</h1>
+        </div>
+
+        {/* Shop/Toko name */}
+        <div className="mb-4 px-1">
+          <div className="bg-white rounded-lg py-2 px-4 shadow-sm">
+            <h2 className="text-base font-medium">
+              {shopInfo ? shopInfo.owner : "Loading..."}
+            </h2>
+          </div>
+        </div>
+
         <div className="flex justify-start items-center mb-4">
           <div className="relative">
             <div
@@ -761,7 +689,7 @@ const ReportPage = () => {
               </div>
             </div>
 
-            {dropdownOpen && hasAccess && (
+            {dropdownOpen && (
               <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg z-10 w-[220px]">
                 <div
                   className={`p-3 cursor-pointer hover:bg-gray-100 ${
@@ -810,23 +738,6 @@ const ReportPage = () => {
                 <>
                   <div className="bg-white rounded-xl p-4 shadow-sm">
                     <div className="flex items-center gap-2 mb-3">
-
-                      <div className="bg-green-100 p-3 rounded-full">
-                        <CoinIcon className="text-green-500" />
-                      </div>
-                      <p className="font-medium">Utang Pelanggan</p>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <p className="text-xl font-bold text-green-600">
-
-                        Rp{formatCurrency(summary.utangSaya)}
-                      </p>
-                      <p className="text-xs text-gray-500">Belum dilunasi</p>
-                    </div>
-                  </div>
-                  <div className="bg-white rounded-xl p-4 shadow-sm">
-                    <div className="flex items-center gap-2 mb-3">
-
                       <div className="bg-red-100 p-3 rounded-full">
                         <StockIcon className="text-red-500" />
                       </div>
@@ -834,6 +745,20 @@ const ReportPage = () => {
                     </div>
                     <div className="flex flex-col gap-1">
                       <p className="text-xl font-bold text-red-600">
+                        Rp{formatCurrency(summary.utangSaya)}
+                      </p>
+                      <p className="text-xs text-gray-500">Belum dilunasi</p>
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 shadow-sm">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="bg-green-100 p-3 rounded-full">
+                        <CoinIcon className="text-green-500" />
+                      </div>
+                      <p className="font-medium">Utang Pelanggan</p>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <p className="text-xl font-bold text-green-600">
                         Rp{formatCurrency(summary.utangPelanggan)}
                       </p>
                       <p className="text-xs text-gray-500">Belum dilunasi</p>
@@ -851,8 +776,7 @@ const ReportPage = () => {
                     </div>
                     <div className="flex flex-col gap-1">
                       <p className="text-xl font-bold text-green-600">
-
-                        Rp{formatCurrency(summary.totalPengeluaran)}
+                        Rp{formatCurrency(summary.totalPemasukan)}
                       </p>
                       <p className="text-xs text-gray-500">
                         {dateRange === "custom" &&
@@ -874,9 +798,7 @@ const ReportPage = () => {
                     </div>
                     <div className="flex flex-col gap-1">
                       <p className="text-xl font-bold text-red-600">
-
-                        Rp{formatCurrency(summary.totalPemasukan)}
-
+                        Rp{formatCurrency(summary.totalPengeluaran)}
                       </p>
                       <p className="text-xs text-gray-500">
                         {dateRange === "custom" &&
@@ -1005,12 +927,6 @@ const ReportPage = () => {
                     ? "Daftar Transaksi Belum Lunas"
                     : "Daftar Transaksi"}
                 </h2>
-                {/* {totalTransactionsCount > 0 && (
-                <p className="text-sm text-gray-500">
-                  Showing {(currentPage - 1) * itemsPerPage + 1}-
-                  {Math.min(currentPage * itemsPerPage, totalTransactionsCount)} of {totalTransactionsCount}
-                </p>
-              )} */}
               </div>
 
               <div className="space-y-3">
@@ -1024,76 +940,59 @@ const ReportPage = () => {
                   </p>
                 ) : currentTransactions.length !== 0 &&
                   reportType !== "arus-kas" ? (
-                  currentTransactions.map(
-                    (transaction) => (
-                      console.log(transaction),
-                      (
-                        <div
-                          key={transaction.id}
-                          className={`bg-white rounded-xl p-3 shadow-sm ${
-                            hasAccess ? "cursor-pointer" : "cursor-not-allowed"
+                  currentTransactions.map((transaction) => (
+                    <div
+                      key={transaction.id}
+                      className="bg-white rounded-xl p-3 shadow-sm"
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">
+                          Transaksi #{transaction.id}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          {"created_at" in transaction
+                            ? formatLocalDate(transaction.created_at)
+                            : ""}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center mt-2">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs ${
+                            "transaction_type" in transaction &&
+                            transaction.transaction_type === "pemasukan"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
                           }`}
-                          onClick={() =>
-                            hasAccess &&
-                            router.push(`/transaksi/detail/${transaction.id}`)
-                          }
                         >
-                          <div className="flex justify-between items-center">
-                            <span className="font-medium">
-                              Transaksi #{transaction.id}
-                            </span>
-                            <span className="text-sm text-gray-500">
-                              {"created_at" in transaction
-                                ? formatLocalDate(transaction.created_at)
-                                : ""}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center mt-2">
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs ${
-                                "transaction_type" in transaction &&
-                                transaction.transaction_type === "pemasukan"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-red-100 text-red-800"
-                              }`}
-                            >
-                              {"transaction_type" in transaction &&
-                              transaction.transaction_type === "pemasukan"
-                                ? "Berikan"
-                                : "Terima"}
-                            </span>
-                            <span className="font-semibold">
-                              Rp
-                              {formatCurrency(
-                                "total_amount" in transaction
-                                  ? transaction.total_amount
-                                  : 0
-                              )}
-                            </span>
-                          </div>
-                          {/* Status badge (shown for all transactions in financial report) */}
-                          {(reportType === "keuangan" ||
-                            ("status" in transaction &&
-                              transaction.status === "Belum Lunas")) && (
-                            <div className="flex justify-end mt-1">
-                              <span
-                                className={`px-2 py-0.5 rounded-full text-xs ${
-                                  "status" in transaction &&
-                                  transaction.status === "Lunas"
-                                    ? "bg-green-50 text-green-700"
-                                    : "bg-yellow-50 text-yellow-700"
-                                }`}
-                              >
-                                {"status" in transaction
-                                  ? transaction.status
-                                  : ""}
-                              </span>
-                            </div>
+                          {"transaction_type" in transaction &&
+                          transaction.transaction_type === "pemasukan"
+                            ? "Berikan"
+                            : "Terima"}
+                        </span>
+                        <span className="font-semibold">
+                          Rp
+                          {formatCurrency(
+                            "total_amount" in transaction
+                              ? transaction.total_amount
+                              : 0
                           )}
-                        </div>
-                      )
-                    )
-                  )
+                        </span>
+                      </div>
+                      {/* Status badge */}
+                      <div className="flex justify-end mt-1">
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-xs ${
+                            "status" in transaction &&
+                            transaction.status === "Lunas"
+                              ? "bg-green-50 text-green-700"
+                              : "bg-yellow-50 text-yellow-700"
+                          }`}
+                        >
+                          {"status" in transaction ? transaction.status : ""}
+                        </span>
+                      </div>
+                    </div>
+                  ))
                 ) : reportType === "arus-kas" &&
                   currentTransactions.length > 0 ? (
                   currentTransactions.map((transaction) => (
@@ -1103,20 +1002,7 @@ const ReportPage = () => {
                           ? transaction.transaksi_id
                           : transaction.id
                       }
-                      className={`bg-white rounded-xl p-3 shadow-sm ${
-                        hasAccess ? "cursor-pointer" : "cursor-not-allowed"
-                      }`}
-                      onClick={() => {
-                        if (hasAccess) {
-                          if ("transaksi_id" in transaction) {
-                            router.push(
-                              `/transaksi/detail/${transaction.transaksi_id}`
-                            );
-                          } else {
-                            router.push(`/transaksi/detail/${transaction.id}`);
-                          }
-                        }
-                      }}
+                      className="bg-white rounded-xl p-3 shadow-sm"
                     >
                       <div className="flex justify-between items-center">
                         <span className="font-medium">
@@ -1203,7 +1089,7 @@ const ReportPage = () => {
               {isGeneratingReport ? "Memproses..." : "Unduh Laporan"}
             </button>
 
-            {/* Download Modal - Fixed Excel Icon */}
+            {/* Download Modal - Simplified */}
             {isDownloadModalOpen && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
                 <div className="bg-white rounded-xl p-5 w-5/6 max-w-md">
@@ -1240,7 +1126,6 @@ const ReportPage = () => {
                       disabled={isGeneratingReport}
                       className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     >
-                      {/* Updated Excel Icon */}
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         className="h-12 w-12 text-green-600 mb-2"
@@ -1304,4 +1189,4 @@ const ReportPage = () => {
   );
 };
 
-export default ReportPage;
+export default ShopReportPage;

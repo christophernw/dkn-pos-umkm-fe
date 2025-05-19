@@ -5,7 +5,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import config from "@/src/config";
 import { useModal } from "@/contexts/ModalContext";
 import EnhancedDropdown from "@/src/components/elements/modal/EnhancedDropdown";
-import Script from "next/script";
+
+import Head from "next/head";
+import { AccessDeniedScreen } from "@/src/components/AccessDeniedScreen";
+
 
 // Initial dropdown options
 const initialUnitOptions = ["Pcs", "Kg", "Botol", "Liter"];
@@ -27,9 +30,11 @@ export default function AddProductPage() {
   const [unit, setUnit] = useState("");
   const [previewImg, setPreviewImg] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const { accessToken } = useAuth();
+  const { user, accessToken } = useAuth();
   const [loading, setLoading] = useState(false);
   const { showModal, hideModal } = useModal();
+
+  
 
   // State for managing custom options
   const [categoryOptions, setCategoryOptions] = useState<string[]>([...initialCategoryOptions]);
@@ -291,6 +296,11 @@ export default function AddProductPage() {
     }
   };
 
+  // Check if user is BPR
+  if (user?.is_bpr) {
+    return <AccessDeniedScreen userType="BPR" />;
+  }
+  
   return (
     <>
         <Script

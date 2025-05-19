@@ -11,7 +11,10 @@ import Script from "next/script";
 const MultiRolePageContent: React.FC = () => {
   const { user } = useAuth();
 
-  const isPemilikOrPengelola = user?.role === "Pemilik" || user?.role === "Pengelola"; 
+  // Updated condition to exclude BPR users
+  const isPemilikOrPengelola = 
+    (user?.role === "Pemilik" || user?.role === "Pengelola") && 
+    !user?.is_bpr;
 
   return (
     <>
