@@ -1,15 +1,11 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useModal } from "@/contexts/ModalContext";
 import config from "@/src/config";
-import { Trash } from "lucide-react";
-import {
-  getPendingInvitations,
-  deleteInvitation,
-  PendingInvitation,
-} from "../services/invitationService";
+import { Trash, Clock } from "lucide-react";
+import { getPendingInvitations, deleteInvitation, PendingInvitation } from "../services/invitationService";
 import { sendRemovalNotificationEmail } from "@/src/app/lib/emailservice";
 
 interface User {
@@ -22,74 +18,84 @@ interface User {
 const UserList = () => {
   const { user, accessToken } = useAuth();
   const { showModal, hideModal } = useModal();
-
   const [users, setUsers] = useState<User[]>([]);
   const [pendingInvitations, setPendingInvitations] = useState<PendingInvitation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   
   // Check if the current user is a BPR user
   const isBPRUser = user?.is_bpr === true;
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
+  const fetchData = async () => {
     try {
-      if (!accessToken) throw new Error("Not authenticated");
+      setLoading(true);
+      setError(null);
 
-      const userRes = await fetch(`${config.apiUrl}/auth/get-users`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      if (!accessToken) {
+        throw new Error("You are not authenticated");
+      }
 
-      if (!userRes.ok) throw new Error("Failed to fetch users");
-      setUsers(await userRes.json());
-
-      const invitations = await getPendingInvitations(accessToken);
-      setPendingInvitations(invitations);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [accessToken]);
-
-  useEffect(() => {
-    if (accessToken) fetchData();
-  }, [accessToken, fetchData]);
-
-  const confirmAction = (
-    title: string,
-    message: string,
-    onConfirm: () => Promise<void>
-  ) => {
-    showModal(title, message, "info", {
-      label: "Hapus",
-      onClick: async () => {
-        try {
-          setIsDeleting(true);
-          await onConfirm();
-        } catch (err: any) {
-          setError(err.message);
-          showModal("Gagal", err.message, "error");
-        } finally {
-          setIsDeleting(false);
-        }
-      },
-    }, { label: "Batal", onClick: hideModal });
-  };
-
-  const handleDeleteUser = (userToRemove: User) => {
-    confirmAction("Konfirmasi", "Apakah Anda yakin ingin menghapus pengguna ini?", async () => {
-      const res = await fetch(`${config.apiUrl}/auth/remove-user-from-toko`, {
-        method: "POST",
+      // Fetch users
+      const usersResponse = await fetch(`${config.apiUrl}/auth/get-users`, {
+        method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({ user_id: userToRemove.id }),
       });
+
+      if (!usersResponse.ok) {
+        throw new Error("Failed to fetch users");
+      }
+
+      const usersData = await usersResponse.json();
+      setUsers(usersData);
+
+      // Fetch pending invitations
+      if (user) {
+        try {
+          const pendingInvitationsData = await getPendingInvitations(accessToken);
+          setPendingInvitations(pendingInvitationsData);
+        } catch (invitationError) {
+          console.error("Error fetching invitations:", invitationError);
+          // Don't fail the whole component if just invitations fail
+        }
+      }
+    } catch (error: any) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [accessToken, user]);
+
+  const handleDeleteUser = async (userToRemove: User) => {
+    showModal(
+      "Konfirmasi",
+      "Apakah Anda yakin ingin menghapus pengguna ini?",
+      "info",
+      {
+        label: "Hapus",
+        onClick: async () => {
+          try {
+            setIsDeleting(true);
+            setError(null);
+
+            const response = await fetch(
+              `${config.apiUrl}/auth/remove-user-from-toko`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${accessToken}`,
+                },
+                body: JSON.stringify({ user_id: userToRemove.id }),
+              }
+            );
 
             if (!response.ok) {
               const errorData = await response.json();
