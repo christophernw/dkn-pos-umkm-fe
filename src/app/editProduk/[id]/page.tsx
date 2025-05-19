@@ -7,6 +7,11 @@ import config from "@/src/config";
 import TextInput from "../../tambahProduk/components/textInput";
 import EnhancedDropdown from "@/src/components/elements/modal/EnhancedDropdown";
 
+import Head from "next/head";
+import { AccessDeniedScreen } from "@/src/components/AccessDeniedScreen";
+import Script from "next/script";
+
+
 // Initial dropdown options
 const initialUnitOptions = ["Pcs", "Kg", "Botol", "Liter"];
 const initialCategoryOptions = [
@@ -27,7 +32,7 @@ export default function EditProductPage() {
   const { id } = useParams();
   const router = useRouter();
   const { showModal } = useModal();
-  const { accessToken } = useAuth();
+  const { user, accessToken } = useAuth();
   const [productName, setProductName] = useState("");
   const [category, setCategory] = useState("");
   const [priceSell, setPriceSell] = useState("");
@@ -160,8 +165,11 @@ export default function EditProductPage() {
       }
     }
 
-    fetchProduct();
-  }, [id, accessToken, showModal]);
+    // Only fetch if user is not BPR
+    if (!user?.is_bpr) {
+      fetchProduct();
+    }
+  }, [id, accessToken, showModal, user?.is_bpr]);
 
   const handleAddCustomCategory = (newCategory: string) => {
     if (!categoryOptions.includes(newCategory)) {
@@ -312,15 +320,40 @@ export default function EditProductPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="max-w-md mx-auto p-4 flex justify-center">
-        <p>Loading...</p>
-      </div>
-    );
+  // Add this early return check to prevent any data fetching for BPR users
+  if (user?.is_bpr) {
+    return <AccessDeniedScreen userType="BPR" />;
   }
 
   return (
+    <>
+        <Script
+        id="maze-script"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function (m, a, z, e) {
+              var s, t;
+              try {
+                t = m.sessionStorage.getItem('maze-us');
+              } catch (err) {}
+
+              if (!t) {
+                t = new Date().getTime();
+                try {
+                  m.sessionStorage.setItem('maze-us', t);
+                } catch (err) {}
+              }
+
+              s = a.createElement('script');
+              s.src = z + '?apiKey=' + e;
+              s.async = true;
+              a.getElementsByTagName('head')[0].appendChild(s);
+              m.mazeUniversalSnippetApiKey = e;
+            })(window, document, 'https://snippet.maze.co/maze-universal-loader.js', 'e31b53f6-c7fd-47f2-85df-d3c285f18b33');
+          `,
+        }}
+      />
     <div className="max-w-md mx-auto p-4">
       <header className="flex items-center mb-4">
         <button
@@ -478,5 +511,6 @@ export default function EditProductPage() {
         </div>
       </form>
     </div>
+    </>
   );
 }

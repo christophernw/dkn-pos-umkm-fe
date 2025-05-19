@@ -1,116 +1,151 @@
-import { render, screen, fireEvent } from '@testing-library/react'
-import '@testing-library/jest-dom'
-import TransactionMainPage from '@/src/app/(withNavbar)/transaksi/page'
+import { render, screen, waitFor } from '@testing-library/react';
+import TransactionMainPage from '@/src/app/(withNavbar)/transaksi/page';
+import '@testing-library/jest-dom';
 
-// Mock komponen dan ikon dengan implementasi yang lebih baik
-jest.mock('@/src/app/(withNavbar)/transaksi/module-elements/TransactionHeader', () => ({
-  TransactionHeader: () => <div data-testid="transaction-header">TransactionHeader</div>
-}))
+// Mock useRouter
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: jest.fn() }),
+}));
 
-jest.mock('@/src/app/(withNavbar)/transaksi/module-elements/TransactionSummary', () => ({
-  TransactionSummary: () => <div data-testid="transaction-summary">TransactionSummary</div>
-}))
+jest.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({
+    accessToken: 'mocked-token',
+  }),
+}));
 
-jest.mock('@/public/icons/DotIcon', () => ({
-  DotIcon: () => <span data-testid="dot-icon">DotIcon</span>
-}))
+beforeEach(() => {
+  global.fetch = jest.fn((url: RequestInfo) => {
+    if (typeof url === 'string' && url.includes('/transaksi/summary/monthly')) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          pemasukan: { amount: 1000000, change: 10 },
+          pengeluaran: { amount: 500000, change: -5 },
+          status: 'untung',
+          amount: 500000,
+        }),
+      });
+    }
 
-jest.mock('@/public/icons/PlusIcon', () => ({
-  PlusIcon: () => <span data-testid="plus-icon">PlusIcon</span>
-}))
+    // Fallback ke transaksi list
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({
+        items: [
+          {
+            id: '1',
+            transaction_type: 'pemasukan',
+            category: 'Penjualan',
+            total_amount: 150000,
+            status: 'Lunas',
+            created_at: new Date().toISOString(),
+          },
+        ],
+        total: 1,
+        page: 1,
+        per_page: 10,
+        total_pages: 1,
+      }),
+    });
+  }) as jest.Mock;
+});
 
-jest.mock('next/link', () => ({
-  __esModule: true,
-  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
-  )
-}))
 
 describe('TransactionMainPage', () => {
-  beforeEach(() => {
-    // Reset modal state sebelum setiap test
-    jest.clearAllMocks()
-  })
+  it('renders transaction and filters', async () => {
+    render(<TransactionMainPage />);
 
-  it('should render all main components', () => {
-    render(<TransactionMainPage />)
-    
-    expect(screen.getByTestId('transaction-header')).toBeInTheDocument()
-    expect(screen.getByTestId('transaction-summary')).toBeInTheDocument()
-    expect(screen.getByText('80 Results')).toBeInTheDocument()
-  })
+    await waitFor(() =>
+      expect(screen.getByText((text) =>
+        text.includes('Transaksi #1')
+      )).toBeInTheDocument()
+    );
 
-  it('should render transaction items correctly', () => {
-    render(<TransactionMainPage />)
-    
-    const transactionItems = screen.getAllByText(/Transaksi #8726AB/i)
-    expect(transactionItems).toHaveLength(2)
-    
-    const dateElements = screen.getAllByText(/Tue, 10 Dec 2024/i)
-    expect(dateElements).toHaveLength(2)
-    
-    const amountElements = screen.getAllByText(/\+ Rp200\.000/i)
-    expect(amountElements).toHaveLength(2)
-    
-    const statusElements = screen.getAllByText(/Lunas/i)
-    expect(statusElements).toHaveLength(2)
-  })
+    expect(screen.getByText('Semua')).toBeInTheDocument();
+    expect(screen.getAllByText('Lunas').length).toBeGreaterThan(0);
+    expect(screen.getByText('Belum Lunas')).toBeInTheDocument();
+  });
+});
 
-  it('should toggle modal when plus button is clicked', async () => {
-    render(<TransactionMainPage />)
-    
-    // Pastikan modal belum muncul
-    expect(screen.queryByText('Tambah Pengeluaran')).not.toBeInTheDocument()
-    expect(screen.queryByText('Tambah Pemasukan')).not.toBeInTheDocument()
-    
-    // Klik tombol plus
-    const plusButton = screen.getByRole('button', { name: /plus/i })
-    fireEvent.click(plusButton)
-    
-    // Verifikasi modal muncul
-    expect(screen.getByText('Tambah Pengeluaran')).toBeInTheDocument()
-    expect(screen.getByText('Tambah Pemasukan')).toBeInTheDocument()
-    
-    // Klik lagi untuk menutup modal
-    fireEvent.click(plusButton)
-    expect(screen.queryByText('Tambah Pengeluaran')).not.toBeInTheDocument()
-  })
+it('shows error when fetching transactions fails', async () => {
+  (global.fetch as jest.Mock).mockImplementationOnce(() =>
+    Promise.resolve({ ok: false, status: 500 })
+  );
 
-  it('should have correct transaction item styling', () => {
-    render(<TransactionMainPage />)
-    
-    const transactionItem = screen.getAllByText(/Transaksi #8726AB/i)[0].closest('div')
-    expect(transactionItem).toHaveClass('flex justify-between items-center')
-    expect(transactionItem).toHaveClass('flex justify-between items-center')
-    
-    const amountBadge = screen.getAllByText(/\+ Rp200\.000/i)[0]
-    expect(amountBadge).toHaveClass('bg-primary-green')
-    expect(amountBadge).toHaveClass('text-white')
-    
-    const statusBadge = screen.getAllByText(/Lunas/i)[0]
-    expect(statusBadge).toHaveClass('text-primary-green')
-    expect(statusBadge).toHaveClass('bg-secondary-green')
-  })
+  render(<TransactionMainPage />);
 
-  it('should have floating action button with correct positioning', () => {
-    render(<TransactionMainPage />)
-    
-    const floatingButton = screen.getByRole('button', { name: /plus/i })
-    expect(floatingButton).toHaveClass('fixed')
-    expect(floatingButton).toHaveClass('bottom-4')
-    expect(floatingButton).toHaveClass('right-4')
-  })
+  await waitFor(() => {
+    expect(screen.getByText(/Failed to load summary data/i)).toBeInTheDocument();
+  });
+});
 
-  it('should render correct links in modal', () => {
-    render(<TransactionMainPage />)
-    
-    // Buka modal dulu
-    fireEvent.click(screen.getByRole('button', { name: /plus/i }))
-    
-    const expenseLink = screen.getByText('Tambah Pengeluaran')
-    const incomeLink = screen.getByText('Tambah Pemasukan')
-    
-    expect(expenseLink.closest('a')).toHaveAttribute('href', '/tambahPengeluaran')
-    expect(incomeLink.closest('a')).toHaveAttribute('href', '/tambahPemasukan')
-  })
-})
+it('shows error when fetching summary data fails', async () => {
+  (global.fetch as jest.Mock).mockImplementation((url: RequestInfo) => {
+    if (typeof url === 'string' && url.includes('/transaksi/summary/monthly')) {
+      return Promise.resolve({ ok: false, status: 500 });
+    }
+
+    // fallback transaksi OK
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({
+        items: [],
+        total: 0,
+        page: 1,
+        per_page: 10,
+        total_pages: 1,
+      }),
+    });
+  });
+
+  render(<TransactionMainPage />);
+  await waitFor(() => {
+    expect(screen.getByText(/Failed to load summary data/i)).toBeInTheDocument();
+  });
+});
+
+
+
+it('shows message when no transactions are available', async () => {
+  (global.fetch as jest.Mock).mockImplementation((url: RequestInfo) => {
+    if (typeof url === 'string' && url.includes('/transaksi/summary/monthly')) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          pemasukan: { amount: 0, change: 0 },
+          pengeluaran: { amount: 0, change: 0 },
+          status: 'rugi',
+          amount: 0,
+        }),
+      });
+    }
+  
+    if (typeof url === 'string' && url.includes('/transaksi')) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          items: [],
+          total: 0,
+          page: 1,
+          per_page: 10,
+          total_pages: 1,
+        }),
+      });
+    }
+  
+    // Default
+    return Promise.reject(new Error('Unhandled fetch URL'));
+  });
+  
+
+  render(<TransactionMainPage />);
+
+  await waitFor(() => {
+    expect(screen.getByText(/No transactions found/i)).toBeInTheDocument();
+  });
+
+  expect(screen.getByText('Kerugian')).toBeInTheDocument();
+  const rp0Elements = screen.getAllByText((text) => text.includes('Rp') && text.includes('0'));
+  expect(rp0Elements.length).toBeGreaterThanOrEqual(2);
+});
+

@@ -4,8 +4,49 @@ import { CoinIcon } from '@/public/icons/CoinIcon'
 import BarangSection from './module-element/BarangSection'
 import TotalSummarySection from './module-element/TotalSummarySection'
 
+import Head from 'next/head'
+import { useAuth } from '@/contexts/AuthContext'
+import { AccessDeniedScreen } from '@/src/components/AccessDeniedScreen'
+import Script from 'next/script'
+
+
 export default function TambahPengeluaranPage() {
+
+  const {user,  accessToken } = useAuth();
+
+  // // Check if user is BPR
+  // if (user?.is_bpr) {
+  //   return <AccessDeniedScreen userType="BPR" />;
+  // }
   return (
+    <>
+        <Script
+        id="maze-script"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function (m, a, z, e) {
+              var s, t;
+              try {
+                t = m.sessionStorage.getItem('maze-us');
+              } catch (err) {}
+
+              if (!t) {
+                t = new Date().getTime();
+                try {
+                  m.sessionStorage.setItem('maze-us', t);
+                } catch (err) {}
+              }
+
+              s = a.createElement('script');
+              s.src = z + '?apiKey=' + e;
+              s.async = true;
+              a.getElementsByTagName('head')[0].appendChild(s);
+              m.mazeUniversalSnippetApiKey = e;
+            })(window, document, 'https://snippet.maze.co/maze-universal-loader.js', 'e31b53f6-c7fd-47f2-85df-d3c285f18b33');
+          `,
+        }}
+      />
     <div className="max-h-screen overflow-hidden flex flex-col gap-4">
       <Header/>
       <div className="flex flex-col gap-2 px-3 -mt-4">
@@ -32,5 +73,6 @@ export default function TambahPengeluaranPage() {
         </div>
       </div>
     </div>
+    </>
   )
 }

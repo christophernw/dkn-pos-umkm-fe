@@ -16,7 +16,7 @@ interface User {
   id: number;
   email: string;
   name: string;
-  role: "Pemilik" | "Pengelola" | "Karyawan";
+  role: "Pemilik" | "Pengelola" | "Karyawan" | "BPR";
 }
 
 const UserList = () => {
@@ -27,7 +27,10 @@ const UserList = () => {
   const [pendingInvitations, setPendingInvitations] = useState<PendingInvitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  
+  // Check if the current user is a BPR user
+  const isBPRUser = user?.is_bpr === true;
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -88,113 +91,238 @@ const UserList = () => {
         body: JSON.stringify({ user_id: userToRemove.id }),
       });
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Gagal menghapus pengguna");
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || "Failed to remove user");
+            }
+
+            const responseData = await response.json();
+
+            // Send email notification from the frontend in addition to backend email
+            // This provides redundancy in case backend email delivery fails
+            try {
+              await sendRemovalNotificationEmail({
+                to: userToRemove.email,
+                senderName: user?.name || "Store Owner",   
+                senderEmail: user?.email || "no-reply@example.com", 
+                userName: userToRemove.name,
+                ownerName: user?.name || "Store Owner"
+              });
+              
+            } catch (emailError) {
+              console.error("Frontend email sending failed:", emailError);
+              // Continue even if frontend email fails
+            }
+
+            // Refresh the user list after successful deletion
+            await fetchData();
+
+            // Show success message
+            showModal("Berhasil", "Pengguna berhasil dihapus dan notifikasi telah dikirim!", "success");
+          } catch (error: any) {
+            setError(error.message);
+            showModal(
+              "Gagal",
+              `Gagal menghapus pengguna: ${error.message}`,
+              "error"
+            );
+          } finally {
+            setIsDeleting(false);
+          }
+        },
+      },
+      {
+        label: "Batal",
+        onClick: () => {
+          hideModal();
+        },
       }
-
-      await sendRemovalNotificationEmail({
-        to: userToRemove.email,
-        senderName: user?.name || "Store Owner",
-        senderEmail: user?.email || "no-reply@example.com",
-        userName: userToRemove.name,
-        ownerName: user?.name || "Store Owner",
-      }).catch(console.error);
-
-      await fetchData();
-      showModal("Berhasil", "Pengguna berhasil dihapus!", "success");
-    });
-  };
-
-  const handleDeleteInvitation = (id: number) => {
-    confirmAction("Konfirmasi", "Apakah Anda yakin ingin menghapus undangan ini?", async () => {
-      await deleteInvitation(id, accessToken || "");
-      await fetchData();
-      showModal("Berhasil", "Undangan berhasil dihapus!", "success");
-    });
-  };
-
-  const formatDate = (dateStr: string) =>
-    new Date(dateStr).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
-
-  const renderUserRoleTag = (role: User["role"]) => {
-    const color = {
-      Pemilik: "#4CAF50",
-      Pengelola: "#FFC107",
-      Karyawan: "#3B82F6",
-    }[role];
-    const textColor = role === "Pengelola" ? "#000" : "#fff";
-
-    return (
-      <span className="text-xs px-3 py-1 rounded-full" style={{ backgroundColor: color, color: textColor }}>
-        {role}
-      </span>
     );
   };
 
-  const renderUserItem = (userItem: User) => (
-    <li key={userItem.id} className="flex justify-between items-center py-3 border-b">
-      <div>
-        <p className="font-medium">{userItem.name}</p>
-        <p className="text-sm text-gray-500">{userItem.email}</p>
-      </div>
-      <div className="flex gap-2 items-center">
-        {renderUserRoleTag(userItem.role)}
-        {user?.role === "Pemilik" && user.id !== userItem.id && (
-          <button
-            onClick={() => handleDeleteUser(userItem)}
-            disabled={isDeleting}
-            className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50"
-            title="Remove user"
-          >
-            <Trash size={16} />
-          </button>
-        )}
-      </div>
-    </li>
-  );
+  const handleDeleteInvitation = async (invitationId: number) => {
+    showModal(
+      "Konfirmasi",
+      "Apakah Anda yakin ingin menghapus undangan ini?",
+      "info",
+      {
+        label: "Hapus",
+        onClick: async () => {
+          try {
+            setIsDeleting(true);
+            setError(null);
 
-  const renderInvitationItem = (inv: PendingInvitation) => (
-    <li key={inv.id} className="flex justify-between items-center py-3 border-b">
-      <div>
-        <p className="font-medium">{inv.name}</p>
-        <p className="text-sm text-gray-500">{inv.email}</p>
-        <p className="text-xs text-gray-400 mt-1">Kadaluarsa: {formatDate(inv.expires_at)}</p>
-      </div>
-      <div className="flex items-center gap-2">
-        {renderUserRoleTag(inv.role as "Pemilik" | "Pengelola" | "Karyawan")}
-        <button
-          onClick={() => handleDeleteInvitation(inv.id)}
-          disabled={isDeleting}
-          className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50"
-          title="Delete invitation"
-        >
-          <Trash size={16} />
-        </button>
-      </div>
-    </li>
-  );
+            await deleteInvitation(invitationId, accessToken || "");
+            
+            // Refresh the invitations list after successful deletion
+            await fetchData();
+
+            // Show success message
+            showModal("Berhasil", "Undangan berhasil dihapus!", "success");
+          } catch (error: any) {
+            setError(error.message);
+            showModal(
+              "Gagal",
+              `Gagal menghapus undangan: ${error.message}`,
+              "error"
+            );
+          } finally {
+            setIsDeleting(false);
+          }
+        },
+      },
+      {
+        label: "Batal",
+        onClick: () => {
+          hideModal();
+        },
+      }
+    );
+  };
+
+  // Function to format date
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("id-ID", {
+        day: "numeric", 
+        month: "short", 
+        year: "numeric",
+      });
+    } catch (e) {
+      return dateString;
+    }
+  };
 
   return (
     <div className="bg-white p-4 rounded-2xl shadow-md">
-      <h2 className="text-lg font-semibold pb-3 border-b">Informasi Pengguna</h2>
-      {loading ? (
-        <p className="py-3 text-gray-500">Loading...</p>
-      ) : error ? (
-        <p className="text-red-500">{error}</p>
-      ) : (
-        <>
-          <h3 className="font-medium text-sm mt-3 mb-2 text-gray-600">Pengguna Aktif</h3>
-          <ul>{users.length > 0 ? users.map(renderUserItem) : <p className="py-3 text-gray-500">Tidak ada pengguna yang ditemukan.</p>}</ul>
+      <h2 className="text-lg font-semibold pb-3 border-b">
+        Informasi Pengguna
+      </h2>
+      <div>
+        {loading ? (
+          <p className="py-3 text-gray-500">Loading...</p>
+        ) : error ? (
+          <p className="text-red-500">{error}</p>
+        ) : (
+          <div>
+            {/* Active Users */}
+            {users.length === 0 ? (
+              <p className="py-3 text-gray-500">Tidak ada pengguna yang ditemukan.</p>
+            ) : (
+              <>
+                <h3 className="font-medium text-sm mt-3 mb-2 text-gray-600">
+                  Pengguna Aktif
+                </h3>
+                <ul>
+                  {users.map((userItem) => (
+                    <li
+                      key={userItem.id}
+                      className="flex items-center justify-between pt-3 pb-3 border-b border-gray-100"
+                    >
+                      <div>
+                        <p className="font-medium">{userItem.name}</p>
+                        <p className="text-sm text-gray-500 font-extralight">
+                          {userItem.email}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="text-xs px-3 py-1 rounded-full"
+                          style={{
+                            backgroundColor:
+                              // If current user is BPR, always use BPR styling
+                              isBPRUser ? "#3B82F6" :
+                              // Otherwise use the original role-based styling
+                              userItem.role === "Pemilik"
+                                ? "#4CAF50"
+                                : userItem.role === "Pengelola"
+                                ? "#FFC107"
+                                : "#3B82F6",
+                            color:
+                              (isBPRUser || userItem.role !== "Pengelola") ? "#fff" : "#000",
+                          }}
+                        >
+                          {/* Hardcode to "BPR" if current user is BPR */}
+                          {isBPRUser ? "BPR" : userItem.role}
+                        </span>
 
-          {pendingInvitations.length > 0 && (
-            <>
-              <h3 className="font-medium text-sm mt-4 mb-2 text-gray-600">Undangan Tertunda</h3>
-              <ul>{pendingInvitations.map(renderInvitationItem)}</ul>
-            </>
-          )}
-        </>
-      )}
+                        {/* Only show delete button for Pemilik and not for themselves */}
+                        {user &&
+                          user.role === "Pemilik" &&
+                          user.id !== userItem.id && 
+                          !isBPRUser && (
+                            <button
+                              onClick={() => handleDeleteUser(userItem)}
+                              disabled={isDeleting}
+                              className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
+                              title="Remove user"
+                            >
+                              <Trash size={16} />
+                            </button>
+                          )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+
+            {/* Pending Invitations - Only show if not BPR user */}
+            {pendingInvitations.length > 0 && !isBPRUser && (
+              <>
+                <h3 className="font-medium text-sm mt-4 mb-2 text-gray-600">
+                  Undangan Tertunda
+                </h3>
+                <ul>
+                  {pendingInvitations.map((invitation) => (
+                    <li
+                      key={invitation.id}
+                      className="flex items-center justify-between pt-3 pb-3 border-b border-gray-100"
+                    >
+                      <div>
+                        <p className="font-medium">{invitation.name}</p>
+                        <p className="text-sm text-gray-500 font-extralight">
+                          {invitation.email}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          Kadaluarsa: {formatDate(invitation.expires_at)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="text-xs px-3 py-1 rounded-full"
+                          style={{
+                            backgroundColor:
+                              invitation.role === "Pemilik"
+                                ? "#4CAF50"
+                                : invitation.role === "Pengelola"
+                                ? "#FFC107"
+                                : "#3B82F6",
+                            color:
+                              invitation.role === "Pengelola" ? "#000" : "#fff",
+                          }}
+                        >
+                          {invitation.role}
+                        </span>
+
+                        <button
+                          onClick={() => handleDeleteInvitation(invitation.id)}
+                          disabled={isDeleting}
+                          className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
+                          title="Delete invitation"
+                        >
+                          <Trash size={16} />
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
