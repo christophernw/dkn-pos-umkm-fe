@@ -7,10 +7,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { PlusIcon } from "@/public/icons/PlusIcon";
 import Head from "next/head";
+import { AccessDeniedScreen } from "@/src/components/AccessDeniedScreen";
 
 const SemuaBarang = () => {
   const { user } = useAuth();
   const router = useRouter();
+
+  // Check if user is BPR
+  if (user?.is_bpr) {
+    return <AccessDeniedScreen userType="BPR" />;
+  }
 
   return (
     <>

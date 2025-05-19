@@ -4,8 +4,17 @@ import { useState } from "react"
 import Link from "next/link"
 import DatePicker from "@/src/components/DatePicker" 
 import Head from "next/head"
+import { useAuth } from "@/contexts/AuthContext"
+import { AccessDeniedScreen } from "@/src/components/AccessDeniedScreen"
 
 export default function LaporanAkuntansi() {
+  const {user,  accessToken } = useAuth();
+
+  // Check if user is BPR
+  if (user?.is_bpr) {
+    return <AccessDeniedScreen userType="BPR" />;
+  }
+  
   const today = new Date()
   const [startDate, setStartDate] = useState<string>(today.toISOString().split("T")[0])
   const [endDate, setEndDate] = useState<string>(today.toISOString().split("T")[0])
