@@ -14,6 +14,7 @@ import { StockIcon } from "@/public/icons/StockIcon";
 import { NotesIcon } from "@/public/icons/notesIcon";
 import Script from "next/script";
 import { formatDate } from "@/src/utils/formatDate";
+import { Button } from "@/src/components/elements/button/Button";
 import { AccessDeniedScreen } from "@/src/components/AccessDeniedScreen";
 import Head from "next/head";
 
@@ -116,8 +117,6 @@ const ReportPage = () => {
   useEffect(() => {
     if (user) {
       setIsAuthLoading(false);
-
-      // Set access based on role
       if (user.role === "Pemilik" || user.role === "Pengelola") {
         setHasAccess(true);
       } else {
@@ -140,70 +139,6 @@ const ReportPage = () => {
       resetDateRange();
     }
   };
-
-  // Fetch summary data - only if user has access
-  // useEffect(() => {
-  //   if (!accessToken || !hasAccess || reportType !== "utang") {
-  //     setIsLoading(false);
-  //     return;
-  //   }
-
-  //   const fetchSummary = async () => {
-  //     if (!accessToken || !hasAccess || reportType === "arus-kas") {
-  //       return;
-  //     }
-
-  //     setIsLoading(true);
-  //     try {
-  //       // Fetch debt summary (for both report types)
-  //       const debtResponse = await fetch(
-  //         `${config.apiUrl}/transaksi/debt-summary`,
-  //         {
-  //           headers: {
-  //             Authorization: `Bearer ${accessToken}`,
-  //           },
-  //         }
-  //       );
-
-  //       // If we're in financial report mode, also fetch total transactions summary
-  //       let totalPemasukan = 0;
-  //       let totalPengeluaran = 0;
-
-  //       if (reportType === "keuangan") {
-  //         const financialResponse = await fetch(
-  //           `${config.apiUrl}/transaksi/summary/monthly`,
-  //           {
-  //             headers: {
-  //               Authorization: `Bearer ${accessToken}`,
-  //             },
-  //           }
-  //         );
-
-  //         if (financialResponse.ok) {
-  //           const financialData = await financialResponse.json();
-  //           totalPemasukan = financialData.pemasukan.amount || 0;
-  //           totalPengeluaran = financialData.pengeluaran.amount || 0;
-  //         }
-  //       }
-
-  //       if (debtResponse.ok) {
-  //         const debtData = await debtResponse.json();
-  //         setSummary({
-  //           utangSaya: debtData.utang_saya || 0,
-  //           utangPelanggan: debtData.utang_pelanggan || 0,
-  //           totalPemasukan: totalPemasukan,
-  //           totalPengeluaran: totalPengeluaran
-  //         });
-  //       }
-  //     } catch (error) {
-  //       console.error("Error fetching summary data:", error);
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-
-  //   fetchSummary();
-  // }, [accessToken, reportType, hasAccess]);
 
   // Fetch first transaction date - only if user has access
   useEffect(() => {
@@ -699,33 +634,33 @@ const ReportPage = () => {
   return (
     <>
 
-      <Head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-                    (function (m, a, z, e) {
-                    var s, t;
-                    try {
-                        t = m.sessionStorage.getItem('maze-us');
-                    } catch (err) {}
+      <Script
+        id="maze-script"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function (m, a, z, e) {
+              var s, t;
+              try {
+                t = m.sessionStorage.getItem('maze-us');
+              } catch (err) {}
 
-                    if (!t) {
-                        t = new Date().getTime();
-                        try {
-                        m.sessionStorage.setItem('maze-us', t);
-                        } catch (err) {}
-                    }
+              if (!t) {
+                t = new Date().getTime();
+                try {
+                  m.sessionStorage.setItem('maze-us', t);
+                } catch (err) {}
+              }
 
-                    s = a.createElement('script');
-                    s.src = z + '?apiKey=' + e;
-                    s.async = true;
-                    a.getElementsByTagName('head')[0].appendChild(s);
-                    m.mazeUniversalSnippetApiKey = e;
-                    })(window, document, 'https://snippet.maze.co/maze-universal-loader.js', 'e31b53f6-c7fd-47f2-85df-d3c285f18b33');
-                `,
-          }}
-        />
-      </Head>
+              s = a.createElement('script');
+              s.src = z + '?apiKey=' + e;
+              s.async = true;
+              a.getElementsByTagName('head')[0].appendChild(s);
+              m.mazeUniversalSnippetApiKey = e;
+            })(window, document, 'https://snippet.maze.co/maze-universal-loader.js', 'e31b53f6-c7fd-47f2-85df-d3c285f18b33');
+          `,
+        }}
+      />
 
       <div className="p-4">
         <div className="flex justify-start items-center mb-4">
@@ -1191,7 +1126,7 @@ const ReportPage = () => {
             )}
 
             {/* Download Button */}
-            <button
+            <Button
               onClick={handleDownloadClick}
               disabled={
                 isGeneratingReport ||
@@ -1199,10 +1134,10 @@ const ReportPage = () => {
                   arusKasTransactions.length === 0) ||
                 !hasAccess
               }
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium mb-20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center z-20"
+              // className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium mb-20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center z-20"
             >
               {isGeneratingReport ? "Memproses..." : "Unduh Laporan"}
-            </button>
+            </Button>
 
             {/* Download Modal - Fixed Excel Icon */}
             {isDownloadModalOpen && (
