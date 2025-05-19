@@ -10,6 +10,7 @@ import config from "@/src/config";
 import { useRouter } from "next/navigation";
 import { NotesIcon } from "@/public/icons/notesIcon";
 import Script from "next/script";
+import { Button } from "@/src/components/elements/button/Button";
 
 interface TransactionItem {
   id: string;
@@ -418,36 +419,24 @@ export default function TransactionMainPage() {
 
         {/* Filter Buttons */}
         <div className="flex gap-2">
-          <button
+          <Button
             onClick={() => handleFilterChange("all")}
-            className={`flex-1 p-2 rounded-lg font-medium ${
-              activeFilter === "all"
-                ? "bg-primary-indigo text-white"
-                : "bg-gray-200 text-gray-700"
-            }`}
+            variant={activeFilter === "all" ? "primary" : "tertiary"}
           >
             Semua
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => handleFilterChange("paid")}
-            className={`flex-1 p-2 rounded-lg font-medium ${
-              activeFilter === "paid"
-                ? "bg-primary-indigo text-white"
-                : "bg-gray-200 text-gray-700"
-            }`}
+            variant={activeFilter === "paid" ? "primary" : "tertiary"}
           >
             Lunas
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => handleFilterChange("unpaid")}
-            className={`flex-1 p-2 rounded-lg font-medium ${
-              activeFilter === "unpaid"
-                ? "bg-primary-indigo text-white"
-                : "bg-gray-200 text-gray-700"
-            }`}
+            variant={activeFilter === "unpaid" ? "primary" : "tertiary"}
           >
             Belum Lunas
-          </button>
+          </Button>
         </div>
 
         {/* Results count */}

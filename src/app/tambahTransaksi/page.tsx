@@ -400,11 +400,12 @@ export default function TambahTransaksiPage() {
         <>
           <div className="flex justify-between items-center mb-3 bg-">
             <h2 className="text-lg font-semibold">Barang</h2>
-            <button
+            <Button
+              variant="secondary"
               onClick={handleOpenProductSelector}
-              className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200 flex items-center"
             >
-              <svg
+              <div className="flex items-center">
+                <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -414,8 +415,9 @@ export default function TambahTransaksiPage() {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
-              Tambah Barang
-            </button>
+              <p className="text-xs">Tambah Barang</p>
+              </div>
+            </Button>
           </div>
 
           <div className="space-y-3 mb-6">
