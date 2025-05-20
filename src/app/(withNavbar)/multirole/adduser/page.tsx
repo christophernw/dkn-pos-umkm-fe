@@ -4,10 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AiOutlineArrowLeft } from "react-icons/ai";
 import { useAuth } from "@/contexts/AuthContext";
-import { sendInvitationEmail } from "@/src/app/lib/emailservice";
+import { InvitationEmailService, sendInvitationEmail } from "@/src/app/lib/emailservice";
 import { sanitizeInput, validateInputs } from "./utils/inputValidation";
-// import { sendInvitation } from "../adduser/services/invitationService";
-// import { InvitationPayload, InvitationResponse } from "./types/types";
 import { 
   sendInvitation, 
   InvitationPayload, 
@@ -15,7 +13,7 @@ import {
 } from "../services/invitationService";
 import { Modal } from '@/src/components/elements/modal/Modal'
 import config from "@/src/config";
-import { ConfirmModal } from "./component/confirmmodal";
+import { ConfirmModal, RoleType } from "./components/confirmmodal";
 import Dropdown from "@/src/components/Dropdown";
 import { AccessDeniedScreen } from "@/src/components/AccessDeniedScreen";
 
@@ -89,6 +87,7 @@ export default function AddUserPage() {
           setName("");
           setRole("Karyawan");
           setEmail("");
+          router.push("/multirole")
         } catch (error) {
           console.error("Gagal mengirim email:", error);
           setMessage("Terjadi kesalahan saat mengirim undangan.");
@@ -221,7 +220,7 @@ export default function AddUserPage() {
         <Modal onClose={() => setShowConfirmModal(false)}>
           <ConfirmModal
             name={name}
-            role={role}
+            role={role as RoleType}
             email={email}
             onClose={() => setShowConfirmModal(false)}
             onConfirm={submitConfirmed}

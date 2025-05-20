@@ -3,7 +3,7 @@ import { getToken } from "next-auth/jwt";
 
 export default async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  if (pathname === "/login") {
+  if (pathname === "/login" || pathname === "/auth/invite") {
     return NextResponse.next();
   }
 
