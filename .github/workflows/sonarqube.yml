@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - "**"
+      # asdfasdf
 
 jobs:
   sonarqube:
@@ -15,6 +16,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for proper SonarQube analysis
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -26,9 +29,9 @@ jobs:
         run: npm install
 
       - name: Run tests and generate coverage
-        run: 
+        run: npm test # Add this command to run your tests
 
-      - name: Run SonarQube Scan (Only `src/` Files)
+      - name: Run SonarQube Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -38,3 +41,6 @@ jobs:
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
             -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
             -Dsonar.sources=src \
+            -Dsonar.tests=__tests__ \
+            -Dsonar.test.inclusions=**/__tests__/**,**/*.test.tsx,**/*.test.ts \
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
