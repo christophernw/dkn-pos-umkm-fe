@@ -26,7 +26,7 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Run tests and generate coverage
         run: npm test -- __test__/laporan/labaRugi.test.tsx # Only test only on laba rugi
