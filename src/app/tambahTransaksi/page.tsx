@@ -16,7 +16,7 @@ import { BellIcon } from "@/public/icons/BellIcon";
 import Head from "next/head";
 import { AccessDeniedScreen } from "@/src/components/AccessDeniedScreen";
 import Script from "next/script";
-
+import { useSearchParams } from "next/navigation";
 
 interface ProductCardProps {
   id: number;
@@ -49,9 +49,13 @@ export default function TambahTransaksiPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [transactionMode, setTransactionMode] = useState<
-    "pemasukan" | "pengeluaran"
-  >("pemasukan");
+  const searchParams = useSearchParams();
+  const mode = searchParams.get("mode") as "pemasukan" | "pengeluaran" | null;
+
+  const [transactionMode, setTransactionMode] = useState<"pemasukan" | "pengeluaran">(
+    mode === "pengeluaran" ? "pengeluaran" : "pemasukan"
+  );
+
   const [manualTotalAmount, setManualTotalAmount] = useState<string>("");
   const [manualTotalModal, setManualTotalModal] = useState<string>("");
   const [categoryType, setCategoryType] = useState<string>(

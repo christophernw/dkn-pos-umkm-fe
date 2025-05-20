@@ -15,10 +15,26 @@ export default function SettingsPage() {
   const { logout} = useAuth();
 
   const handleSignOut = async () => {
-    logout();
-    await signOut({ redirect: false });
+    try {
+      const refresh = localStorage.getItem("refreshToken");
+      if (refresh) {
+        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/logout`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ refresh }),
+        });
+      }
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+
+    logout(); // Panggil logout dari context
+    await signOut({ redirect: false }); // Clear session if using NextAuth
     router.push("/");
   };
+
   
   return (
     <>
