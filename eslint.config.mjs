@@ -18,8 +18,7 @@ const eslintConfig = [
       "@typescript-eslint/no-unused-vars": "off", // Disable the ESLint rule
       "@next/next/no-img-element": "off", // Disable the ESLint rule
       "react-hooks/exhaustive-deps": "off",
-      "prefer-const": "off",
-      "react-hooks/rules-of-hooks": "off" // Add this line to disable the hooks rule
+      "prefer-const": "off"
     },
   },
 ];    
