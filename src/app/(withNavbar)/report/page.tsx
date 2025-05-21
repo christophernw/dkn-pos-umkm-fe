@@ -120,38 +120,37 @@ const ReportPage = () => {
     if (!accessToken) return;
 
     try {
-      const res = await fetch(`${config.apiUrl}/auth/validate-token`, {
+      // Get current user info
+      const userInfoResponse = await fetch(`${config.apiUrl}/auth/me`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
       });
-
-      const data = await res.json();
-
-      if (!data.valid) {
+      
+      if (!userInfoResponse.ok) {
+        // If we can't get user info, user has likely been kicked
         alert("Sesi Anda telah berakhir atau Anda telah dikeluarkan dari toko.");
         logout();
-        await signOut({ redirect: false });
+        await signOut({ redirect: true });
         router.push("/");
-      } else if (data.user) {
-        // Check for role mismatch between backend and frontend
-        if (user?.role !== data.user.role || user?.toko_id !== data.user.toko_id) {
-          console.log("Role/toko mismatch detected. Frontend:", user, "Backend:", data.user);
-          alert("Informasi akun Anda telah berubah. Silakan login kembali.");
-          logout();
-          await signOut({ redirect: false });
-          router.push("/");
-        } else {
-          // Only set access state when roles match
-          if (user?.role === "Pemilik" || user?.role === "Pengelola") {
-            setHasAccess(true);
-          } else {
-            setHasAccess(false);
-          }
-        }
+        return;
       }
+      
+      const userInfo = await userInfoResponse.json();
+      
+      // Compare with current frontend user data
+      if (user?.toko_id !== userInfo.toko_id || user?.role !== userInfo.role) {
+        alert("Informasi akun Anda telah berubah. Silakan login kembali.");
+        logout();
+        await signOut({ redirect: true });
+        router.push("/");
+        return;
+      }
+      
+      // Continue with other validation if needed
     } catch (err) {
       console.error("Gagal validasi sesi:", err);
+      logout();
       await signOut({ redirect: false });
       router.push("/");
     }
