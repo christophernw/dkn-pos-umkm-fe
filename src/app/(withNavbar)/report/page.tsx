@@ -814,7 +814,7 @@ const ReportPage = () => {
                     <div className="flex flex-col gap-1">
                       <p className="text-xl font-bold text-green-600">
 
-                        Rp{formatCurrency(summary.totalPengeluaran)}
+                        Rp{formatCurrency(summary.totalPemasukan)}
                       </p>
                       <p className="text-xs text-gray-500">
                         {dateRange === "custom" && customStartDate && customEndDate
@@ -835,7 +835,7 @@ const ReportPage = () => {
                     <div className="flex flex-col gap-1">
                       <p className="text-xl font-bold text-red-600">
 
-                        Rp{formatCurrency(summary.totalPemasukan)}
+                        Rp{formatCurrency(summary.totalPengeluaran)}
 
                       </p>
                       <p className="text-xs text-gray-500">
@@ -1019,8 +1019,8 @@ const ReportPage = () => {
                             >
                               {"transaction_type" in transaction &&
                               transaction.transaction_type === "pemasukan"
-                                ? "Berikan"
-                                : "Terima"}
+                                ? "Terima"
+                                : "Berikan"}
                             </span>
                             <span className="font-semibold">
                               Rp
