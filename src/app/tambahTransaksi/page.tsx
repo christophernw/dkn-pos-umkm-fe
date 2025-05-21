@@ -40,7 +40,7 @@ function formatHarga(num: number): string {
 export default function TambahTransaksiPage() {
   const router = useRouter()
   const { accessToken } = useAuth()
-  const { showModal, hideModal } = useModal()
+  const {   showModal, hideModal } = useModal()
   const [selectedProducts, setSelectedProducts] = useState<SelectedProductItem[]>([])
   const [status, setStatus] = useState<"Lunas" | "Belum Lunas">("Lunas")
   const [isLoading, setIsLoading] = useState(false)
