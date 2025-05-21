@@ -29,7 +29,7 @@ jobs:
         run: npm install --legacy-peer-deps
 
       - name: Run tests and generate coverage
-        run: npm test -- --coverage __test__/multirole/userList.test.tsx 
+        run: npm test -- --coverage __test__/multirole/userList.test.tsx __test__/multirole/MultiRole.test.tsx 
       - name: Run SonarQube Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
