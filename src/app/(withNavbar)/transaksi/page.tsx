@@ -216,6 +216,24 @@ export default function TransactionMainPage() {
     "Juli", "Agustus", "September", "Oktober", "November", "Desember"
   ];
 
+  // Function to get available months based on selected year
+  const getAvailableMonths = () => {
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1; // getMonth() returns 0-11, so add 1
+
+    if (selectedYear === 2025) {
+      // For year 2025, only show months up to the current month (May = 5)
+      return monthNames.slice(0, Math.min(currentMonth, 12));
+    } else if (selectedYear === currentYear && selectedYear !== 2025) {
+      // For the current year (if it's not 2025), show months up to current month
+      return monthNames.slice(0, currentMonth);
+    } else {
+      // For past years, show all months
+      return monthNames;
+    }
+  };
+
   // Get list of years (current year and 4 years back)
   const currentYear = new Date().getFullYear();
   const yearList = Array.from({ length: 5 }, (_, i) => currentYear - i);
@@ -338,7 +356,7 @@ export default function TransactionMainPage() {
 
             {monthDropdownOpen && (
               <div className="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-lg z-10 w-[160px] max-h-56 overflow-y-auto">
-                {monthNames.map((month, index) => (
+                {getAvailableMonths().map((month, index) => (
                   <div
                     key={index}
                     className={`p-2 cursor-pointer hover:bg-gray-100 ${
