@@ -17,6 +17,7 @@ import { formatDate } from "@/src/utils/formatDate";
 import { Button } from "@/src/components/elements/button/Button";
 import { AccessDeniedScreen } from "@/src/components/AccessDeniedScreen";
 import Head from "next/head";
+import { signOut } from "next-auth/react";
 
 // Define types
 interface Transaction {
@@ -64,7 +65,7 @@ export interface ArusKasReportResponse {
 }
 
 const ReportPage = () => {
-  const { user, accessToken } = useAuth();
+  const { user, accessToken, logout, setAuthData, refreshToken } = useAuth();
   // Check if user is BPR
   if (user?.is_bpr) {
     return <AccessDeniedScreen userType="BPR" />;
@@ -114,6 +115,47 @@ const ReportPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
+  // In ReportPage.tsx
+  const validateSession = async () => {
+    if (!accessToken) return;
+
+    try {
+      // Get current user info
+      const userInfoResponse = await fetch(`${config.apiUrl}/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      
+      if (!userInfoResponse.ok) {
+        // If we can't get user info, user has likely been kicked
+        alert("Sesi Anda telah berakhir atau Anda telah dikeluarkan dari toko.");
+        logout();
+        await signOut({ redirect: true });
+        router.push("/");
+        return;
+      }
+      
+      const userInfo = await userInfoResponse.json();
+      
+      // Compare with current frontend user data
+      if (user?.toko_id !== userInfo.toko_id || user?.role !== userInfo.role) {
+        alert("Informasi akun Anda telah berubah. Silakan login kembali.");
+        logout();
+        await signOut({ redirect: true });
+        router.push("/");
+        return;
+      }
+      
+      // Continue with other validation if needed
+    } catch (err) {
+      console.error("Gagal validasi sesi:", err);
+      logout();
+      await signOut({ redirect: false });
+      router.push("/");
+    }
+  };
+
   useEffect(() => {
     if (user) {
       setIsAuthLoading(false);
@@ -122,6 +164,7 @@ const ReportPage = () => {
       } else {
         setHasAccess(false);
       }
+      validateSession()
     } else if (accessToken === null) {
       setIsAuthLoading(false);
       setHasAccess(false);

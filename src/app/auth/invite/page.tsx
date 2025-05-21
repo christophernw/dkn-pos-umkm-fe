@@ -53,7 +53,6 @@ const useInvitationValidation = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ token }),
-        signal: AbortSignal.timeout(10000) 
       });
 
       if (!response.ok) {
@@ -65,9 +64,6 @@ const useInvitationValidation = () => {
       if (data.valid) {
         setStatus('success');
         setMessage(INVITATION_MESSAGES.SUCCESS);
-        
-        logout();
-        await signOut({ redirect: false });
       } else {
         setStatus('error');
         
