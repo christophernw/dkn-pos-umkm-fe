@@ -13,6 +13,7 @@ import { formatDate } from "@/src/utils/formatDate";
 // Add these imports for the download functionality
 import { generateDebtReportPDF } from "@/src/utils/pdfGenerator";
 import { generateDebtReportExcel } from "@/src/utils/excelGenerator";
+import { Button } from "@/src/components/elements/button/Button";
 
 // Types
 interface ShopInfo {
@@ -634,18 +635,18 @@ const ShopReportPage = () => {
 
   if (!hasAccess) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-100">
-        <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-sm">
+      <div className="h-screen flex items-center justify-center bg-[#EDF1F9]">
+        <div className="bg-white p-8 rounded-xl text-center max-w-sm">
           <h1 className="text-2xl font-bold text-red-600 mb-4">
             Akses Ditolak
           </h1>
           <p className="mb-6">Anda tidak memiliki akses ke halaman ini.</p>
-          <button
+          <Button
             onClick={() => router.push("/")}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             Kembali ke Beranda
-          </button>
+          </Button>
         </div>
       </div>
     );
