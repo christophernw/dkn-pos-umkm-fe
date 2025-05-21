@@ -29,9 +29,8 @@ jobs:
         run: npm install --legacy-peer-deps
 
       - name: Run tests and generate coverage
-        run: 
-
-      - name: Run SonarQube Scan (Only `src/` Files)
+        run: npm test -- --coverage __test__/multirole/userList.test.tsx 
+      - name: Run SonarQube Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
