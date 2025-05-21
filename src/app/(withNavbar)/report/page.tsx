@@ -65,7 +65,7 @@ export interface ArusKasReportResponse {
 }
 
 const ReportPage = () => {
-  const { user, accessToken, logout } = useAuth();
+  const { user, accessToken, logout, setAuthData, refreshToken } = useAuth();
   // Check if user is BPR
   if (user?.is_bpr) {
     return <AccessDeniedScreen userType="BPR" />;
@@ -115,6 +115,7 @@ const ReportPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
+  // In ReportPage.tsx
   const validateSession = async () => {
     if (!accessToken) return;
 
@@ -132,6 +133,22 @@ const ReportPage = () => {
         logout();
         await signOut({ redirect: false });
         router.push("/");
+      } else if (data.user) {
+        // Check for role mismatch between backend and frontend
+        if (user?.role !== data.user.role || user?.toko_id !== data.user.toko_id) {
+          console.log("Role/toko mismatch detected. Frontend:", user, "Backend:", data.user);
+          alert("Informasi akun Anda telah berubah. Silakan login kembali.");
+          logout();
+          await signOut({ redirect: false });
+          router.push("/");
+        } else {
+          // Only set access state when roles match
+          if (user?.role === "Pemilik" || user?.role === "Pengelola") {
+            setHasAccess(true);
+          } else {
+            setHasAccess(false);
+          }
+        }
       }
     } catch (err) {
       console.error("Gagal validasi sesi:", err);
