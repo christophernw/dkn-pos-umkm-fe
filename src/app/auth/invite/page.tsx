@@ -64,16 +64,6 @@ const useInvitationValidation = () => {
       if (data.valid) {
         setStatus('success');
         setMessage(INVITATION_MESSAGES.SUCCESS);
-
-        try {
-          logout?.(); 
-          await signOut({ redirect: false });
-        } catch (logoutError) {
-          console.warn("Logout failed or user not logged in:", logoutError);
-          // Still continue without failing the invitation process
-        }
-
-        return;
       } else {
         setStatus('error');
         
