@@ -20,9 +20,8 @@ const Header = () => {
       <h1 className="text-lg font-semibold flex items-center justify-center">
         Pengaturan Pengguna
       </h1>
-      <button className="w-10 h-10 rounded-full bg-white hover:bg-gray-300 flex items-center justify-center">
-        <MoreHorizontal className="w-5 h-5 text-black" />
-      </button>
+      {/* Dummy placeholder to balance layout */}
+      <div className="w-10 h-10" />
     </div>
   );
 };
