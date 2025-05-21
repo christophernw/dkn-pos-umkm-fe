@@ -8,17 +8,19 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import Script from 'next/script'
+import config from '@/src/config'
 
 export default function SettingsPage() {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const { logout} = useAuth();
-
+  const { logout } = useAuth();
+  const { user, accessToken } = useAuth();
   const handleSignOut = async () => {
-    logout();
+    logout()
     await signOut({ redirect: false });
     router.push("/");
   };
+
   
   return (
     <>

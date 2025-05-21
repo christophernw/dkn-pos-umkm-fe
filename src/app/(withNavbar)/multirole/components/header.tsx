@@ -17,7 +17,7 @@ const Header = () => {
       >
         <ArrowLeft className="w-5 h-5 text-black" />
       </button>
-      <h1 className="text-xl font-semibold flex items-center justify-center">
+      <h1 className="text-lg font-semibold flex items-center justify-center">
         Pengaturan Pengguna
       </h1>
       <button className="w-10 h-10 rounded-full bg-white hover:bg-gray-300 flex items-center justify-center">

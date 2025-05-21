@@ -86,7 +86,7 @@ export default function Home() {
               </div>
             </Link>
             
-            <Link href="/tambahPemasukan">
+            <Link href="/tambahTransaksi?mode=pemasukan">
               <div className="bg-white rounded-xl p-4 shadow-sm flex flex-col items-center justify-center gap-2 h-24 hover:bg-green-50 transition-colors">
                 <div className="bg-green-100 p-2 rounded-full">
                   <CoinIcon />
@@ -95,7 +95,7 @@ export default function Home() {
               </div>
             </Link>
             
-            <Link href="/tambahPengeluaran">
+            <Link href="/tambahTransaksi?mode=pengeluaran">
               <div className="bg-white rounded-xl p-4 shadow-sm flex flex-col items-center justify-center gap-2 h-24 hover:bg-red-50 transition-colors">
                 <div className="bg-red-100 p-2 rounded-full">
                   <StockIcon />

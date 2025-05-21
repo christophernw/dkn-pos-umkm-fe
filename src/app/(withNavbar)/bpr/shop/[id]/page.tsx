@@ -10,6 +10,10 @@ import { StockIcon } from "@/public/icons/StockIcon";
 import { NotesIcon } from "@/public/icons/notesIcon";
 import Head from "next/head";
 import { formatDate } from "@/src/utils/formatDate";
+// Add these imports for the download functionality
+import { generateDebtReportPDF } from "@/src/utils/pdfGenerator";
+import { generateDebtReportExcel } from "@/src/utils/excelGenerator";
+import { Button } from "@/src/components/elements/button/Button";
 
 // Types
 interface ShopInfo {
@@ -387,7 +391,6 @@ const ShopReportPage = () => {
     itemsPerPage,
   ]);
 
-  // Handle download click
   const handleDownloadClick = () => {
     if (!hasAccess) {
       // Prevent download if no access
@@ -396,17 +399,84 @@ const ShopReportPage = () => {
     setIsDownloadModalOpen(true);
   };
 
-  // Handle download
+  // Modified handleDownload function to actually download reports
   const handleDownload = async (format: string) => {
     setIsDownloadModalOpen(false);
-    showModal(
-      "Coming Soon",
-      "Download feature for BPR shop reports will be available soon.",
-      "info"
-    );
+    setIsGeneratingReport(true);
+
+    try {
+      // Prepare the report data
+      const reportData = {
+        transactions: reportType === "arus-kas" ? arusKasTransactions : transactions,
+        startDate: reportDateRange.startDate,
+        endDate: reportDateRange.endDate,
+        utangSaya: summary.utangSaya,
+        utangPelanggan: summary.utangPelanggan,
+        totalPemasukan: summary.totalPemasukan,
+        totalPengeluaran: summary.totalPengeluaran,
+        reportType: reportType,
+      };
+
+      // Generate report based on format
+      let blob: Blob;
+      let fileName: string;
+
+      if (format === "pdf") {
+        blob = await generateDebtReportPDF({
+          ...reportData,
+          reportType: reportType === "keuangan" ? "laba-rugi" : reportType,
+        });
+        fileName = `BPR_Laporan_${
+          reportType === "utang"
+            ? "Utang_Piutang"
+            : reportType !== "arus-kas"
+            ? "Keuangan"
+            : "Arus_Kas"
+        }_${shopInfo?.owner || 'Shop'}_${new Date().toISOString().split('T')[0]}.pdf`;
+      } else {
+        blob = generateDebtReportExcel(reportData);
+        fileName = `BPR_Laporan_${
+          reportType === "utang"
+            ? "Utang_Piutang"
+            : reportType !== "arus-kas"
+            ? "Keuangan"
+            : "Arus_Kas"
+        }_${shopInfo?.owner || 'Shop'}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      }
+
+      // Create download link and trigger download
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+
+      // Clean up
+      URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+
+      showModal(
+        "Laporan Diunduh",
+        `Laporan dalam format ${
+          format === "pdf" ? "PDF" : "Excel"
+        } telah berhasil diunduh.`,
+        "success"
+      );
+    } catch (error) {
+      console.error(`Error generating ${format} report:`, error);
+      showModal(
+        "Gagal Mengunduh",
+        `Terjadi kesalahan saat mengunduh laporan dalam format ${
+          format === "pdf" ? "PDF" : "Excel"
+        }.`,
+        "error"
+      );
+    } finally {
+      setIsGeneratingReport(false);
+    }
   };
 
-  // Format currency
   const formatCurrency = (amount: number): string => {
     // Convert to number if it's a string, handle NaN cases
     const amountNumber =
@@ -543,8 +613,8 @@ const ShopReportPage = () => {
       buttons.push(
         <button
           key={totalPages}
-          onClick={() => handlePageChange(totalPages)}
           className="min-w-9 rounded-md border border-slate-300 py-1 px-2 text-xs hover:bg-blue-100 ml-1"
+          onClick={() => handlePageChange(totalPages)}
         >
           {totalPages}
         </button>
@@ -565,18 +635,18 @@ const ShopReportPage = () => {
 
   if (!hasAccess) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-100">
-        <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-sm">
+      <div className="h-screen flex items-center justify-center bg-[#EDF1F9]">
+        <div className="bg-white p-8 rounded-xl text-center max-w-sm">
           <h1 className="text-2xl font-bold text-red-600 mb-4">
             Akses Ditolak
           </h1>
           <p className="mb-6">Anda tidak memiliki akses ke halaman ini.</p>
-          <button
+          <Button
             onClick={() => router.push("/")}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             Kembali ke Beranda
-          </button>
+          </Button>
         </div>
       </div>
     );

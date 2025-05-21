@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useModal } from "@/contexts/ModalContext";
@@ -604,20 +605,20 @@ const ReportPage = () => {
 
   if (!hasAccess) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-100">
-        <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-sm">
+      <div className="h-screen flex items-center justify-center bg-[#EDF1F9]">
+        <div className="bg-white p-8 rounded-xl text-center max-w-sm">
           <h1 className="text-2xl font-bold text-red-600 mb-4">
             Akses Ditolak
           </h1>
           <p className="mb-6">
             Karyawan tidak diperbolehkan mengakses halaman Laporan.
           </p>
-          <button
+          <Button
             onClick={() => router.push("/")}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             Kembali ke Beranda
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -633,7 +634,33 @@ const ReportPage = () => {
 
   return (
     <>
+      <Script
+        id="maze-script"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function (m, a, z, e) {
+              var s, t;
+              try {
+                t = m.sessionStorage.getItem('maze-us');
+              } catch (err) {}
 
+              if (!t) {
+                t = new Date().getTime();
+                try {
+                  m.sessionStorage.setItem('maze-us', t);
+                } catch (err) {}
+              }
+
+              s = a.createElement('script');
+              s.src = z + '?apiKey=' + e;
+              s.async = true;
+              a.getElementsByTagName('head')[0].appendChild(s);
+              m.mazeUniversalSnippetApiKey = e;
+            })(window, document, 'https://snippet.maze.co/maze-universal-loader.js', 'e31b53f6-c7fd-47f2-85df-d3c285f18b33');
+          `,
+        }}
+      />
       <Script
         id="maze-script"
         strategy="afterInteractive"
@@ -791,13 +818,11 @@ const ReportPage = () => {
                         Rp{formatCurrency(summary.totalPengeluaran)}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {dateRange === "custom" &&
-                        customStartDate &&
-                        customEndDate
+                        {dateRange === "custom" && customStartDate && customEndDate
                           ? `${formatDate(customStartDate)} - ${formatDate(
                               customEndDate
                             )}`
-                          : `${dateRange} Hari Terakhir`}
+                          : dateRange === "this_month" ? `Bulan ini` :`${dateRange} Hari Terakhir`}
                       </p>
                     </div>
                   </div>
@@ -821,7 +846,7 @@ const ReportPage = () => {
                           ? `${formatDate(customStartDate)} - ${formatDate(
                               customEndDate
                             )}`
-                          : `${dateRange} Hari Terakhir`}
+                          : dateRange === "this_month" ? `Bulan ini` :`${dateRange} Hari Terakhir`}
                       </p>
                     </div>
                   </div>
@@ -846,7 +871,7 @@ const ReportPage = () => {
                           ? `${formatDate(customStartDate)} - ${formatDate(
                               customEndDate
                             )}`
-                          : `${dateRange} Hari Terakhir`}
+                          : dateRange === "this_month" ? `Bulan ini` :`${dateRange} Hari Terakhir`}
                       </p>
                     </div>
                   </div>
@@ -868,7 +893,7 @@ const ReportPage = () => {
                           ? `${formatDate(customStartDate)} - ${formatDate(
                               customEndDate
                             )}`
-                          : `${dateRange} Hari Terakhir`}
+                          : dateRange === "this_month" ? `Bulan ini` :`${dateRange} Hari Terakhir`}
                       </p>
                     </div>
                   </div>

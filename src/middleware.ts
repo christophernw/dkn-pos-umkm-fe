@@ -3,11 +3,11 @@ import { getToken } from "next-auth/jwt";
 
 export default async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  if (pathname === "/login") {
+  if (pathname === "/login" || pathname === "/auth/invite") {
     return NextResponse.next();
   }
 
-  const PROTECTED_ROUTES = ["informasi", "semuaBarang","multirole","pengaturan", "tambahProduk", "transaksi"];
+  const PROTECTED_ROUTES = ["informasi", "semuaBarang","multirole","pengaturan", "tambahProduk", "transaksi", ""];
 
   const isProtectedRoute = PROTECTED_ROUTES.some((route) =>
     pathname.includes(route)
