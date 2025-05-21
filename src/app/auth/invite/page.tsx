@@ -53,7 +53,6 @@ const useInvitationValidation = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ token }),
-        signal: AbortSignal.timeout(10000) 
       });
 
       if (!response.ok) {
@@ -65,9 +64,16 @@ const useInvitationValidation = () => {
       if (data.valid) {
         setStatus('success');
         setMessage(INVITATION_MESSAGES.SUCCESS);
-        
-        logout();
-        await signOut({ redirect: false });
+
+        try {
+          logout?.(); 
+          await signOut({ redirect: false });
+        } catch (logoutError) {
+          console.warn("Logout failed or user not logged in:", logoutError);
+          // Still continue without failing the invitation process
+        }
+
+        return;
       } else {
         setStatus('error');
         

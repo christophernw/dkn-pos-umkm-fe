@@ -7,12 +7,12 @@ import UserList from "./components/userList";
 import { useAuth } from "@/contexts/AuthContext";
 import AddUserButton from "./components/addUserButton";
 import Script from "next/script";
-import config from "@/src/config";
-import router from "next/router";
+import config from "@/src/config"
+import { useRouter } from 'next/navigation';;
 
 const MultiRolePageContent: React.FC = () => {
   const { user, accessToken, logout } = useAuth();
-
+  const router = useRouter()
   // In MultiRolePageContent component
   useEffect(() => {
     const validateSession = async () => {
