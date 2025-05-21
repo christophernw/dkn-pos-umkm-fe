@@ -17,6 +17,7 @@ import { formatDate } from "@/src/utils/formatDate";
 import { Button } from "@/src/components/elements/button/Button";
 import { AccessDeniedScreen } from "@/src/components/AccessDeniedScreen";
 import Head from "next/head";
+import { signOut } from "next-auth/react";
 
 // Define types
 interface Transaction {
@@ -64,7 +65,7 @@ export interface ArusKasReportResponse {
 }
 
 const ReportPage = () => {
-  const { user, accessToken } = useAuth();
+  const { user, accessToken, logout } = useAuth();
   // Check if user is BPR
   if (user?.is_bpr) {
     return <AccessDeniedScreen userType="BPR" />;
@@ -114,6 +115,31 @@ const ReportPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
+  const validateSession = async () => {
+    if (!accessToken) return;
+
+    try {
+      const res = await fetch(`${config.apiUrl}/auth/validate-token`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (!data.valid) {
+        alert("Sesi Anda telah berakhir atau Anda telah dikeluarkan dari toko.");
+        logout();
+        await signOut({ redirect: false });
+        router.push("/");
+      }
+    } catch (err) {
+      console.error("Gagal validasi sesi:", err);
+      await signOut({ redirect: false });
+      router.push("/");
+    }
+  };
+
   useEffect(() => {
     if (user) {
       setIsAuthLoading(false);
@@ -122,6 +148,7 @@ const ReportPage = () => {
       } else {
         setHasAccess(false);
       }
+      validateSession()
     } else if (accessToken === null) {
       setIsAuthLoading(false);
       setHasAccess(false);
