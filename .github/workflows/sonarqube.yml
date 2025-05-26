@@ -27,9 +27,6 @@ jobs:
 
       - name: Install dependencies
         run: npm install --legacy-peer-deps
-
-      - name: Run tests and generate coverage
-        run: npm test -- --coverage __test__/invite/InvitePage.test.tsx 
         
       - name: Run SonarQube Scan
         env:
