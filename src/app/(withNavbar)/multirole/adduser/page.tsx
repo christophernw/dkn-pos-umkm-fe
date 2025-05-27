@@ -209,7 +209,7 @@ export default function AddUserPage() {
           className={`mt-10 w-full p-3 rounded-3xl font-semibold ${
             loading
               ? "bg-gray-400 cursor-not-allowed"
-              : "bg-blue-600 text-white hover:bg-blue-700"
+              : "bg-[#3554C1] text-white hover:bg-blue-700"
           }`}
           disabled={loading}
         >
