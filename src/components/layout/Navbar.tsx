@@ -10,7 +10,7 @@ import ReportIcon from '@/public/icons/navbar/ReportIcon'
 
 export const Navbar = () => {
     const navItems = React.useMemo(() => [
-        { text: 'Produk', icon: ProductIcon, route: ["/informasi", "/semuaBarang"] },
+        { text: 'Produk', icon: ProductIcon, route: ["/semuaBarang", "/informasi"] },
         { text: 'Transaksi', icon: TransactionIcon, route: ["/transaksi"] },
         { text: 'Beranda', icon: HomeIcon, route: ["/"] },
         { text: 'Laporan', icon: ReportIcon, route: ["/report"] },
