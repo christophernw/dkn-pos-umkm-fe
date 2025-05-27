@@ -10,6 +10,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import config from '@/src/config';
 import Script from 'next/script';
 
+declare global {
+  interface Window {
+    LogRocket?: any;
+  }
+}
+
 export default function LoginPage() {
     const { data: session } = useSession();
     const [loading, setLoading] = useState(false);
@@ -91,7 +97,6 @@ export default function LoginPage() {
             src="https://cdn.logrocket.io/LogRocket.min.js"
             strategy="afterInteractive"
             onLoad={() => {
-            // @ts-ignore
             window.LogRocket && window.LogRocket.init('6htjxq/lancar');
             }}
         />
