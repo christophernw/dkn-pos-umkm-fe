@@ -206,7 +206,7 @@ export default function AddUserPage() {
 
         <button
           type="submit"
-          className={`mt-10 w-full p-3 rounded-3xl font-semibold ${
+          className={`mt-10 w-full p-3 rounded-3xl ${
             loading
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-[#3554C1] text-white hover:bg-blue-700"
