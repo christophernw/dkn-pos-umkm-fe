@@ -13,7 +13,7 @@ const AddUserButton = () => {
         onClick={handleAddUser}
         className="bg-[#3554C1] text-white px-6 py-3 rounded-full shadow-md w-full"
       >
-        + Tambah Akun
+        + Tambah Pengguna
       </button>
     </div>
   );
