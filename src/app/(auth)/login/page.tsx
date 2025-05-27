@@ -14,7 +14,7 @@ export default function LoginPage() {
     const { data: session } = useSession();
     const [loading, setLoading] = useState(false);
     const router = useRouter();
-    const { setAuthData, logout } = useAuth();
+    const { setAuthData } = useAuth();
     
     useEffect(() => {
         if (session) {
