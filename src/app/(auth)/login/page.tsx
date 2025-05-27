@@ -100,7 +100,6 @@ export default function LoginPage() {
             window.LogRocket && window.LogRocket.init('6htjxq/lancar');
             }}
         />
-
         <Script
         id="maze-script"
         strategy="afterInteractive"
