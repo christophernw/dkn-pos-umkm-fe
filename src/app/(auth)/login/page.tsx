@@ -14,7 +14,7 @@ export default function LoginPage() {
     const { data: session } = useSession();
     const [loading, setLoading] = useState(false);
     const router = useRouter();
-    const { setAuthData } = useAuth();
+    const { setAuthData, logout } = useAuth();
     
     useEffect(() => {
         if (session) {
@@ -29,6 +29,15 @@ export default function LoginPage() {
             })
             .then(response => response.json())
             .then(data => {
+                // @ts-ignore
+                if (typeof window !== 'undefined' && window.LogRocket && data.user) {
+                    // @ts-ignore
+                    window.LogRocket.identify(data.user.id.toString(), {
+                    name: data.user.name,
+                    email: data.user.email,
+                    role: data.user.role,
+                    });
+                }
                 // Check if user is BPR
                 if (data.user && data.user.is_bpr) {
                     // Set auth data for BPR user
@@ -77,6 +86,16 @@ export default function LoginPage() {
 
     return (
         <>
+
+        <Script
+            src="https://cdn.logrocket.io/LogRocket.min.js"
+            strategy="afterInteractive"
+            onLoad={() => {
+            // @ts-ignore
+            window.LogRocket && window.LogRocket.init('6htjxq/lancar');
+            }}
+        />
+
         <Script
         id="maze-script"
         strategy="afterInteractive"
