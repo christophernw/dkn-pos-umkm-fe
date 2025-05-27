@@ -21,7 +21,8 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
     const { setAuthData, logout } = useAuth();
-    
+    const [logRocketReady, setLogRocketReady] = useState(false);
+
     useEffect(() => {
         if (session) {
             
@@ -35,9 +36,7 @@ export default function LoginPage() {
             })
             .then(response => response.json())
             .then(data => {
-                // @ts-ignore
-                if (typeof window !== 'undefined' && window.LogRocket && data.user) {
-                    // @ts-ignore
+                if (window.LogRocket && data.user) {
                     window.LogRocket.identify(data.user.id.toString(), {
                     name: data.user.name,
                     email: data.user.email,
@@ -97,9 +96,13 @@ export default function LoginPage() {
             src="https://cdn.logrocket.io/LogRocket.min.js"
             strategy="afterInteractive"
             onLoad={() => {
-            window.LogRocket && window.LogRocket.init('6htjxq/lancar');
+                if (window.LogRocket) {
+                window.LogRocket.init('6htjxq/lancar');
+                setLogRocketReady(true);
+                }
             }}
-        />
+            />
+
         <Script
         id="maze-script"
         strategy="afterInteractive"

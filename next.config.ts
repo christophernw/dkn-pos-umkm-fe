@@ -9,6 +9,11 @@ const nextConfig = {
           "127.0.0.1"
       ],
   },
+
+  experimental: {
+  allowedDevOrigins: ['https://app.logrocket.com'],
+},
+
 };
 
 
